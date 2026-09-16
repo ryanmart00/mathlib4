@@ -112,4 +112,17 @@ noncomputable def Hom.sumMap {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) 
   have := T.compatible a₀ (-a₁) (by simpa using ha)
   simpa using this
 
+@[simp]
+theorem Hom.sumMap_mk {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) (a₀ : C.A₀) (a₁ : C.A₁) :
+    T.sumMap (Submodule.Quotient.mk (a₀, a₁)) = Submodule.Quotient.mk (T.f₀ a₀, T.f₁ a₁) := rfl
+
+/-- The map a `Hom` induces on the meets: the restriction of `(f₀, f₁)` to `C.meet`, landing in
+`D.meet` — well-defined precisely because `compatible` says so directly (no quotient needed). -/
+noncomputable def Hom.meetMap {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) :
+    InterpolationCouple.meet C.ι₀ C.ι₁ →L[𝕜] InterpolationCouple.meet D.ι₀ D.ι₁ :=
+  (T.f₀.prodMap T.f₁).restrict <| by
+    rintro ⟨a₀, a₁⟩ ha
+    rw [InterpolationCouple.mem_meet_iff] at ha ⊢
+    exact T.compatible a₀ a₁ ha
+
 end InterpolationCat

@@ -121,6 +121,48 @@ noncomputable def InterpolationCouple.inl₁ (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
   (InterpolationCouple.plus ι₀ ι₁).ker.mkQL.comp (ContinuousLinearMap.inr 𝕜 A₀ A₁)
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+@[simp]
+theorem InterpolationCouple.inl₀_eq_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
+    InterpolationCouple.inl₀ ι₀ ι₁ a = Submodule.Quotient.mk (a, 0) := rfl
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+@[simp]
+theorem InterpolationCouple.inl₁_eq_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
+    InterpolationCouple.inl₁ ι₀ ι₁ a = Submodule.Quotient.mk (0, a) := rfl
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.inl₀_eq_zero_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
+    InterpolationCouple.inl₀ ι₀ ι₁ a = 0 ↔ ι₀ a = 0 := by
+  change (InterpolationCouple.plus ι₀ ι₁).ker.mkQ (a, 0) = 0 ↔ _
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, InterpolationCouple.mem_ker_plus_iff]
+  simp
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.inl₁_eq_zero_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
+    InterpolationCouple.inl₁ ι₀ ι₁ a = 0 ↔ ι₁ a = 0 := by
+  change (InterpolationCouple.plus ι₀ ι₁).ker.mkQ (0, a) = 0 ↔ _
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, InterpolationCouple.mem_ker_plus_iff]
+  simp
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.inl₀_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
+    (hι₀ : Function.Injective ι₀) :
+    Function.Injective (InterpolationCouple.inl₀ ι₀ ι₁) := by
+  intro a b hab
+  have h0 : InterpolationCouple.inl₀ ι₀ ι₁ (a - b) = 0 := by rw [map_sub, hab, sub_self]
+  rw [InterpolationCouple.inl₀_eq_zero_iff, map_sub] at h0
+  exact hι₀ (sub_eq_zero.mp h0)
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.inl₁_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
+    (hι₁ : Function.Injective ι₁) :
+    Function.Injective (InterpolationCouple.inl₁ ι₀ ι₁) := by
+  intro a b hab
+  have h0 : InterpolationCouple.inl₁ ι₀ ι₁ (a - b) = 0 := by rw [map_sub, hab, sub_self]
+  rw [InterpolationCouple.inl₁_eq_zero_iff, map_sub] at h0
+  exact hι₁ (sub_eq_zero.mp h0)
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- For `(a₀,a₁)` in the meet (so `ι₀ a₀ = ι₁ a₁`, a single point of the ambient space reachable
 from both legs), its images in the sum space via either leg agree: `[(a₀,0)] = [(0,a₁)]`. This is
 what makes `meetToSum` (using only the `A₀` leg) the right, symmetric notion of "the meet, viewed

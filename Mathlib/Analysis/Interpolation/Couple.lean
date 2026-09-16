@@ -27,14 +27,14 @@ instead of a from-scratch Cauchy-sequence argument.
 
 open scoped Topology
 
-variable (𝕜 : Type*) [NontriviallyNormedField 𝕜]
-variable (𝒜 : Type*) [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
   [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
 variable {A₀ A₁ : Type*} [NormedAddCommGroup A₀] [NormedSpace 𝕜 A₀] [CompleteSpace A₀]
   [NormedAddCommGroup A₁] [NormedSpace 𝕜 A₁] [CompleteSpace A₁]
 
 /-- The continuous linear map `(a₀, a₁) ↦ ι₀ a₀ - ι₁ a₁` on the product. Its kernel realizes
-`A₀ ⊓ A₁` and its induced quotient realizes `A₀ + A₁`. -/
+`A₀ ∩ A₁` and its induced quotient realizes `A₀ + A₁`. -/
 noncomputable def InterpolationCouple.diff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     (A₀ × A₁) →L[𝕜] 𝒜 :=
   ι₀.comp (ContinuousLinearMap.fst 𝕜 A₀ A₁) - ι₁.comp (ContinuousLinearMap.snd 𝕜 A₀ A₁)
@@ -42,30 +42,44 @@ noncomputable def InterpolationCouple.diff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The kernel of `diff` is closed, since `diff` is continuous into a Hausdorff space. -/
 theorem InterpolationCouple.isClosed_ker_diff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    IsClosed ((InterpolationCouple.diff 𝕜 𝒜 ι₀ ι₁).ker : Set (A₀ × A₁)) :=
-  isClosed_singleton.preimage (InterpolationCouple.diff 𝕜 𝒜 ι₀ ι₁).continuous
+    IsClosed ((InterpolationCouple.diff ι₀ ι₁).ker : Set (A₀ × A₁)) :=
+  isClosed_singleton.preimage (InterpolationCouple.diff ι₀ ι₁).continuous
 
-/-- `A₀ ⊓ A₁`, realized as the (closed) kernel submodule of `diff` inside `A₀ × A₁`. -/
+/-- `A₀ ∩ A₁`, realized as the (closed) kernel submodule of `diff` inside `A₀ × A₁`. -/
 noncomputable def InterpolationCouple.meet (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     Submodule 𝕜 (A₀ × A₁) :=
-  (InterpolationCouple.diff 𝕜 𝒜 ι₀ ι₁).ker
+  (InterpolationCouple.diff ι₀ ι₁).ker
 
 noncomputable instance InterpolationCouple.meet.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    CompleteSpace (InterpolationCouple.meet 𝕜 𝒜 ι₀ ι₁) :=
-  (InterpolationCouple.isClosed_ker_diff 𝕜 𝒜 ι₀ ι₁).completeSpace_coe
+    CompleteSpace (InterpolationCouple.meet ι₀ ι₁) :=
+  (InterpolationCouple.isClosed_ker_diff ι₀ ι₁).completeSpace_coe
 
 /-- `A₀ + A₁`, realized as the quotient of `A₀ × A₁` by the (closed) kernel of `diff`. -/
 def InterpolationCouple.sum (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) : Type _ :=
-  (A₀ × A₁) ⧸ InterpolationCouple.meet 𝕜 𝒜 ι₀ ι₁
+  (A₀ × A₁) ⧸ InterpolationCouple.meet ι₀ ι₁
 
 noncomputable instance InterpolationCouple.sum.normedAddCommGroup
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    NormedAddCommGroup (InterpolationCouple.sum 𝕜 𝒜 ι₀ ι₁) :=
-  Submodule.Quotient.normedAddCommGroup (S := InterpolationCouple.meet 𝕜 𝒜 ι₀ ι₁)
-    (hS := InterpolationCouple.isClosed_ker_diff 𝕜 𝒜 ι₀ ι₁)
+    NormedAddCommGroup (InterpolationCouple.sum ι₀ ι₁) :=
+  Submodule.Quotient.normedAddCommGroup (S := InterpolationCouple.meet ι₀ ι₁)
+    (hS := InterpolationCouple.isClosed_ker_diff ι₀ ι₁)
 
 noncomputable instance InterpolationCouple.sum.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    CompleteSpace (InterpolationCouple.sum 𝕜 𝒜 ι₀ ι₁) :=
-  Submodule.Quotient.completeSpace (InterpolationCouple.meet 𝕜 𝒜 ι₀ ι₁)
+    CompleteSpace (InterpolationCouple.sum ι₀ ι₁) :=
+  Submodule.Quotient.completeSpace (InterpolationCouple.meet ι₀ ι₁)
+
+/-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
+`InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs
+`open scoped InterpolationCouple`) so it doesn't shadow `Set`/`Submodule`'s `∩`/`+` elsewhere.
+
+NOTE for later: this notation currently takes the *embedding maps* `ι₀, ι₁` as arguments, not the
+Banach spaces `A₀, A₁` themselves, since nothing yet determines a canonical embedding from a type
+alone. Once canonical embeddings exist for concrete spaces (e.g. `Lp` spaces embedding into `𝒟'`
+or `𝒮'`), it will likely read better for this notation to apply directly to `A₀, A₁` (with the
+embedding found automatically) rather than to `ι₀, ι₁` explicitly — deliberately not acted on
+yet, flagged here for when that machinery exists. -/
+scoped[InterpolationCouple] notation:70 ι₀ " ∩ " ι₁ => InterpolationCouple.meet ι₀ ι₁
+
+scoped[InterpolationCouple] notation:65 ι₀ " + " ι₁ => InterpolationCouple.sum ι₀ ι₁

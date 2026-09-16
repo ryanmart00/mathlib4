@@ -69,3 +69,53 @@ theorem InterpolationCouple.kFunctional_mono {s t : ℝ} (hs : 0 ≤ s) (hst : s
       ≤ ‖a₀‖ + s * ‖a₁‖ :=
         csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ s hs a) hr'
     _ ≤ ‖a₀‖ + t * ‖a₁‖ := by nlinarith [norm_nonneg a₁]
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `K(t,a) ≥ min(1,t) ‖a‖`, relating `K` back to the couple's own sum-space norm. -/
+theorem InterpolationCouple.min_mul_norm_le_kFunctional (t : ℝ) (ht : 0 ≤ t)
+    (a : InterpolationCouple.sum ι₀ ι₁) :
+    min 1 t * ‖a‖ ≤ InterpolationCouple.KFunctional ι₀ ι₁ t a := by
+  apply le_csInf (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ t a)
+  rintro r ⟨a₀, a₁, ha, rfl⟩
+  have h1 : ‖a‖ ≤ max ‖a₀‖ ‖a₁‖ := by
+    rw [← ha]
+    exact (Submodule.Quotient.norm_mk_le (InterpolationCouple.plus ι₀ ι₁).ker
+      (a₀, a₁)).trans_eq (Prod.norm_def _)
+  have h2 : min 1 t * max ‖a₀‖ ‖a₁‖ ≤ ‖a₀‖ + t * ‖a₁‖ := by
+    rcases le_total ‖a₀‖ ‖a₁‖ with h | h
+    · rw [max_eq_right h]
+      nlinarith [min_le_right (1 : ℝ) t, norm_nonneg a₀]
+    · rw [max_eq_left h]
+      nlinarith [min_le_left (1 : ℝ) t, norm_nonneg a₁]
+  calc min 1 t * ‖a‖ ≤ min 1 t * max ‖a₀‖ ‖a₁‖ :=
+        mul_le_mul_of_nonneg_left h1 (le_min zero_le_one ht)
+    _ ≤ ‖a₀‖ + t * ‖a₁‖ := h2
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `K(t,a) ≤ 2 max(1,t) ‖a‖` — the extra factor `2` (compared to Triebel's literal
+`max(1,t)‖a‖`) comes from our `sum`'s norm being the *max*-based quotient norm, not Triebel's
+literal `inf ‖a₀‖+‖a₁‖` sum-norm; the two are equivalent but not equal (documented in
+`Couple.lean`). -/
+theorem InterpolationCouple.kFunctional_le_two_mul_max_mul_norm (t : ℝ) (ht : 0 ≤ t)
+    (a : InterpolationCouple.sum ι₀ ι₁) :
+    InterpolationCouple.KFunctional ι₀ ι₁ t a ≤ 2 * max 1 t * ‖a‖ := by
+  have hmax : (0 : ℝ) < 2 * max 1 t := by positivity
+  apply le_of_forall_pos_le_add
+  intro ε hε
+  obtain ⟨x, hx, hxlt⟩ := Submodule.Quotient.norm_mk_lt a (div_pos hε hmax)
+  have hb : InterpolationCouple.KFunctional ι₀ ι₁ t a ≤ ‖x.1‖ + t * ‖x.2‖ :=
+    csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht a)
+      ⟨x.1, x.2, by simpa using hx, rfl⟩
+  have hc : ‖x.1‖ + t * ‖x.2‖ ≤ 2 * max 1 t * ‖x‖ := by
+    rw [Prod.norm_def]
+    rcases le_total ‖x.1‖ ‖x.2‖ with h | h
+    · rw [max_eq_right h]
+      nlinarith [le_max_right (1 : ℝ) t, le_max_left (1 : ℝ) t, norm_nonneg x.1, norm_nonneg x.2]
+    · rw [max_eq_left h]
+      nlinarith [le_max_left (1 : ℝ) t, le_max_right (1 : ℝ) t, norm_nonneg x.1, norm_nonneg x.2]
+  calc InterpolationCouple.KFunctional ι₀ ι₁ t a
+      ≤ ‖x.1‖ + t * ‖x.2‖ := hb
+    _ ≤ 2 * max 1 t * ‖x‖ := hc
+    _ ≤ 2 * max 1 t * (‖a‖ + ε / (2 * max 1 t)) := by
+        apply mul_le_mul_of_nonneg_left hxlt.le (by positivity)
+    _ = 2 * max 1 t * ‖a‖ + ε := by field_simp

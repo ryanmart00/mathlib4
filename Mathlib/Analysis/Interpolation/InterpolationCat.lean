@@ -95,4 +95,20 @@ instance : Category (InterpolationCat.{v, u} 𝕜) where
 @[simp] lemma comp_f₁ {C D E : InterpolationCat.{v, u} 𝕜} (φ : C ⟶ D) (ψ : D ⟶ E) :
     (φ ≫ ψ).f₁ = ψ.f₁.comp φ.f₁ := rfl
 
+/-- The map a `Hom` induces on the sum spaces: `(f₀, f₁)` applied on `A₀ × A₁`, descended to the
+quotient `A₀ + A₁` via the quotient's universal property — well-defined precisely because
+`compatible` says the pair sends the meet (the kernel the quotient is built from) into the
+target's meet. This recovers Triebel's own notion of morphism: "a linear map on the sum space,
+continuous on each restriction". -/
+noncomputable def Hom.sumMap {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) :
+    InterpolationCouple.sum C.ι₀ C.ι₁ →L[𝕜] InterpolationCouple.sum D.ι₀ D.ι₁ :=
+  (InterpolationCouple.meet C.ι₀ C.ι₁).liftQL
+    ((InterpolationCouple.meet D.ι₀ D.ι₁).mkQL.comp (T.f₀.prodMap T.f₁)) <| by
+  rintro ⟨a₀, a₁⟩ ha
+  rw [InterpolationCouple.mem_meet_iff] at ha
+  rw [LinearMap.mem_ker]
+  change (InterpolationCouple.meet D.ι₀ D.ι₁).mkQ (T.f₀ a₀, T.f₁ a₁) = 0
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, InterpolationCouple.mem_meet_iff]
+  exact T.compatible a₀ a₁ ha
+
 end InterpolationCat

@@ -5,6 +5,7 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Normed.Group.Quotient
 import Mathlib.Analysis.Normed.Operator.Basic
+import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Quotient
 
 /-!
 # Interpolation couples
@@ -50,6 +51,11 @@ noncomputable def InterpolationCouple.meet (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁
     Submodule 𝕜 (A₀ × A₁) :=
   (InterpolationCouple.diff ι₀ ι₁).ker
 
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.mem_meet_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a₀ : A₀) (a₁ : A₁) :
+    (a₀, a₁) ∈ InterpolationCouple.meet ι₀ ι₁ ↔ ι₀ a₀ = ι₁ a₁ := by
+  simp [InterpolationCouple.meet, InterpolationCouple.diff, LinearMap.mem_ker, sub_eq_zero]
+
 noncomputable instance InterpolationCouple.meet.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     CompleteSpace (InterpolationCouple.meet ι₀ ι₁) :=
@@ -69,6 +75,17 @@ noncomputable instance InterpolationCouple.sum.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     CompleteSpace (InterpolationCouple.sum ι₀ ι₁) :=
   Submodule.Quotient.completeSpace (InterpolationCouple.meet ι₀ ι₁)
+
+noncomputable instance InterpolationCouple.sum.normedSpace
+    (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    NormedSpace 𝕜 (InterpolationCouple.sum ι₀ ι₁) :=
+  Submodule.Quotient.normedSpace 𝕜 (S := InterpolationCouple.meet ι₀ ι₁)
+
+/-- The canonical continuous linear map `A₀ ∩ A₁ →L[𝕜] A₀ + A₁`: the inclusion of the meet
+(as a submodule of `A₀ × A₁`) followed by the quotient map onto the sum. -/
+noncomputable def InterpolationCouple.meetToSum (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    InterpolationCouple.meet ι₀ ι₁ →L[𝕜] InterpolationCouple.sum ι₀ ι₁ :=
+  (InterpolationCouple.meet ι₀ ι₁).mkQL.comp (InterpolationCouple.meet ι₀ ι₁).subtypeL
 
 /-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
 `InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs

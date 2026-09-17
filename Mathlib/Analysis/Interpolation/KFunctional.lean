@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.Couple
+import Mathlib.Analysis.Interpolation.InterpolationCat
+import Mathlib.Analysis.Convex.Function
 
 /-!
 # The K-functional
@@ -119,3 +121,31 @@ theorem InterpolationCouple.kFunctional_le_two_mul_max_mul_norm (t : ℝ) (ht : 
     _ ≤ 2 * max 1 t * (‖a‖ + ε / (2 * max 1 t)) := by
         apply mul_le_mul_of_nonneg_left hxlt.le (by positivity)
     _ = 2 * max 1 t * ‖a‖ + ε := by field_simp
+
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
+proof deferred. -/
+theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :
+    ContinuousOn (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) (Set.Ici 0) := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- Triebel's Lemma (§1.3.1): `K(t,a)` is concave in `t` (for `t ≥ 0`). STATEMENT ONLY — proof
+deferred (not needed for the `(A₀,A₁)_{θ,q}` Banach/type-θ theorem specifically; needed later
+for reiteration / K-L-method equivalence). -/
+theorem InterpolationCouple.kFunctional_concaveOn (a : InterpolationCouple.sum ι₀ ι₁) :
+    ConcaveOn ℝ (Set.Ici (0 : ℝ)) (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The key transformation/naturality property used to show `(A₀,A₁)_{θ,q}` is an exact
+interpolation functor of type `θ` (Triebel §1.3.3 proof, step 4): a morphism `T : C ⟶ D` scales
+the K-functional by its operator norms on each leg. STATEMENT ONLY — proof deferred.
+
+CAVEAT: the `‖T.f₀‖ = 0` edge case (division by zero in the second argument) hasn't been
+reviewed yet; revisit when actually proving this. -/
+theorem InterpolationCat.Hom.kFunctional_sumMap_le {C D : InterpolationCat 𝕜}
+    (T : InterpolationCat.Hom C D) (t : ℝ) (ht : 0 ≤ t) (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
+    InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (T.sumMap a) ≤
+      ‖T.f₀‖ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ (t * ‖T.f₁‖ / ‖T.f₀‖) a := by
+  sorry

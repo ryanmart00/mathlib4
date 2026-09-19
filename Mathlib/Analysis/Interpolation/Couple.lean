@@ -305,11 +305,28 @@ theorem InterpolationCouple.inl₀_fst_eq_inl₁_snd (ι₀ : A₀ →L[𝕜] �
   simpa using h
 
 /-- The canonical continuous linear map `A₀ ∩ A₁ →L[𝕜] A₀ + A₁`: `(a₀,a₁) ↦ [(a₀,0)]` (which,
-by `inl₀_fst_eq_inl₁_snd`, agrees with `[(0,a₁)]` — the meet, viewed inside the sum). -/
+by `inl₀_fst_eq_inl₁_snd`, agrees with `[(0,a₁)]` — the meet, viewed inside the sum).
+
+The domain's `TopologicalSpace`/`AddCommMonoid` are `@`-pinned to `meet.quasinormedAddCommGroup`'s
+own bundled ones rather than left to ordinary instance search: since `meet ι₀ ι₁` is a *visible*
+`Submodule` (unlike the opaque `sum`), the generic `Submodule`-subtype instances are always a
+competing candidate and win by default — but `QuasiBanachCat.of`/`.ofHom` (via their
+`[QuasinormedAddCommGroup _]` bracket) expect the bundled ones. Pinning here keeps this
+declaration consistent with those. Do **not** unfold this definition by name in a later `simp`;
+that discards the pinning and reverts to the generic route — use `meetToSum_apply` instead. -/
 noncomputable def InterpolationCouple.meetToSum (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    InterpolationCouple.meet ι₀ ι₁ →L[𝕜] InterpolationCouple.sum ι₀ ι₁ :=
+    @ContinuousLinearMap 𝕜 𝕜 _ _ (RingHom.id 𝕜)
+      (InterpolationCouple.meet ι₀ ι₁)
+      (InterpolationCouple.meet.quasinormedAddCommGroup ι₀ ι₁).toUniformSpace.toTopologicalSpace
+      (InterpolationCouple.meet.quasinormedAddCommGroup ι₀ ι₁).toAddCommMonoid
+      (InterpolationCouple.sum ι₀ ι₁) _ _ _ _ :=
   (InterpolationCouple.inl₀ ι₀ ι₁).comp
     ((ContinuousLinearMap.fst 𝕜 A₀ A₁).comp (InterpolationCouple.meet ι₀ ι₁).subtypeL)
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.meetToSum_apply (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
+    (a₀ : A₀) (a₁ : A₁) (ha) :
+    InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩ = InterpolationCouple.inl₀ ι₀ ι₁ a₀ := rfl
 
 /-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
 `InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs

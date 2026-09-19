@@ -117,12 +117,34 @@ theorem Hom.sumMap_mk {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) (a₀ :
     T.sumMap (Submodule.Quotient.mk (a₀, a₁)) = Submodule.Quotient.mk (T.f₀ a₀, T.f₁ a₁) := rfl
 
 /-- The map a `Hom` induces on the meets: the restriction of `(f₀, f₁)` to `C.meet`, landing in
-`D.meet` — well-defined precisely because `compatible` says so directly (no quotient needed). -/
+`D.meet` — well-defined precisely because `compatible` says so directly (no quotient needed).
+
+Both endpoints' `TopologicalSpace`/`AddCommMonoid` are `@`-pinned to
+`meet.quasinormedAddCommGroup`'s own bundled ones, for the same reason as
+`InterpolationCouple.meetToSum`: `meet` is a *visible*
+`Submodule`, so ordinary instance search always finds the generic `Submodule`-subtype route first,
+but `QuasiBanachCat.of`/`.ofHom` expect the bundled one. Do **not** unfold this definition by name
+in a later `simp`; that discards the pinning and reverts to the generic route — use
+`Hom.meetMap_apply` instead. -/
 noncomputable def Hom.meetMap {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) :
-    InterpolationCouple.meet C.ι₀ C.ι₁ →L[𝕜] InterpolationCouple.meet D.ι₀ D.ι₁ :=
+    @ContinuousLinearMap 𝕜 𝕜 _ _ (RingHom.id 𝕜)
+      (InterpolationCouple.meet C.ι₀ C.ι₁)
+      (InterpolationCouple.meet.quasinormedAddCommGroup C.ι₀ C.ι₁).toUniformSpace.toTopologicalSpace
+      (InterpolationCouple.meet.quasinormedAddCommGroup C.ι₀ C.ι₁).toAddCommMonoid
+      (InterpolationCouple.meet D.ι₀ D.ι₁)
+      (InterpolationCouple.meet.quasinormedAddCommGroup D.ι₀ D.ι₁).toUniformSpace.toTopologicalSpace
+      (InterpolationCouple.meet.quasinormedAddCommGroup D.ι₀ D.ι₁).toAddCommMonoid
+      _ _ :=
   (T.f₀.prodMap T.f₁).restrict <| by
     rintro ⟨a₀, a₁⟩ ha
     rw [InterpolationCouple.mem_meet_iff] at ha ⊢
     exact T.compatible a₀ a₁ ha
+
+theorem Hom.meetMap_apply {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) (a₀ : C.A₀) (a₁ : C.A₁)
+    (ha) :
+    Hom.meetMap T ⟨(a₀, a₁), ha⟩ =
+      ⟨(T.f₀ a₀, T.f₁ a₁), by
+        rw [InterpolationCouple.mem_meet_iff] at ha ⊢
+        exact T.compatible a₀ a₁ ha⟩ := rfl
 
 end InterpolationCat

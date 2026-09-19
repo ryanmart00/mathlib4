@@ -50,7 +50,7 @@ noncomputable def sumInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜 whe
   toSum _ := ContinuousLinearMap.id 𝕜 _
   toSum_injective _ := Function.injective_id
   fromMeet C := InterpolationCouple.meetToSum C.ι₀ C.ι₁
-  toSum_fromMeet _ := by simp
+  toSum_fromMeet _ := ContinuousLinearMap.id_comp _
   map_toSum _ := by simp
 
 theorem InterpolationCouple.meetToSum_injective (C : InterpolationCat.{v, u} 𝕜) :
@@ -73,9 +73,8 @@ noncomputable def meetInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜 wh
   toSum_fromMeet _ := ContinuousLinearMap.comp_id _
   map_toSum {C D} T := by
     ext ⟨⟨a₀, a₁⟩, ha⟩
-    -- ESCALATED (see PROGRESS-interpolation-theory.md): `ContinuousLinearMap.comp_apply`
-    -- (and every other simp lemma tried) makes zero syntactic progress on this goal, even
-    -- though the same lemma fires immediately on a minimal analogous example — suspected to
-    -- be another instance of this session's `Module`/topology-path diamond for `sum ι₀ ι₁`,
-    -- now blocking `simp`'s congruence closure rather than `synthInstance` outright.
-    sorry
+    rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
+      QuasiBanachCat.hom_ofHom, InterpolationCat.Hom.meetMap_apply,
+      InterpolationCouple.meetToSum_apply, InterpolationCouple.meetToSum_apply,
+      InterpolationCouple.inl₀_eq_mk, InterpolationCouple.inl₀_eq_mk,
+      InterpolationCat.Hom.sumMap_mk, map_zero]

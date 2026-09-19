@@ -139,16 +139,58 @@ theorem InterpolationCouple.kFunctional_concaveOn (a : InterpolationCouple.sum �
 
 /-- The key transformation/naturality property used to show `(A₀,A₁)_{θ,q}` is an exact
 interpolation functor of type `θ` (Triebel §1.3.3 proof, step 4): a morphism `T : C ⟶ D` scales
-the K-functional by its operator norms on each leg. STATEMENT ONLY — proof deferred.
+the K-functional by bounds on its operator quasi-norms on each leg.
 
-CAVEAT: the `opQuasiNorm T.f₀ = 0` edge case (division by zero in the second argument) hasn't
-been reviewed yet; revisit when actually proving this. Uses `QuasinormedAddCommGroup.opQuasiNorm`
-rather than Mathlib's own operator norm, which needs genuine `SeminormedAddCommGroup` on both
-ends and so isn't available for merely-quasi-normed legs (`QuasiNorm.lean`). -/
+Stated with arbitrary upper bounds `M₀, M₁` on `opQuasiNorm T.f₀`/`opQuasiNorm T.f₁` (rather than
+the exact quasi-norms themselves) precisely to sidestep the `opQuasiNorm T.f₀ = 0` edge case
+flagged when this was statement-only: with the exact quasi-norm plugged in, `t * ‖T.f₁‖ / 0`
+evaluates to `0` under Lean's `x / 0 = 0` convention, making the RHS `0` and the claimed
+inequality false whenever `T.f₀ = 0` and `T.sumMap a ≠ 0`. The proof below only ever uses
+`‖T.f₀ a₀‖ ≤ M₀ * ‖a₀‖`/`‖T.f₁ a₁‖ ≤ M₁ * ‖a₁‖`, never that `M₀, M₁` are the *tightest* such
+bounds, so this version is strictly more general (recovers the exact-quasi-norm statement by
+taking `M₀ := opQuasiNorm T.f₀` whenever that is positive) and avoids the degenerate case by
+letting the caller pick `M₀ > 0` freely (e.g. `M₀ := 1` when `T.f₀ = 0`). Signed off by Ryan.
+
+Uses `QuasinormedAddCommGroup.opQuasiNorm` rather than Mathlib's own operator norm, which needs
+genuine `SeminormedAddCommGroup` on both ends and so isn't available for merely-quasi-normed legs
+(`QuasiNorm.lean`). -/
 theorem InterpolationCat.Hom.kFunctional_sumMap_le {C D : InterpolationCat 𝕜}
-    (T : InterpolationCat.Hom C D) (t : ℝ) (ht : 0 ≤ t) (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
+    (T : InterpolationCat.Hom C D) (t : ℝ) (ht : 0 ≤ t)
+    (M₀ M₁ : ℝ) (hM₀ : 0 < M₀)
+    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
+    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (T.sumMap a) ≤
-      QuasinormedAddCommGroup.opQuasiNorm T.f₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁
-        (t * QuasinormedAddCommGroup.opQuasiNorm T.f₁ / QuasinormedAddCommGroup.opQuasiNorm T.f₀)
-        a := by
-  sorry
+      M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) a := by
+  set s := t * M₁ / M₀ with hs
+  apply le_of_forall_pos_le_add
+  intro ε hε
+  obtain ⟨r, ⟨a₀, a₁, ha, hreq⟩, hrlt⟩ := Real.lt_sInf_add_pos
+    (InterpolationCouple.kFunctional_set_nonempty C.ι₀ C.ι₁ s a) (div_pos hε hM₀)
+  subst hreq
+  have hrlt' : ‖a₀‖ + s * ‖a₁‖ <
+      InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε / M₀ := hrlt
+  have hb : InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (T.sumMap a) ≤
+      ‖T.f₀ a₀‖ + t * ‖T.f₁ a₁‖ := by
+    refine csInf_le (InterpolationCouple.kFunctional_set_boundedBelow D.ι₀ D.ι₁ t ht (T.sumMap a))
+      ⟨T.f₀ a₀, T.f₁ a₁, ?_, rfl⟩
+    rw [← ha, InterpolationCat.Hom.sumMap_mk]
+  have h0 : ‖T.f₀ a₀‖ ≤ M₀ * ‖a₀‖ :=
+    (QuasinormedAddCommGroup.le_opQuasiNorm T.f₀ a₀).trans
+      (mul_le_mul_of_nonneg_right h₀ (QuasinormedAddCommGroup.norm_nonneg a₀))
+  have h1 : ‖T.f₁ a₁‖ ≤ M₁ * ‖a₁‖ :=
+    (QuasinormedAddCommGroup.le_opQuasiNorm T.f₁ a₁).trans
+      (mul_le_mul_of_nonneg_right h₁ (QuasinormedAddCommGroup.norm_nonneg a₁))
+  have hcomb : ‖T.f₀ a₀‖ + t * ‖T.f₁ a₁‖ ≤ M₀ * ‖a₀‖ + t * (M₁ * ‖a₁‖) := by
+    have := mul_le_mul_of_nonneg_left h1 ht
+    linarith
+  have heq : M₀ * ‖a₀‖ + t * (M₁ * ‖a₁‖) = M₀ * (‖a₀‖ + s * ‖a₁‖) := by
+    rw [hs]; field_simp
+  rw [heq] at hcomb
+  have hfin : M₀ * (‖a₀‖ + s * ‖a₁‖) <
+      M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε := by
+    have hmul := mul_lt_mul_of_pos_left hrlt' hM₀
+    calc M₀ * (‖a₀‖ + s * ‖a₁‖)
+        < M₀ * (InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε / M₀) := hmul
+      _ = M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε := by field_simp
+  linarith [hb, hcomb, hfin]

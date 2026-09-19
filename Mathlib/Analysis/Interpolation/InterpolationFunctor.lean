@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.BanachCat
+import Mathlib.Analysis.Interpolation.QuasiBanachCat
 import Mathlib.Analysis.Interpolation.InterpolationCat
 import Mathlib.CategoryTheory.Functor.Basic
 
@@ -13,8 +13,12 @@ import Mathlib.CategoryTheory.Functor.Basic
 DRAFT — under review, no instances constructed yet.
 
 Triebel §1.2.2, Definition 1: an interpolation functor is a (covariant) functor
-`F : InterpolationCat 𝕜 ⥤ BanachCat 𝕜` such that `A₀ ∩ A₁ ⊂ F({A₀,A₁}) ⊂ A₀ + A₁`, and for a
-morphism `T`, `F(T)` is the restriction of `T` to `F({A₀,A₁})`.
+`F : InterpolationCat 𝕜 ⥤ QuasiBanachCat 𝕜` such that `A₀ ∩ A₁ ⊂ F({A₀,A₁}) ⊂ A₀ + A₁`, and for a
+morphism `T`, `F(T)` is the restriction of `T` to `F({A₀,A₁})`. Triebel's own definition lands
+in genuine Banach spaces; we land in quasi-Banach spaces instead, since `A₀ ∩ A₁`/`A₀ + A₁`
+themselves (`Couple.lean`) are only guaranteed quasi-Banach for quasi-normed legs — every
+genuinely-Banach case is still covered, via `NormedAddCommGroup.toQuasinormedAddCommGroup`
+(`QuasiNorm.lean`).
 
 We realize the sandwich condition as two continuous linear maps `fromMeet C : C.meet →L[𝕜] F(C)`
 and `toSum C : F(C) →L[𝕜] C.sum`, agreeing with the canonical `meet →L[𝕜] sum` map on composition,
@@ -30,7 +34,7 @@ open CategoryTheory
 variable (𝕜 : Type u) [NontriviallyNormedField 𝕜]
 
 /-- Triebel §1.2.2, Definition 1: an interpolation functor. -/
-structure InterpolationFunctor extends InterpolationCat.{v, u} 𝕜 ⥤ BanachCat.{v} 𝕜 where
+structure InterpolationFunctor extends InterpolationCat.{v, u} 𝕜 ⥤ QuasiBanachCat.{v} 𝕜 where
   /-- The inclusion of `F(C)` into the sum space `A₀ + A₁`. -/
   toSum (C : InterpolationCat.{v, u} 𝕜) :
     (obj C : Type v) →L[𝕜] InterpolationCouple.sum C.ι₀ C.ι₁

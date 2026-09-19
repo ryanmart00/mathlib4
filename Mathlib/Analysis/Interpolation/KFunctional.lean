@@ -22,8 +22,8 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
   [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
 variable {A₀ A₁ : Type*}
-  [QuasinormedAddCommGroup A₀] [Module 𝕜 A₀] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [QuasinormedAddCommGroup A₁] [Module 𝕜 A₁] [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁]
+  [QuasinormedAddCommGroup A₀] [QuasiNormedSpace 𝕜 A₀] [CompleteSpace A₀]
+  [QuasinormedAddCommGroup A₁] [QuasiNormedSpace 𝕜 A₁] [CompleteSpace A₁]
 variable (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
 
 /-- The K-functional: `K(t,a) = inf_{a = a₀+a₁} (‖a₀‖ + t‖a₁‖)`. -/
@@ -32,8 +32,7 @@ noncomputable def InterpolationCouple.KFunctional (t : ℝ) (a : InterpolationCo
   sInf {r : ℝ | ∃ a₀ : A₀, ∃ a₁ : A₁,
     (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum ι₀ ι₁) = a ∧ ‖a₀‖ + t * ‖a₁‖ = r}
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.kFunctional_set_nonempty (t : ℝ) (a : InterpolationCouple.sum ι₀ ι₁) :
     {r : ℝ | ∃ a₀ : A₀, ∃ a₁ : A₁,
       (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum ι₀ ι₁) = a ∧
@@ -41,8 +40,7 @@ theorem InterpolationCouple.kFunctional_set_nonempty (t : ℝ) (a : Interpolatio
   obtain ⟨⟨a₀, a₁⟩, ha⟩ := Submodule.Quotient.mk_surjective _ a
   exact ⟨‖a₀‖ + t * ‖a₁‖, a₀, a₁, ha, rfl⟩
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.kFunctional_set_boundedBelow (t : ℝ) (ht : 0 ≤ t)
     (a : InterpolationCouple.sum ι₀ ι₁) :
     BddBelow {r : ℝ | ∃ a₀ : A₀, ∃ a₁ : A₁,
@@ -52,8 +50,7 @@ theorem InterpolationCouple.kFunctional_set_boundedBelow (t : ℝ) (ht : 0 ≤ t
   rintro r ⟨a₀, a₁, -, rfl⟩
   nlinarith [QuasinormedAddCommGroup.norm_nonneg a₀, QuasinormedAddCommGroup.norm_nonneg a₁]
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.kFunctional_nonneg (t : ℝ) (ht : 0 ≤ t)
     (a : InterpolationCouple.sum ι₀ ι₁) :
     0 ≤ InterpolationCouple.KFunctional ι₀ ι₁ t a :=
@@ -61,8 +58,7 @@ theorem InterpolationCouple.kFunctional_nonneg (t : ℝ) (ht : 0 ≤ t)
     rintro r ⟨a₀, a₁, -, rfl⟩
     nlinarith [QuasinormedAddCommGroup.norm_nonneg a₀, QuasinormedAddCommGroup.norm_nonneg a₁])
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `K(t,a)` is monotone increasing in `t`, for `t ≥ 0`. -/
 theorem InterpolationCouple.kFunctional_mono {s t : ℝ} (hs : 0 ≤ s) (hst : s ≤ t)
     (a : InterpolationCouple.sum ι₀ ι₁) :
@@ -77,8 +73,7 @@ theorem InterpolationCouple.kFunctional_mono {s t : ℝ} (hs : 0 ≤ s) (hst : s
         csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ s hs a) hr'
     _ ≤ ‖a₀‖ + t * ‖a₁‖ := by nlinarith [QuasinormedAddCommGroup.norm_nonneg a₁]
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `K(t,a) ≥ min(1,t) ‖a‖`, relating `K` back to the couple's own sum-space norm. -/
 theorem InterpolationCouple.min_mul_norm_le_kFunctional (t : ℝ) (ht : 0 ≤ t)
     (a : InterpolationCouple.sum ι₀ ι₁) :
@@ -99,8 +94,7 @@ theorem InterpolationCouple.min_mul_norm_le_kFunctional (t : ℝ) (ht : 0 ≤ t)
         mul_le_mul_of_nonneg_left h1 (le_min zero_le_one ht)
     _ ≤ ‖a₀‖ + t * ‖a₁‖ := h2
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `K(t,a) ≤ 2 max(1,t) ‖a‖` — the extra factor `2` (compared to Triebel's literal
 `max(1,t)‖a‖`) comes from our `sum`'s norm being the *max*-based quotient norm, not Triebel's
 literal `inf ‖a₀‖+‖a₁‖` sum-norm; the two are equivalent but not equal (documented in

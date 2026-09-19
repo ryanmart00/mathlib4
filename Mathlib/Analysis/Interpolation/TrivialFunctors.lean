@@ -45,8 +45,8 @@ end InterpolationCat.Hom
 
 /-- Triebel §1.2.3: `A₀ + A₁` is (trivially) an interpolation functor. -/
 noncomputable def sumInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜 where
-  obj C := BanachCat.of 𝕜 (InterpolationCouple.sum C.ι₀ C.ι₁)
-  map T := BanachCat.ofHom T.sumMap
+  obj C := QuasiBanachCat.of 𝕜 (InterpolationCouple.sum C.ι₀ C.ι₁)
+  map T := QuasiBanachCat.ofHom T.sumMap
   toSum _ := ContinuousLinearMap.id 𝕜 _
   toSum_injective _ := Function.injective_id
   fromMeet C := InterpolationCouple.meetToSum C.ι₀ C.ι₁
@@ -65,14 +65,17 @@ theorem InterpolationCouple.meetToSum_injective (C : InterpolationCat.{v, u} �
 
 /-- Triebel §1.2.3: `A₀ ∩ A₁` is (trivially) an interpolation functor. -/
 noncomputable def meetInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜 where
-  obj C := BanachCat.of 𝕜 (InterpolationCouple.meet C.ι₀ C.ι₁)
-  map T := BanachCat.ofHom T.meetMap
+  obj C := QuasiBanachCat.of 𝕜 (InterpolationCouple.meet C.ι₀ C.ι₁)
+  map T := QuasiBanachCat.ofHom T.meetMap
   toSum C := InterpolationCouple.meetToSum C.ι₀ C.ι₁
   toSum_injective C := InterpolationCouple.meetToSum_injective C
   fromMeet _ := ContinuousLinearMap.id 𝕜 _
-  toSum_fromMeet _ := by simp
+  toSum_fromMeet _ := ContinuousLinearMap.comp_id _
   map_toSum {C D} T := by
     ext ⟨⟨a₀, a₁⟩, ha⟩
-    simp [InterpolationCouple.meetToSum, InterpolationCat.Hom.meetMap,
-      InterpolationCat.Hom.sumMap_mk]
-    rfl
+    -- ESCALATED (see PROGRESS-interpolation-theory.md): `ContinuousLinearMap.comp_apply`
+    -- (and every other simp lemma tried) makes zero syntactic progress on this goal, even
+    -- though the same lemma fires immediately on a minimal analogous example — suspected to
+    -- be another instance of this session's `Module`/topology-path diamond for `sum ι₀ ι₁`,
+    -- now blocking `simp`'s congruence closure rather than `synthInstance` outright.
+    sorry

@@ -172,39 +172,54 @@ theorem quotientNorm_eq_zero_iff (hN : N.IsNormClosed) (a : E ⧸ N) :
   rw [quotientNorm_mk_eq_zero_iff N hN x, hmem, QuotientAddGroup.mk'_apply]
 
 /-- Given a norm-closed subgroup `N`, the quotient `E ⧸ N` is quasi-normed, with the *same*
-triangle constant as `E`. The topology/uniform structure fields are given *explicitly* (via the
-quotient norm's own `AddGroupFilterBasis`) rather than left to the class's defaults: relying on
-the defaults here — i.e. omitting these four fields and letting `QuasinormedAddCommGroup`'s own
-default expressions kick in — was tried first and silently mis-elaborated (`quasiTriangleConst`
-inside the default resolved to the bare, unapplied field *projection* rather than this
-`E ⧸ N` instance's own value, apparently because this definition sits inside
-`namespace QuasinormedAddCommGroup`, the same namespace the class itself lives in). Supplying
-them explicitly sidesteps that entirely and is guaranteed correct. -/
+triangle constant as `E`. The topology/uniform structure fields *reuse* the quotient's own
+already-automatic ambient topology (`QuotientAddGroup.instTopologicalSpace`/
+`.instIsTopologicalAddGroup`, free given `[N.Normal]`, itself free for abelian groups) via
+`IsTopologicalAddGroup.rightUniformSpace`, rather than building a *fresh* topology from the
+quotient norm's own `AddGroupFilterBasis` — the same "reuse ambient, don't recompute" principle
+already used for `QuasinormedAddCommGroup.instProd`/the `NormedAddCommGroup` bridge instance in
+`QuasiNorm.lean`. This matters beyond mere elegance: `quotientNorm_completeSpace` below is
+`@`-pinned to exactly `IsTopologicalAddGroup.rightUniformSpace (E ⧸ N)`, and `Couple.lean`'s own
+`InterpolationCouple.sum`-related instances rely on the SAME uniform space being found by ordinary
+instance search — building a second, only-propositionally-equal one here (as an earlier version
+of this file did) creates a genuine diamond: two non-defeq `UniformSpace (E ⧸ N)` terms, silently
+tolerated until something (e.g. `QuasiBanachCat.ofHom`) needs to compare a term built through one
+path against a term built through the other, which surfaces as a spurious instance-search failure
+far downstream rather than an obviously-relevant error here. Explicit fields (rather than the
+class's own defaults) are still needed regardless, for the unrelated reason documented on
+`AddGroupFilterBasis.ofQuasiNorm`'s call sites elsewhere in this project: a default referencing an
+*earlier* sibling field only resolves correctly when elaborated as part of the class's own
+declaration, not inside a separately-defined instance sitting in the class's namespace. -/
 @[instance_reducible]
 noncomputable def quotientQuasinormedAddCommGroup (hN : N.IsNormClosed) :
-    QuasinormedAddCommGroup (E ⧸ N) :=
-  letI : Norm (E ⧸ N) := ⟨quotientNorm N⟩
-  let hB := AddGroupFilterBasis.ofQuasiNorm (E := E ⧸ N) (quasiTriangleConst (E := E))
-    (one_le_quasiTriangleConst (E := E)) (quotientNorm_add_le N) (quotientNorm_neg N)
-    (quotientNorm_eq_zero_iff N hN)
-  { norm := quotientNorm N
-    quasiTriangleConst := quasiTriangleConst (E := E)
-    one_le_quasiTriangleConst := one_le_quasiTriangleConst (E := E)
-    norm_add_le := quotientNorm_add_le N
-    norm_neg := quotientNorm_neg N
-    norm_eq_zero_iff := quotientNorm_eq_zero_iff N hN
-    toUniformSpace := hB.uniformSpace
-    toIsTopologicalAddGroup := hB.isTopologicalAddGroup
-    toIsUniformAddGroup := hB.isUniformAddGroup
-    nhds_zero_hasBasis := by
-      change (@nhds (E ⧸ N) hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
-        fun ε : ℝ => {x : E ⧸ N | quotientNorm N x < ε}
-      rw [hB.nhds_eq (x₀ := 0), AddGroupFilterBasis.N_zero]
-      refine (FilterBasis.hasBasis hB.toFilterBasis).to_hasBasis' ?_ ?_
-      · rintro s ⟨ε, hε, rfl⟩
-        exact ⟨ε, hε, subset_rfl⟩
-      · rintro ε hε
-        exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩ }
+    QuasinormedAddCommGroup (E ⧸ N) where
+  norm := quotientNorm N
+  quasiTriangleConst := quasiTriangleConst (E := E)
+  one_le_quasiTriangleConst := one_le_quasiTriangleConst (E := E)
+  norm_add_le := quotientNorm_add_le N
+  norm_neg := quotientNorm_neg N
+  norm_eq_zero_iff := quotientNorm_eq_zero_iff N hN
+  toUniformSpace := IsTopologicalAddGroup.rightUniformSpace (E ⧸ N)
+  toIsTopologicalAddGroup := inferInstance
+  toIsUniformAddGroup := isUniformAddGroup_of_addCommGroup
+  nhds_zero_hasBasis := by
+    change Filter.HasBasis
+      (@nhds (E ⧸ N) (IsTopologicalAddGroup.rightUniformSpace (E ⧸ N)).toTopologicalSpace 0)
+      (0 < ·) fun ε : ℝ => {x : E ⧸ N | quotientNorm N x < ε}
+    rw [show (0 : E ⧸ N) = ((0 : E) : E ⧸ N) from rfl, QuotientAddGroup.nhds_eq]
+    have hmap := (nhds_zero_hasBasis (E := E)).map (QuotientAddGroup.mk (s := N))
+    have himg : ∀ ε : ℝ, (QuotientAddGroup.mk (s := N)) '' {x : E | ‖x‖ < ε} =
+        {y : E ⧸ N | quotientNorm N y < ε} := by
+      intro ε
+      ext y
+      constructor
+      · rintro ⟨x, hx, rfl⟩
+        exact (quotientNorm_mk_le N x).trans_lt hx
+      · intro hy
+        obtain ⟨x, hx, hx'⟩ := exists_norm_lt_quotientNorm_add N (x := y) (sub_pos.mpr hy)
+        have hxε : ‖x‖ < ε := by linarith
+        exact ⟨x, hxε, hx⟩
+    simpa only [himg] using hmap
 
 /-- Completeness of the quotient, from the purely topological (unprimed)
 `QuotientAddGroup.completeSpace_right` (Bourbaki, *General Topology* IX.3.1 Prop. 4) — no

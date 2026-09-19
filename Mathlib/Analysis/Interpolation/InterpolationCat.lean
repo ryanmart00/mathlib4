@@ -43,14 +43,12 @@ structure InterpolationCat where
   /-- The first Banach (quasi-Banach) space of the couple. -/
   A₀ : Type v
   [quasinormed₀ : QuasinormedAddCommGroup A₀]
-  [module₀ : Module 𝕜 A₀]
-  [continuousSMul₀ : ContinuousSMul 𝕜 A₀]
+  [quasiNormedSpace₀ : QuasiNormedSpace 𝕜 A₀]
   [completeSpace₀ : CompleteSpace A₀]
   /-- The second Banach (quasi-Banach) space of the couple. -/
   A₁ : Type v
   [quasinormed₁ : QuasinormedAddCommGroup A₁]
-  [module₁ : Module 𝕜 A₁]
-  [continuousSMul₁ : ContinuousSMul 𝕜 A₁]
+  [quasiNormedSpace₁ : QuasiNormedSpace 𝕜 A₁]
   [completeSpace₁ : CompleteSpace A₁]
   /-- The embedding of `A₀` into the ambient space. -/
   ι₀ : A₀ →L[𝕜] 𝒜
@@ -62,8 +60,8 @@ structure InterpolationCat where
 namespace InterpolationCat
 
 attribute [instance] addCommGroup𝒜 module𝒜 topologicalSpace𝒜 isTopologicalAddGroup𝒜
-  continuousSMul𝒜 t2Space𝒜 quasinormed₀ module₀ continuousSMul₀ completeSpace₀
-  quasinormed₁ module₁ continuousSMul₁ completeSpace₁
+  continuousSMul𝒜 t2Space𝒜 quasinormed₀ quasiNormedSpace₀ completeSpace₀
+  quasinormed₁ quasiNormedSpace₁ completeSpace₁
 
 variable {𝕜}
 

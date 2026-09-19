@@ -5,6 +5,7 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.QuasiNormQuotient
 import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Quotient
+import Mathlib.Tactic.FastInstance
 
 /-!
 # Interpolation couples
@@ -66,8 +67,8 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
   [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
 variable {A₀ A₁ : Type*}
-  [QuasinormedAddCommGroup A₀] [Module 𝕜 A₀] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [QuasinormedAddCommGroup A₁] [Module 𝕜 A₁] [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁]
+  [QuasinormedAddCommGroup A₀] [QuasiNormedSpace 𝕜 A₀] [CompleteSpace A₀]
+  [QuasinormedAddCommGroup A₁] [QuasiNormedSpace 𝕜 A₁] [CompleteSpace A₁]
 
 /-- The continuous linear map `(a₀, a₁) ↦ ι₀ a₀ - ι₁ a₁` on the product. Its kernel realizes
 `A₀ ∩ A₁` and its induced quotient realizes `A₀ + A₁`. -/
@@ -82,15 +83,13 @@ noncomputable def InterpolationCouple.plus (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁
     (A₀ × A₁) →L[𝕜] 𝒜 :=
   ι₀.comp (ContinuousLinearMap.fst 𝕜 A₀ A₁) + ι₁.comp (ContinuousLinearMap.snd 𝕜 A₀ A₁)
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The kernel of `diff` is closed, since `diff` is continuous into a Hausdorff space. -/
 theorem InterpolationCouple.isClosed_ker_diff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     IsClosed ((InterpolationCouple.diff ι₀ ι₁).ker : Set (A₀ × A₁)) :=
   isClosed_singleton.preimage (InterpolationCouple.diff ι₀ ι₁).continuous
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The kernel of `plus` is closed, since `plus` is continuous into a Hausdorff space. -/
 theorem InterpolationCouple.isClosed_ker_plus (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
     IsClosed ((InterpolationCouple.plus ι₀ ι₁).ker : Set (A₀ × A₁)) :=
@@ -101,23 +100,70 @@ noncomputable def InterpolationCouple.meet (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁
     Submodule 𝕜 (A₀ × A₁) :=
   (InterpolationCouple.diff ι₀ ι₁).ker
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.mem_meet_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a₀ : A₀) (a₁ : A₁) :
     (a₀, a₁) ∈ InterpolationCouple.meet ι₀ ι₁ ↔ ι₀ a₀ = ι₁ a₁ := by
   simp [InterpolationCouple.meet, InterpolationCouple.diff, LinearMap.mem_ker, sub_eq_zero]
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `A₀ ∩ A₁`'s quasi-norm: the restriction of `A₀ × A₁`'s own (max) quasi-norm to the (closed)
+submodule `meet ι₀ ι₁`, with the same triangle constant. The topology/uniform structure are the
+submodule's own already-automatic ones (`Submodule`'s generic subtype instances, from `A₀ × A₁`'s
+own topology), reused rather than recomputed — `toIsUniformAddGroup` specifically via
+`AddSubgroup.isUniformAddGroup` applied to `(diff ι₀ ι₁).ker.toAddSubgroup` (whose carrier type
+is definitionally `meet ι₀ ι₁`'s own, so this gives the *same* ambient uniform space, not a
+second one). Same "reuse ambient, don't recompute" principle as `sum.quasinormedAddCommGroup`'s
+topology fields, for the same reason: a second, only-propositionally-equal instance here would
+create the same kind of diamond that surfaced for `A₀+A₁` (see `QuotientQuasinormedAddCommGroup`'s
+docstring in `QuasiNormQuotient.lean`). -/
+@[instance_reducible]
+noncomputable instance InterpolationCouple.meet.quasinormedAddCommGroup
+    (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    QuasinormedAddCommGroup (InterpolationCouple.meet ι₀ ι₁) :=
+  fast_instance% show QuasinormedAddCommGroup (InterpolationCouple.diff ι₀ ι₁).ker from
+  { norm := fun x => ‖(x : A₀ × A₁)‖
+    quasiTriangleConst := QuasinormedAddCommGroup.quasiTriangleConst (E := A₀ × A₁)
+    one_le_quasiTriangleConst := QuasinormedAddCommGroup.one_le_quasiTriangleConst (E := A₀ × A₁)
+    norm_add_le := fun x y => QuasinormedAddCommGroup.norm_add_le (x : A₀ × A₁) (y : A₀ × A₁)
+    norm_neg := fun x => by simp [QuasinormedAddCommGroup.norm_neg]
+    norm_eq_zero_iff := fun x => by simp [QuasinormedAddCommGroup.norm_eq_zero_iff]
+    toUniformSpace := inferInstance
+    toIsTopologicalAddGroup := inferInstance
+    toIsUniformAddGroup :=
+      AddSubgroup.isUniformAddGroup (InterpolationCouple.diff ι₀ ι₁).ker.toAddSubgroup
+    nhds_zero_hasBasis := by
+      rw [nhds_subtype]
+      exact (QuasinormedAddCommGroup.nhds_zero_hasBasis (E := A₀ × A₁)).comap _ }
+
+/-- `A₀ ∩ A₁` is a `QuasiNormedSpace`: the norm-scalar bound is just the restriction of
+`A₀ × A₁`'s own. Gives `Module`/`ContinuousSMul` for free via `QuasiNormedSpace.toModule`/
+`.continuousSMul`, superseding what used to be two separate, ambient-topology-dependent
+instances (`meet.module`, `meet.continuousSMul`, via the generic `Submodule.module`/
+`SMulMemClass.continuousSMul` routes) — those turned out to create exactly the same kind of
+diamond as `sum.uniformSpace` once did, since `ContinuousSMul` traces back to needing
+`meet.quasinormedAddCommGroup`'s *own* bundled topology to match the generic ambient one, and
+that match is not obvious to instance search. Deriving `ContinuousSMul` directly from the
+quasi-norm bound (`QuasiNormedSpace.continuousSMul`, `QuasiNorm.lean`) sidesteps the ambient
+topology entirely, the same way it does for `sum` below. -/
+noncomputable instance InterpolationCouple.meet.quasiNormedSpace
+    (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    QuasiNormedSpace 𝕜 (InterpolationCouple.meet ι₀ ι₁) where
+  norm_smul_le c a := by
+    change ‖(↑(c • a) : A₀ × A₁)‖ ≤ ‖c‖ * ‖(↑a : A₀ × A₁)‖
+    rw [Submodule.coe_smul]
+    exact QuasiNormedSpace.norm_smul_le c (a : A₀ × A₁)
+
 noncomputable instance InterpolationCouple.meet.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    CompleteSpace (InterpolationCouple.meet ι₀ ι₁) :=
+    @CompleteSpace (InterpolationCouple.meet ι₀ ι₁)
+      (InterpolationCouple.meet.quasinormedAddCommGroup ι₀ ι₁).toUniformSpace :=
   (InterpolationCouple.isClosed_ker_diff ι₀ ι₁).completeSpace_coe
 
 /-- `A₀ + A₁`, realized as the quotient of `A₀ × A₁` by the (closed) kernel of `plus`. -/
 def InterpolationCouple.sum (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) : Type _ :=
   (A₀ × A₁) ⧸ (InterpolationCouple.plus ι₀ ι₁).ker
 
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀]
-  [ContinuousSMul 𝕜 A₁] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.mem_ker_plus_iff
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a₀ : A₀) (a₁ : A₁) :
     (a₀, a₁) ∈ (InterpolationCouple.plus ι₀ ι₁).ker ↔ ι₀ a₀ = -ι₁ a₁ := by
@@ -133,39 +179,64 @@ noncomputable instance InterpolationCouple.sum.quasinormedAddCommGroup
     (InterpolationCouple.plus ι₀ ι₁).ker.toAddSubgroup
     (AddSubgroup.isNormClosed_of_isClosed _ (InterpolationCouple.isClosed_ker_plus ι₀ ι₁))
 
-/-- The uniform space matching `A₀+A₁`'s quasi-norm topology
-(`IsTopologicalAddGroup.rightUniformSpace` — the ambient `TopologicalSpace`/
-`IsTopologicalAddGroup (A₀+A₁)` instances used here are already automatic, from `Submodule`'s
-own quotient-topology API). Registered specifically for
-`InterpolationCouple.sum` (not generically for all quotients), so this is not a diamond risk. -/
-noncomputable instance InterpolationCouple.sum.uniformSpace
-    (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    UniformSpace (InterpolationCouple.sum ι₀ ι₁) :=
-  show UniformSpace ((A₀ × A₁) ⧸ (InterpolationCouple.plus ι₀ ι₁).ker) from
-    IsTopologicalAddGroup.rightUniformSpace _
-
 /-- Completeness of `A₀+A₁`, from `QuasinormedAddCommGroup.quotientNorm_completeSpace` (the
-purely topological `QuotientAddGroup.completeSpace_right`) — matches `sum.uniformSpace` above
-exactly (both are, definitionally, `IsTopologicalAddGroup.rightUniformSpace`). -/
+purely topological `QuotientAddGroup.completeSpace_right`) — matches `sum.quasinormedAddCommGroup`
+above exactly, since `QuasinormedAddCommGroup.quotientQuasinormedAddCommGroup`'s own
+`toUniformSpace` field *is* `IsTopologicalAddGroup.rightUniformSpace` (reusing the quotient's
+already-automatic ambient topology, not a fresh one — see that definition's docstring). No
+separate `sum.uniformSpace` instance is needed (an earlier version of this file had one,
+built the same way, but as a *second*, only-propositionally-equal term for the same class —
+a real diamond, caught once `QuasiBanachCat.ofHom` needed to compare a term built through each
+path). -/
 noncomputable instance InterpolationCouple.sum.completeSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    CompleteSpace (InterpolationCouple.sum ι₀ ι₁) :=
+    @CompleteSpace (InterpolationCouple.sum ι₀ ι₁)
+      (InterpolationCouple.sum.quasinormedAddCommGroup ι₀ ι₁).toUniformSpace :=
   QuasinormedAddCommGroup.quotientNorm_completeSpace
-    (InterpolationCouple.plus ι₀ ι₁).ker.toAddSubgroup
+    (E := A₀ × A₁) (N := (InterpolationCouple.plus ι₀ ι₁).ker.toAddSubgroup)
 
-/-- The `𝕜`-module structure on `A₀+A₁` — automatic for `Submodule.Quotient` generically
-(`Submodule.Quotient.module`), but needs restating explicitly here since `sum` is an opaque
-`def`: instance search for `Module 𝕜 (sum ι₀ ι₁)` won't unfold it to see that it's really a
-`Submodule.Quotient` (unlike a `show ... from ...`-guided elaboration, which forces the unfold). -/
-noncomputable instance InterpolationCouple.sum.module
+/-- `A₀+A₁` is a `QuasiNormedSpace`: the norm-scalar bound for the quotient norm, proved the same
+way `quotientNorm_add_le` proves its own triangle inequality — for any `ε > 0`, pick a
+representative `y` of `a` with `‖y‖` within `ε` of the infimum, then bound
+`‖c • a‖ ≤ ‖c • y‖ ≤ ‖c‖ * ‖y‖ < ‖c‖ * quotientNorm a + ‖c‖ * ε'` for `ε' := ε/(‖c‖+1)` (chosen to
+avoid dividing by `‖c‖` itself, so the same argument covers `c = 0` too). Gives
+`Module`/`ContinuousSMul` for free via `QuasiNormedSpace.toModule`/`.continuousSMul`, superseding
+what used to be two separate instances (`sum.module`, `sum.continuousSMul`) — for the same reason
+`meet.quasiNormedSpace` above supersedes its own pair: deriving `ContinuousSMul` directly from
+the quasi-norm bound sidesteps ever needing to match this class's bundled topology against a
+generic ambient one. -/
+noncomputable instance InterpolationCouple.sum.quasiNormedSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    Module 𝕜 (InterpolationCouple.sum ι₀ ι₁) :=
-  show Module 𝕜 ((A₀ × A₁) ⧸ (InterpolationCouple.plus ι₀ ι₁).ker) from inferInstance
-
-instance InterpolationCouple.sum.continuousSMul
-    (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    ContinuousSMul 𝕜 (InterpolationCouple.sum ι₀ ι₁) :=
-  show ContinuousSMul 𝕜 ((A₀ × A₁) ⧸ (InterpolationCouple.plus ι₀ ι₁).ker) from inferInstance
+    QuasiNormedSpace 𝕜 (InterpolationCouple.sum ι₀ ι₁) :=
+  letI : Module 𝕜 (InterpolationCouple.sum ι₀ ι₁) :=
+    (show Module 𝕜 ((A₀ × A₁) ⧸ (InterpolationCouple.plus ι₀ ι₁).ker) from inferInstance)
+  { norm_smul_le := fun c a => by
+      induction a using Submodule.Quotient.induction_on with
+      | _ x =>
+        set P := (InterpolationCouple.plus ι₀ ι₁).ker with hP
+        let a : InterpolationCouple.sum ι₀ ι₁ := Submodule.Quotient.mk (p := P) x
+        change ‖c • a‖ ≤ ‖c‖ * ‖a‖
+        apply le_of_forall_pos_le_add
+        intro ε hε
+        have hcpos : (0:ℝ) < ‖c‖ + 1 := by positivity
+        obtain ⟨y, hy, hy'⟩ := QuasinormedAddCommGroup.exists_norm_lt_quotientNorm_add
+          (N := P.toAddSubgroup) (x := a) (div_pos hε hcpos)
+        have hbound : ‖c‖ * (ε / (‖c‖ + 1)) ≤ ε := by
+          rw [← mul_div_assoc, div_le_iff₀ hcpos]
+          nlinarith [norm_nonneg c, hε.le]
+        let b : InterpolationCouple.sum ι₀ ι₁ := Submodule.Quotient.mk (p := P) (c • y)
+        have hcx : c • a = b := by
+          rw [← hy]
+          exact (Submodule.Quotient.mk_smul (S := 𝕜) P c y).symm
+        calc ‖c • a‖ = ‖b‖ := by rw [hcx]
+          _ ≤ ‖c • y‖ := QuasinormedAddCommGroup.quotientNorm_mk_le _ (c • y)
+          _ ≤ ‖c‖ * ‖y‖ := QuasiNormedSpace.norm_smul_le c y
+          _ ≤ ‖c‖ * (QuasinormedAddCommGroup.quotientNorm P.toAddSubgroup a
+                + ε / (‖c‖ + 1)) :=
+              mul_le_mul_of_nonneg_left hy'.le (norm_nonneg c)
+          _ = ‖c‖ * QuasinormedAddCommGroup.quotientNorm P.toAddSubgroup a
+                + ‖c‖ * (ε / (‖c‖ + 1)) := by ring
+          _ ≤ ‖c‖ * QuasinormedAddCommGroup.quotientNorm P.toAddSubgroup a + ε := by linarith }
 
 /-- The canonical continuous linear map `A₀ →L[𝕜] A₀ + A₁`, `a₀ ↦ [(a₀, 0)]`. -/
 noncomputable def InterpolationCouple.inl₀ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
@@ -177,36 +248,31 @@ noncomputable def InterpolationCouple.inl₁ (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
     A₁ →L[𝕜] InterpolationCouple.sum ι₀ ι₁ :=
   (InterpolationCouple.plus ι₀ ι₁).ker.mkQL.comp (ContinuousLinearMap.inr 𝕜 A₀ A₁)
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 @[simp]
 theorem InterpolationCouple.inl₀_eq_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
     InterpolationCouple.inl₀ ι₀ ι₁ a = Submodule.Quotient.mk (a, 0) := rfl
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 @[simp]
 theorem InterpolationCouple.inl₁_eq_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
     InterpolationCouple.inl₁ ι₀ ι₁ a = Submodule.Quotient.mk (0, a) := rfl
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.inl₀_eq_zero_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
     InterpolationCouple.inl₀ ι₀ ι₁ a = 0 ↔ ι₀ a = 0 := by
   change (InterpolationCouple.plus ι₀ ι₁).ker.mkQ (a, 0) = 0 ↔ _
   rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, InterpolationCouple.mem_ker_plus_iff]
   simp
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.inl₁_eq_zero_iff (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
     InterpolationCouple.inl₁ ι₀ ι₁ a = 0 ↔ ι₁ a = 0 := by
   change (InterpolationCouple.plus ι₀ ι₁).ker.mkQ (0, a) = 0 ↔ _
   rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, InterpolationCouple.mem_ker_plus_iff]
   simp
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.inl₀_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
     (hι₀ : Function.Injective ι₀) :
     Function.Injective (InterpolationCouple.inl₀ ι₀ ι₁) := by
@@ -215,8 +281,7 @@ theorem InterpolationCouple.inl₀_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
   rw [InterpolationCouple.inl₀_eq_zero_iff, map_sub] at h0
   exact hι₀ (sub_eq_zero.mp h0)
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.inl₁_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
     (hι₁ : Function.Injective ι₁) :
     Function.Injective (InterpolationCouple.inl₁ ι₀ ι₁) := by
@@ -225,8 +290,7 @@ theorem InterpolationCouple.inl₁_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
   rw [InterpolationCouple.inl₁_eq_zero_iff, map_sub] at h0
   exact hι₁ (sub_eq_zero.mp h0)
 
-omit [ContinuousSMul 𝕜 𝒜] [ContinuousSMul 𝕜 A₀] [CompleteSpace A₀] [ContinuousSMul 𝕜 A₁]
-  [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- For `(a₀,a₁)` in the meet (so `ι₀ a₀ = ι₁ a₁`, a single point of the ambient space reachable
 from both legs), its images in the sum space via either leg agree: `[(a₀,0)] = [(0,a₁)]`. This is
 what makes `meetToSum` (using only the `A₀` leg) the right, symmetric notion of "the meet, viewed

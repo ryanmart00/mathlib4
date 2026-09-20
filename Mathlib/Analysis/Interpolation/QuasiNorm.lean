@@ -202,6 +202,19 @@ theorem norm_nonneg (a : E) : 0 ≤ ‖a‖ := by
 theorem quasiTriangleConst_pos : 0 < quasiTriangleConst (E := E) := by
   linarith [one_le_quasiTriangleConst (E := E)]
 
+/-- Convergence in a quasi-normed group is exactly convergence-to-zero of the norm of the
+difference — the direct analogue of the same fact for genuine normed groups, needing only the
+bundled `nhds_zero_hasBasis` (not the quasi-triangle inequality itself). -/
+theorem tendsto_iff_norm_sub_tendsto_zero {ι : Type*} {l : Filter ι} {u : ι → E} {x : E} :
+    Filter.Tendsto u l (nhds x) ↔ Filter.Tendsto (fun n => ‖u n - x‖) l (nhds 0) := by
+  rw [← tendsto_sub_nhds_zero_iff, (nhds_zero_hasBasis (E := E)).tendsto_right_iff]
+  constructor
+  · intro h
+    rw [tendsto_order]
+    exact ⟨fun b hb => .of_forall fun n => hb.trans_le (norm_nonneg _), fun b hb => h b hb⟩
+  · intro h ε hε
+    exact (tendsto_order.mp h).2 ε hε
+
 /-- Every quasi-normed group is first countable: the bundled `nhds_zero_hasBasis` gives a
 neighborhood basis of `0` indexed by `ε ∈ (0,∞)`, which reindexes to a genuine `ℕ`-indexed basis
 via the Archimedean cofinal sequence `1/(n+1)` — exactly the trick `PseudoEMetricSpace` uses for

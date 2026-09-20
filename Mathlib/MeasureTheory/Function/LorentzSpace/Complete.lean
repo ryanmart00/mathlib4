@@ -294,3 +294,76 @@ theorem lorentzNorm_top_le_liminf_of_tendsto_ae (p : ℝ≥0∞) {g : ℕ → α
             (fun v : ℝ≥0 => (v : ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ (g k) (v : ℝ≥0∞))
             u
         exact liminf_le_liminf (Filter.Eventually.of_forall hle_all)
+
+/-- **Fatou's lemma for `lorentzNorm`, `0 < q < ⊤` case**: the same conclusion as
+`lorentzNorm_top_le_liminf_of_tendsto_ae`, but needs one further layer of Fatou (for the defining
+`lintegral` itself, via the genuine `lintegral_liminf_le'`) on top of the `decreasingRearrangement`
+bound, since `lorentzNorm` at finite `q` is an integral, not a plain `iSup`. The pointwise-in-`t`
+step and the final outer-power step both go through the same "monotone + continuous map commutes
+with `liminf`" trick (`Monotone.map_liminf_of_continuousAt`), applied to `x ↦ (c*x)^r*d` and
+`x ↦ x^{q⁻¹.toReal}` respectively. -/
+theorem lorentzNorm_finite_le_liminf_of_tendsto_ae (p q : ℝ≥0∞) (hq0 : q ≠ 0) (hqtop : q ≠ ⊤)
+    {g : ℕ → α → E} {glim : α → E}
+    (hgmeas : ∀ n, AEMeasurable (fun x => ‖g n x‖ₑ) μ)
+    (hglimmeas : AEMeasurable (fun x => ‖glim x‖ₑ) μ)
+    (hg : ∀ᵐ x ∂μ, Tendsto (fun k => g k x) atTop (𝓝 (glim x))) :
+    lorentzNorm μ p q glim ≤ liminf (fun k => lorentzNorm μ p q (g k)) atTop := by
+  set r := q.toReal with hrdef
+  set inv := q⁻¹.toReal with hinvdef
+  have hr0 : 0 < r := ENNReal.toReal_pos hq0 hqtop
+  have hinv0 : 0 < inv :=
+    ENNReal.toReal_pos (ENNReal.inv_ne_zero.mpr hqtop) (ENNReal.inv_ne_top.mpr hq0)
+  set F : ℕ → ℝ → ℝ≥0∞ := fun k t =>
+    (ENNReal.ofReal t ^ p⁻¹.toReal * decreasingRearrangement μ (g k) (ENNReal.ofReal t)) ^ r *
+      ENNReal.ofReal t⁻¹ with hFdef
+  set Flim : ℝ → ℝ≥0∞ := fun t =>
+    (ENNReal.ofReal t ^ p⁻¹.toReal * decreasingRearrangement μ glim (ENNReal.ofReal t)) ^ r *
+      ENNReal.ofReal t⁻¹ with hFlimdef
+  have hpt : ∀ t : ℝ, Flim t ≤ liminf (fun k => F k t) atTop := by
+    intro t
+    have hrearr := decreasingRearrangement_le_liminf_of_tendsto_ae hgmeas hglimmeas hg
+      (ENNReal.ofReal t)
+    set φ : ℝ≥0∞ → ℝ≥0∞ := fun x => (ENNReal.ofReal t ^ p⁻¹.toReal * x) ^ r * ENNReal.ofReal t⁻¹
+      with hφdef
+    have hφmono : Monotone φ := by
+      intro x y hxy
+      simp only [hφdef]
+      gcongr
+    have hφcont : Continuous φ := by
+      simp only [hφdef]
+      have hcne : ENNReal.ofReal t ^ p⁻¹.toReal ≠ ⊤ :=
+        ENNReal.rpow_ne_top_of_nonneg ENNReal.toReal_nonneg (by simp)
+      have h1 : Continuous (fun x : ℝ≥0∞ => (ENNReal.ofReal t ^ p⁻¹.toReal * x) ^ r) :=
+        (ENNReal.continuous_rpow_const).comp (ENNReal.continuous_const_mul hcne)
+      exact ENNReal.continuous_mul_const (by simp) |>.comp h1
+    have hkey : φ (decreasingRearrangement μ glim (ENNReal.ofReal t)) ≤
+        φ (liminf (fun k => decreasingRearrangement μ (g k) (ENNReal.ofReal t)) atTop) :=
+      hφmono hrearr
+    rw [hφmono.map_liminf_of_continuousAt _ hφcont.continuousAt] at hkey
+    exact hkey
+  have hFmeas : ∀ k, Measurable (F k) := fun k => lorentzNorm_integrand_measurable' p (g k) r
+  have hfatou : ∫⁻ t in Ioi (0 : ℝ), liminf (fun k => F k t) atTop ≤
+      liminf (fun k => ∫⁻ t in Ioi (0 : ℝ), F k t) atTop :=
+    lintegral_liminf_le' (fun k => (hFmeas k).aemeasurable)
+  have hmono2 : ∫⁻ t in Ioi (0 : ℝ), Flim t ≤ ∫⁻ t in Ioi (0 : ℝ), liminf (fun k => F k t) atTop :=
+    lintegral_mono hpt
+  have hchain : ∫⁻ t in Ioi (0 : ℝ), Flim t ≤ liminf (fun k => ∫⁻ t in Ioi (0 : ℝ), F k t) atTop :=
+    hmono2.trans hfatou
+  set ψ : ℝ≥0∞ → ℝ≥0∞ := fun x => x ^ inv with hψdef
+  have hψmono : Monotone ψ := fun x y hxy => by simp only [hψdef]; gcongr
+  have hψcont : Continuous ψ := by
+    simp only [hψdef]
+    exact ENNReal.continuous_rpow_const
+  have hstep3 : ψ (∫⁻ t in Ioi (0 : ℝ), Flim t) ≤
+      ψ (liminf (fun k => ∫⁻ t in Ioi (0 : ℝ), F k t) atTop) := hψmono hchain
+  rw [hψmono.map_liminf_of_continuousAt _ hψcont.continuousAt] at hstep3
+  have hlorentz_lim : lorentzNorm μ p q glim = ψ (∫⁻ t in Ioi (0 : ℝ), Flim t) := by
+    unfold lorentzNorm
+    rw [if_neg hqtop]
+  have hlorentz_k : ∀ k, lorentzNorm μ p q (g k) = ψ (∫⁻ t in Ioi (0 : ℝ), F k t) := by
+    intro k
+    unfold lorentzNorm
+    rw [if_neg hqtop]
+  rw [hlorentz_lim]
+  simp_rw [hlorentz_k]
+  exact hstep3

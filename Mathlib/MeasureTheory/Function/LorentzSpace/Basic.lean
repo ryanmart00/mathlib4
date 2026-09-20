@@ -26,11 +26,25 @@ question, not yet settled) is deferred to a later theorem, once this bundled typ
 * `LorentzLp E p q μ` — the bundled Lorentz space, mirroring `MeasureTheory.Lp`'s own definition.
 * `LorentzLp.instQuasinormedAddCommGroup` — its `QuasinormedAddCommGroup` instance (for `0 < q`,
   see its own docstring for why), using `TriangleInequality.lean`'s `lorentzNorm_add_le`/
-  `lorentzNorm_eq_zero_iff` for its content. Every field has a real proof — this instance is done.
-  Its four bundled topology fields are given explicitly (via the same
-  `AddGroupFilterBasis.ofQuasiNorm` construction the class's own defaults use), rather than
-  relying on those defaults, which failed to elaborate here for reasons not fully diagnosed (see
-  the instance's own docstring).
+  `lorentzNorm_eq_zero_iff` for its content. Every field, including the four bundled topology
+  ones, has a real proof — this instance is fully done, zero `sorry`.
+
+## A `Lp`-inspired elaboration-performance lesson
+
+Building `instQuasinormedAddCommGroup`'s topology fields directly (via
+`AddGroupFilterBasis.ofQuasiNorm`, mirroring the class's own field defaults) initially hit a wall:
+every structurally-different way tried needed a heartbeat budget climbing past 4 million without
+finishing in reasonable wall-clock time. Per Ryan's suggestion to look at how `Lp` itself is
+structured: `Lp`'s own `instNormedAddCommGroup` (`LpSpace/Basic.lean`) is scrupulous about *never*
+leaving a local definition's type to be inferred — every intermediate piece is either a separately
+named, explicitly-typed instance (`Lp.instAddCommGroup : AddCommGroup (Lp E p μ) := inferInstance`)
+or wrapped in `fast_instance%`. Applying that discipline here (`let hB :
+AddGroupFilterBasis (LorentzLp E p q μ) := ...`, with the type spelled out, instead of `have hB :=
+...` left to be inferred) resolved the *entire* problem outright — down from a multi-hundred-second
+non-terminating elaboration to under three seconds. `let` (not `have`) was also needed so that
+`hB`'s definition itself stays visible to later `rcases`/`rintro` calls that need to unfold it,
+`have` bindings are opaque to reduction, but their type still gets fixed the same way `let`'s does,
+which is what fixes the performance problem specifically.
 -/
 
 open MeasureTheory Set
@@ -150,28 +164,36 @@ is genuinely needed (not just a convenience hypothesis): at `q = 0`, `lorentzNor
 `MeasureTheory.Lp`'s own `[Fact (1 ≤ p)]`-gated `NormedAddCommGroup` instance in spirit —
 `LorentzLp` itself stays defined for every `p, q` regardless.
 
-**Pending**: the four bundled topology fields are `sorry`. Every *mathematical* field
-(`quasiTriangleConst`, `one_le_quasiTriangleConst`, `norm_add_le`, `norm_neg`, `norm_eq_zero_iff`)
-has a real proof — this is now purely an elaboration-performance obstacle, not a correctness gap,
-and needs Ryan's input on how to proceed (see `PROGRESS-interpolation-theory.md`'s log entry for
-the full diagnostic: several structurally-different ways of discharging these four fields via
-`AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst ⋯ norm_add_le norm_neg norm_eq_zero_iff` were
-tried — inline ×4, factored into a shared top-level `def` (hit an instance diamond), a single
-`have` shared within one tactic block for the whole instance (sidesteps the diamond) — and every
-one that type-checked at all needed a heartbeat budget that kept climbing (200k → 1M → 4M) without
-ever finishing within reasonable wall-clock time (up to 337s and counting at 4M), pointing at a
-genuine elaboration blow-up tied to `LorentzLp E p q μ`'s deeply-nested type
-(`↥(AddSubgroup (α →ₘ[μ] E))`), not to proof-term size as first suspected. -/
+The four bundled topology fields are given explicitly (mirroring `AddGroupFilterBasis.ofQuasiNorm`'s
+own docstring pattern, `QuasiNorm.lean`) via the local `hB` computed once below, rather than relying
+on the class's own default mechanism (which hit an unrelated elaboration issue — an "unknown
+identifier" error referencing earlier fields — not investigated further since this direct route
+works). See the module docstring's "elaboration-performance lesson" for why `hB` needs an explicit
+type ascription and `let` rather than `have`. -/
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
-    QuasinormedAddCommGroup (LorentzLp E p q μ) where
-  quasiTriangleConst := quasiTriangleConst (p := p) (q := q)
-  one_le_quasiTriangleConst := one_le_quasiTriangleConst
-  norm_add_le := norm_add_le μ
-  norm_neg := norm_neg μ
-  norm_eq_zero_iff := norm_eq_zero_iff μ
-  toUniformSpace := sorry
-  toIsTopologicalAddGroup := sorry
-  toIsUniformAddGroup := sorry
-  nhds_zero_hasBasis := sorry
+    QuasinormedAddCommGroup (LorentzLp E p q μ) := by
+  let hB : AddGroupFilterBasis (LorentzLp E p q μ) :=
+    AddGroupFilterBasis.ofQuasiNorm (quasiTriangleConst (p := p) (q := q))
+      one_le_quasiTriangleConst (norm_add_le μ) (norm_neg μ) (norm_eq_zero_iff μ)
+  refine
+    { quasiTriangleConst := quasiTriangleConst (p := p) (q := q)
+      one_le_quasiTriangleConst := one_le_quasiTriangleConst
+      norm_add_le := norm_add_le μ
+      norm_neg := norm_neg μ
+      norm_eq_zero_iff := norm_eq_zero_iff μ
+      toUniformSpace := hB.uniformSpace
+      toIsTopologicalAddGroup := ?_
+      toIsUniformAddGroup := ?_
+      nhds_zero_hasBasis := ?_ }
+  · exact hB.isTopologicalAddGroup
+  · exact hB.isUniformAddGroup
+  · change (@nhds (LorentzLp E p q μ) hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
+      fun ε : ℝ => {x : LorentzLp E p q μ | ‖x‖ < ε}
+    rw [hB.nhds_eq (x₀ := 0), AddGroupFilterBasis.N_zero]
+    refine (FilterBasis.hasBasis hB.toFilterBasis).to_hasBasis' ?_ ?_
+    · rintro s ⟨ε, hε, rfl⟩
+      exact ⟨ε, hε, subset_rfl⟩
+    · rintro ε hε
+      exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩
 
 end LorentzLp

@@ -5,7 +5,9 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.Couple
 import Mathlib.Analysis.Interpolation.InterpolationCat
+import Mathlib.Analysis.Interpolation.TrivialFunctors
 import Mathlib.Analysis.Convex.Function
+import Mathlib.CategoryTheory.Iso
 
 /-!
 # The K-functional
@@ -267,3 +269,30 @@ theorem InterpolationCat.Hom.kFunctional_sumMap_le {C D : InterpolationCat 𝕜}
         < M₀ * (InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε / M₀) := hmul
       _ = M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ s a + ε := by field_simp
   linarith [hb, hcomb, hfin]
+
+/-- Unit 5's promised "transport" payoff: a couple-level quasi-norm equivalence (a `Iso` `e : C ≅
+D` in `InterpolationCat 𝕜`) bounds `K` in *both* directions, by applying `kFunctional_sumMap_le`
+to `e.hom` and separately to `e.inv`. No new "equivalence" structure is needed for this: an `Iso`
+already gives `e.inv.sumMap (e.hom.sumMap a) = a` for free, via `Hom.sumMap`'s already-proved
+functoriality (`sumMap_id`/`sumMap_comp`, `TrivialFunctors.lean`). STATEMENT ONLY — proof
+deferred. -/
+theorem InterpolationCat.Hom.kFunctional_iso_le {C D : InterpolationCat 𝕜} (e : C ≅ D)
+    (M₀ M₁ N₀ N₁ : ℝ) (hM₀ : 0 < M₀) (hN₀ : 0 < N₀)
+    (h₀ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₀ ≤ M₀)
+    (h₁ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₁ ≤ M₁)
+    (g₀ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₀ ≤ N₀)
+    (g₁ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₁ ≤ N₁)
+    (t : ℝ) (ht : 0 ≤ t) (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
+    InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (e.hom.sumMap a) ≤
+      M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) a ∧
+    InterpolationCouple.KFunctional C.ι₀ C.ι₁ t a ≤
+      N₀ * InterpolationCouple.KFunctional D.ι₀ D.ι₁ (t * N₁ / N₀) (e.hom.sumMap a) := by
+  have hcomp := congrArg InterpolationCat.Hom.sumMap e.hom_inv_id
+  rw [InterpolationCat.Hom.sumMap_comp, InterpolationCat.Hom.sumMap_id] at hcomp
+  have hinv : e.inv.sumMap (e.hom.sumMap a) = a := by
+    have := DFunLike.congr_fun hcomp a
+    simpa using this
+  refine ⟨InterpolationCat.Hom.kFunctional_sumMap_le e.hom t ht M₀ M₁ hM₀ h₀ h₁ a, ?_⟩
+  have hstep := InterpolationCat.Hom.kFunctional_sumMap_le e.inv t ht N₀ N₁ hN₀ g₀ g₁
+    (e.hom.sumMap a)
+  rwa [hinv] at hstep

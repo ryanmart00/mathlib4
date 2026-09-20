@@ -679,3 +679,140 @@ theorem lorentzNorm_lt_top_of_tendsto_zero (p q : ℝ≥0∞) {g : ℕ → α �
   rw [h_neg, lorentzNorm_neg]
   refine ENNReal.mul_lt_top (ENNReal.rpow_lt_top_of_nonneg (by positivity) (by norm_num)) ?_
   exact ENNReal.add_lt_top.mpr ⟨lt_of_le_of_lt h1 ENNReal.one_lt_top, hg N⟩
+
+variable [CompleteSpace E] {p q : ℝ≥0∞}
+
+/-- **The main theorem**: every `B`-controlled Cauchy sequence in `LorentzSpace E p q μ` converges,
+discharging `QuasinormedAddCommGroup.completeSpace_of_cauchy_complete`'s hypothesis. The proof:
+extract a subsequence `g = f ∘ φ` with `lorentzNorm`-consecutive-differences shrinking at the
+`lorentzBCConst`/`lorentzBCRate` rate (`exists_seq_lt_of_tendsto_zero`); build an a.e. pointwise
+limit `glim` of `g` (`exists_ae_tendsto_of_lorentzNorm_lt` +
+`exists_stronglyMeasurable_limit_of_tendsto_ae`); show `lorentzNorm (g n - glim) → 0` and
+`lorentzNorm glim < ⊤` from *genuine* (arbitrary-pair, not just consecutive) `lorentzNorm`-Cauchy
+control on `g` (`lorentzNorm_tendsto_zero_of_tendsto_ae`, `lorentzNorm_lt_top_of_tendsto_zero`);
+package `glim` as an actual `LorentzSpace` element and transfer the convergence
+(`QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero`); finally upgrade `g → glimBundled`
+to the *full* sequence `f → glimBundled`, via a single quasi-triangle-inequality application at
+each step (`‖f n - glimBundled‖ ≤ C(‖f n - g k‖ + ‖g k - glimBundled‖)`, for `k` chosen so `φ k`
+is at least as large as `n` and `B (φ k)`/`‖g k - glimBundled‖` are both small) — the standard
+"Cauchy sequence with a convergent subsequence converges" argument. -/
+theorem LorentzSpace.exists_tendsto_of_cauchy [Fact (0 < q)]
+    (f : ℕ → LorentzSpace E p q μ) (B : ℕ → ℝ) (hB : Summable B)
+    (hf : ∀ N n m : ℕ, N ≤ n → N ≤ m → ‖f n - f m‖ < B N) :
+    ∃ f_lim : LorentzSpace E p q μ, Tendsto f atTop (𝓝 f_lim) := by
+  have hq0 : q ≠ 0 := (Fact.out (p := 0 < q)).ne'
+  have hB0 : Tendsto B atTop (𝓝 0) := hB.tendsto_atTop_zero
+  obtain ⟨φ, hφmono, hφc⟩ := exists_seq_lt_of_tendsto_zero
+    (c := fun k => lorentzBCConst p q * lorentzBCRate p ^ k)
+    (fun k => mul_pos (lorentzBCConst_pos p q) (pow_pos (lorentzBCRate_pos p) k)) hB0
+  set g : ℕ → LorentzSpace E p q μ := fun k => f (φ k) with hgdef
+  have hgmeas : ∀ k, AEStronglyMeasurable ((g k : α → E)) μ :=
+    fun k => (g k : α →ₘ[μ] E).aestronglyMeasurable
+  have hgnorm_small_real : ∀ k, ‖g (k + 1) - g k‖ <
+      lorentzBCConst p q * lorentzBCRate p ^ k := by
+    intro k
+    calc ‖g (k + 1) - g k‖ = ‖f (φ (k + 1)) - f (φ k)‖ := rfl
+      _ < B (φ k) := hf (φ k) (φ (k + 1)) (φ k) (hφmono.le_iff_le.mpr (Nat.le_succ k)) le_rfl
+      _ < lorentzBCConst p q * lorentzBCRate p ^ k := hφc k
+  have hgnorm_small : ∀ k, lorentzNorm μ p q ((g (k + 1) : α → E) - (g k : α → E)) <
+      ENNReal.ofReal (lorentzBCConst p q * lorentzBCRate p ^ k) := by
+    intro k
+    rw [lorentzNorm_coe_sub_eq]
+    exact (ENNReal.ofReal_lt_ofReal_iff
+      (mul_pos (lorentzBCConst_pos p q) (pow_pos (lorentzBCRate_pos p) k))).mpr
+      (hgnorm_small_real k)
+  have h_ae_tendsto : ∀ᵐ x ∂μ, ∃ l : E, Tendsto (fun k => (g k : α → E) x) atTop (𝓝 l) :=
+    exists_ae_tendsto_of_lorentzNorm_lt p q hq0 hgnorm_small
+  obtain ⟨glim, hglim_meas, hglim_tendsto⟩ :
+      ∃ glim : α → E, StronglyMeasurable glim ∧
+        ∀ᵐ x ∂μ, Tendsto (fun k => (g k : α → E) x) atTop (𝓝 (glim x)) :=
+    exists_stronglyMeasurable_limit_of_tendsto_ae hgmeas h_ae_tendsto
+  have hBφ_pos : ∀ k, 0 < B (φ k) := by
+    intro k
+    calc (0 : ℝ) = ‖g k - g k‖ := by simp
+      _ < B (φ k) := hf (φ k) (φ k) (φ k) le_rfl le_rfl
+  have hBφ_summable : Summable (fun k => B (φ k)) := hB.comp_injective hφmono.injective
+  have hBφ_ne_top : (∑' k, ENNReal.ofReal (B (φ k))) ≠ ⊤ :=
+    (ENNReal.ofReal_tsum_of_nonneg (fun k => (hBφ_pos k).le) hBφ_summable ▸
+      ENNReal.ofReal_lt_top).ne
+  have h_cau : ∀ N n m : ℕ, N ≤ n → N ≤ m →
+      lorentzNorm μ p q ((g n : α → E) - (g m : α → E)) < ENNReal.ofReal (B (φ N)) := by
+    intro N n m hn hm
+    rw [lorentzNorm_coe_sub_eq]
+    exact ENNReal.ofReal_lt_ofReal_iff (hBφ_pos N) |>.mpr (hf (φ N) (φ n) (φ m)
+      (hφmono.le_iff_le.mpr hn) (hφmono.le_iff_le.mpr hm))
+  have h_tendsto_zero : Tendsto (fun n => lorentzNorm μ p q ((g n : α → E) - glim)) atTop (𝓝 0) :=
+    lorentzNorm_tendsto_zero_of_tendsto_ae p q hq0 hgmeas hglim_meas.aestronglyMeasurable
+      hBφ_ne_top h_cau hglim_tendsto
+  have h_glim_finite : lorentzNorm μ p q glim < ⊤ :=
+    lorentzNorm_lt_top_of_tendsto_zero p q (fun n => (g n).2) glim h_tendsto_zero
+  set glimAE : α →ₘ[μ] E := AEEqFun.mk glim hglim_meas.aestronglyMeasurable with hglimAEdef
+  have hglimAE_ae : (glimAE : α → E) =ᵐ[μ] glim := AEEqFun.coeFn_mk glim _
+  have hglimAE_lorentzNorm : lorentzNorm μ p q (glimAE : α → E) < ⊤ := by
+    rw [lorentzNorm_congr_ae p q hglimAE_ae]
+    exact h_glim_finite
+  set glimBundled : LorentzSpace E p q μ := ⟨glimAE, hglimAE_lorentzNorm⟩ with hglimBundleddef
+  have h_g_tendsto : Tendsto g atTop (𝓝 glimBundled) := by
+    rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero]
+    have heq : ∀ n, ‖g n - glimBundled‖ = (lorentzNorm μ p q ((g n : α → E) - glim)).toReal := by
+      intro n
+      have h1 : lorentzNorm μ p q (⇑(g n - glimBundled)) =
+          lorentzNorm μ p q ((g n : α → E) - glim) := by
+        have hcoe : ((g n - glimBundled : LorentzSpace E p q μ) : α →ₘ[μ] E) =
+            (g n : α →ₘ[μ] E) - (glimAE : α →ₘ[μ] E) := rfl
+        have h1' : (⇑(g n - glimBundled) : α → E) =
+            ((g n - glimBundled : LorentzSpace E p q μ) : α →ₘ[μ] E) := rfl
+        rw [h1', hcoe]
+        rw [lorentzNorm_congr_ae p q (AEEqFun.coeFn_sub (g n : α →ₘ[μ] E) glimAE)]
+        exact lorentzNorm_congr_ae p q (Filter.EventuallyEq.rfl.sub hglimAE_ae)
+      change (lorentzNorm μ p q (⇑(g n - glimBundled))).toReal = _
+      rw [h1]
+    simp_rw [heq]
+    rw [← ENNReal.toReal_zero]
+    exact Tendsto.comp (g := ENNReal.toReal) (ENNReal.tendsto_toReal ENNReal.zero_ne_top)
+      h_tendsto_zero
+  refine ⟨glimBundled, ?_⟩
+  rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero, Metric.tendsto_atTop]
+  rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero, Metric.tendsto_atTop]
+    at h_g_tendsto
+  intro ε hε
+  set C := LorentzSpace.quasiTriangleConst (p := p) (q := q) with hCdef
+  have hCpos : (0 : ℝ) < C := lt_of_lt_of_le zero_lt_one LorentzSpace.one_le_quasiTriangleConst
+  have hεC : (0 : ℝ) < ε / (2 * C) := by positivity
+  obtain ⟨K, hK0⟩ := h_g_tendsto (ε / (2 * C)) hεC
+  have hK : ∀ n ≥ K, ‖g n - glimBundled‖ < ε / (2 * C) := by
+    intro n hn
+    have := hK0 n hn
+    rwa [Real.dist_eq, sub_zero,
+      abs_of_nonneg (QuasinormedAddCommGroup.norm_nonneg (g n - glimBundled))] at this
+  obtain ⟨N0, hN0⟩ := (Metric.tendsto_atTop.mp hB0) (ε / (2 * C)) hεC
+  refine ⟨N0, fun n hn => ?_⟩
+  set k := max K n with hkdef
+  have hkK : k ≥ K := le_max_left _ _
+  have hkn : k ≥ n := le_max_right _ _
+  have hphik : φ k ≥ n := le_trans hkn hφmono.le_apply
+  have hBn_pos : 0 < B n := by
+    have := hf n n n le_rfl le_rfl
+    simpa using this
+  have h1 : ‖f n - g k‖ < B n := hf n n (φ k) le_rfl hphik
+  have h2 : B n < ε / (2 * C) := by
+    have := hN0 n hn
+    rwa [Real.dist_eq, sub_zero, abs_of_pos hBn_pos] at this
+  have h3 : ‖g k - glimBundled‖ < ε / (2 * C) := hK k hkK
+  have h4 : ‖f n - glimBundled‖ ≤ C * (‖f n - g k‖ + ‖g k - glimBundled‖) := by
+    have heq : f n - glimBundled = (f n - g k) + (g k - glimBundled) := by abel
+    rw [heq]
+    exact LorentzSpace.norm_add_le μ (f n - g k) (g k - glimBundled)
+  change dist ‖f n - glimBundled‖ 0 < ε
+  rw [Real.dist_eq, sub_zero,
+    abs_of_nonneg (QuasinormedAddCommGroup.norm_nonneg (f n - glimBundled))]
+  calc ‖f n - glimBundled‖ ≤ C * (‖f n - g k‖ + ‖g k - glimBundled‖) := h4
+    _ < C * (ε / (2 * C) + ε / (2 * C)) := by gcongr; exact h1.trans h2
+    _ = ε := by field_simp; ring
+
+/-- **`LorentzSpace E p q μ` is complete**, for every `p, q` with `0 < q` (matching
+`instQuasinormedAddCommGroup`'s own gating, `Basic.lean`) and `[CompleteSpace E]` (matching `Lp`'s
+own requirement on its target space). -/
+instance LorentzSpace.instCompleteSpace [Fact (0 < q)] : CompleteSpace (LorentzSpace E p q μ) :=
+  QuasinormedAddCommGroup.completeSpace_of_cauchy_complete
+    fun f B hB hf => LorentzSpace.exists_tendsto_of_cauchy f B hB hf

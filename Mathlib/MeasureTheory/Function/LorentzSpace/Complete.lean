@@ -7,6 +7,7 @@ import Mathlib.MeasureTheory.Function.LorentzSpace.Basic
 import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Order.Filter.ENNReal
+import Mathlib.Probability.BorelCantelli
 
 /-!
 # Completeness of `LorentzSpace`
@@ -367,3 +368,66 @@ theorem lorentzNorm_finite_le_liminf_of_tendsto_ae (p q : ℝ≥0∞) (hq0 : q �
   rw [hlorentz_lim]
   simp_rw [hlorentz_k]
   exact hstep3
+
+/-- Extracts a strictly increasing `φ` along which `B` is dominated by any prescribed positive
+target sequence `c`, from `B → 0`. Needed because `QuasinormedAddCommGroup.
+completeSpace_of_cauchy_complete`'s hypothesis is universally quantified over *every* summable `B`
+(matching `Lp`'s own hypothesis shape) — unlike `Lp`'s Minkowski-based argument, which controls an
+arbitrary summable-`B`-bounded sum directly with no need for a subsequence, the quasi-triangle
+inequality's constant blows up under naive repeated application to a growing number of terms, so
+this file's Fatou-based approach instead only ever uses *pairwise* differences, needing a single
+sequence along which those differences shrink at a rate the caller can choose in advance
+(`ae_summable_norm_of_distributionFunction_le` below is what actually uses that freedom). -/
+theorem exists_seq_lt_of_tendsto_zero {c : ℕ → ℝ} (hc : ∀ k, 0 < c k) {B : ℕ → ℝ}
+    (hB : Tendsto B atTop (𝓝 0)) : ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ k, B (φ k) < c k := by
+  have hstep : ∀ (k N : ℕ), ∃ n, n > N ∧ B n < c k := by
+    intro k N
+    obtain ⟨N0, hN0⟩ := Metric.tendsto_atTop.mp hB _ (hc k)
+    refine ⟨max (N + 1) N0, by omega, ?_⟩
+    have hthis := hN0 (max (N + 1) N0) (le_max_right _ _)
+    rw [Real.dist_eq, sub_zero, abs_lt] at hthis
+    exact hthis.2
+  choose g hg using hstep
+  let φ : ℕ → ℕ := fun k => Nat.rec (g 0 0) (fun n prev => g (n + 1) prev) k
+  have hφsucc : ∀ n, φ (n + 1) = g (n + 1) (φ n) := fun n => rfl
+  refine ⟨φ, strictMono_nat_of_lt_succ (fun n => ?_), fun k => ?_⟩
+  · rw [hφsucc]
+    exact (hg (n + 1) (φ n)).1
+  · cases k with
+    | zero => exact (hg 0 0).2
+    | succ n => rw [hφsucc]; exact (hg (n + 1) (φ n)).2
+
+/-- **The Borel–Cantelli-to-summability engine**: given, for each `k`, a bound on
+`distributionFunction μ (h k)` at threshold `σ k` by a summable `t k`, the norms `‖h k x‖` are a.e.
+eventually below the (summable) `σ k`, hence a.e. absolutely summable. Via Mathlib's own
+`ae_eventually_notMem` (the first Borel–Cantelli lemma): `∑' k, μ {x | σ k < ‖h k x‖ₑ} ≤
+∑' k, t k < ∞` forces a.e. eventual non-membership, i.e. `‖h k x‖ ≤ σ k` eventually; comparison
+against the summable `σ` (past whatever finite point the "eventually" starts) then gives
+`Summable (fun k => ‖h k x‖)`. This is the tool that turns the Chebyshev bounds
+(`distributionFunction_le_of_lorentzNorm_top_lt`/`_finite_lt`) into a.e. absolute convergence of
+the telescoping sum defining `f_lim`. -/
+theorem ae_summable_norm_of_distributionFunction_le {h : ℕ → α → E}
+    {σ t : ℕ → ℝ} (hσ0 : ∀ k, 0 ≤ σ k) (hσsum : Summable σ)
+    (ht0 : ∀ k, 0 ≤ t k) (htsum : Summable t)
+    (hbd : ∀ k, distributionFunction μ (h k) (ENNReal.ofReal (σ k)) ≤ ENNReal.ofReal (t k)) :
+    ∀ᵐ x ∂μ, Summable (fun k => ‖h k x‖) := by
+  set s : ℕ → Set α := fun k => {x | ENNReal.ofReal (σ k) < ‖h k x‖ₑ} with hsdef
+  have hsum_finite : (∑' k, μ (s k)) ≠ ⊤ := by
+    have h1 : ∑' k, μ (s k) ≤ ∑' k, ENNReal.ofReal (t k) := ENNReal.tsum_le_tsum hbd
+    have h2 : ∑' k, ENNReal.ofReal (t k) = ENNReal.ofReal (∑' k, t k) :=
+      (ENNReal.ofReal_tsum_of_nonneg ht0 htsum).symm
+    rw [h2] at h1
+    exact (h1.trans_lt ENNReal.ofReal_lt_top).ne
+  have hae := ae_eventually_notMem hsum_finite
+  filter_upwards [hae] with x hx
+  simp only [hsdef, Set.mem_ofPred_eq, not_lt] at hx
+  obtain ⟨N, hN⟩ := hx.exists_forall_of_atTop
+  have hcomp : ∀ k ≥ N, ‖h k x‖ ≤ σ k := by
+    intro k hk
+    have hle := hN k hk
+    rw [← ofReal_norm (h k x)] at hle
+    exact (ENNReal.ofReal_le_ofReal_iff (hσ0 k)).mp hle
+  have hsummable_tail : Summable (fun k => ‖h (k + N) x‖) := by
+    apply Summable.of_nonneg_of_le (fun k => norm_nonneg _) (fun k => hcomp (k + N) (by omega))
+    exact hσsum.comp_injective (add_left_injective N)
+  exact (summable_nat_add_iff N).mp hsummable_tail

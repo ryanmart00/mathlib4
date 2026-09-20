@@ -148,7 +148,7 @@ theorem distributionFunction_le_of_lorentzNorm_finite_lt (p q : ℝ≥0∞) (hq0
       _ ≤ ∫⁻ t in Ioi (0 : ℝ), F t := lintegral_mono_set (fun x hx => hs.trans hx.1)
   have hlorentz_eq : lorentzNorm μ p q f = (∫⁻ t in Ioi (0 : ℝ), F t) ^ inv := by
     unfold lorentzNorm
-    rw [if_neg hqtop]
+    rw [ite_eq_right hqtop]
   have hgoal : ENNReal.ofReal s ^ p⁻¹.toReal * σ * ENNReal.ofReal (Real.log 2) ^ inv ≤
       lorentzNorm μ p q f := by
     rw [hlorentz_eq]
@@ -361,11 +361,11 @@ theorem lorentzNorm_finite_le_liminf_of_tendsto_ae (p q : ℝ≥0∞) (hq0 : q �
   rw [hψmono.map_liminf_of_continuousAt _ hψcont.continuousAt] at hstep3
   have hlorentz_lim : lorentzNorm μ p q glim = ψ (∫⁻ t in Ioi (0 : ℝ), Flim t) := by
     unfold lorentzNorm
-    rw [if_neg hqtop]
+    rw [ite_eq_right hqtop]
   have hlorentz_k : ∀ k, lorentzNorm μ p q (g k) = ψ (∫⁻ t in Ioi (0 : ℝ), F k t) := by
     intro k
     unfold lorentzNorm
-    rw [if_neg hqtop]
+    rw [ite_eq_right hqtop]
   rw [hlorentz_lim]
   simp_rw [hlorentz_k]
   exact hstep3
@@ -773,8 +773,7 @@ theorem LorentzSpace.exists_tendsto_of_cauchy [Fact (0 < q)]
       h_tendsto_zero
   refine ⟨glimBundled, ?_⟩
   rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero, Metric.tendsto_atTop]
-  rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero, Metric.tendsto_atTop]
-    at h_g_tendsto
+    at h_g_tendsto ⊢
   intro ε hε
   set C := LorentzSpace.quasiTriangleConst (p := p) (q := q) with hCdef
   have hCpos : (0 : ℝ) < C := lt_of_lt_of_le zero_lt_one LorentzSpace.one_le_quasiTriangleConst

@@ -446,7 +446,7 @@ theorem lorentzNorm_top_add_le (p : ℝ≥0∞) (f g : α → E) :
 evaluates to), so the triangle inequality holds trivially there. -/
 theorem lorentzNorm_zero_exponent (p : ℝ≥0∞) (h : α → E) : lorentzNorm μ p 0 h = 1 := by
   unfold lorentzNorm
-  rw [if_neg (by simp : (0:ℝ≥0∞) ≠ ⊤)]
+  rw [ite_eq_right (by simp : (0:ℝ≥0∞) ≠ ⊤)]
   rw [show (0:ℝ≥0∞)⁻¹.toReal = 0 by simp]
   exact ENNReal.rpow_zero
 
@@ -474,7 +474,7 @@ theorem lorentzNorm_add_le (p q : ℝ≥0∞) (f g : α → E) :
             gcongr
             norm_num
     · unfold lorentzNorm
-      simp only [if_neg hqtop]
+      simp only [ite_eq_right hqtop]
       exact lorentzNorm_finite_add_le p q hq0 hqtop f g
 
 /-- `ϱ(f,·)` is antitone: a bigger threshold gives a smaller-or-equal super-level set. -/
@@ -548,7 +548,7 @@ case below). -/
 theorem lorentzNorm_top_eq_zero_imp (p : ℝ≥0∞) (f : α → E)
     (h : lorentzNorm μ p ⊤ f = 0) : ∀ t : ℝ≥0∞, 0 < t → decreasingRearrangement μ f t = 0 := by
   unfold lorentzNorm at h
-  rw [if_pos rfl] at h
+  rw [ite_eq_left rfl] at h
   have hterm : ∀ t : ℝ≥0,
       (t:ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ f (t:ℝ≥0∞) = 0 :=
     fun t => le_antisymm (h ▸ le_iSup
@@ -611,7 +611,7 @@ theorem lorentzNorm_finite_eq_zero_imp (p q : ℝ≥0∞) (hq0 : q ≠ 0) (hqtop
     (h : lorentzNorm μ p q f = 0) :
     ∀ t : ℝ, 0 < t → decreasingRearrangement μ f (ENNReal.ofReal t) = 0 := by
   unfold lorentzNorm at h
-  rw [if_neg hqtop] at h
+  rw [ite_eq_right hqtop] at h
   set F : ℝ → ℝ≥0∞ := fun t =>
     (ENNReal.ofReal t ^ p⁻¹.toReal * decreasingRearrangement μ f (ENNReal.ofReal t)) ^ q.toReal *
       ENNReal.ofReal t⁻¹ with hFdef

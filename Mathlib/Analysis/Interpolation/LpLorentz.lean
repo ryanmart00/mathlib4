@@ -3,8 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.MeasureTheory.Function.LorentzSpace.Basic
 
 /-!
 # Classical interpolation of `Lᵖ` and Lorentz spaces
@@ -15,16 +14,17 @@ Following Triebel, *Interpolation Theory, Function Spaces, Differential Operator
 The end goal (per Ryan): the Marcinkiewicz interpolation theorem, i.e. that real-interpolating
 two weak-`Lᵖ` (Lorentz `L_{p,∞}`) spaces gives the usual `Lᵖ` space.
 
-Deliberately **not** yet wired through `InterpolationCouple`/`KFunctional`: weak-`Lᵖ` is only a
-*quasi*-Banach space (its "norm" satisfies the triangle inequality only up to a constant) for
-`p < ∞`, so it doesn't literally satisfy our couple framework's `NormedAddCommGroup` requirement
-without extra work (an equivalent genuine norm). These definitions instead follow Triebel's own
-classical-analysis formulas directly, self-contained, so the classical statements can be recorded
-now; reconciling with the abstract framework is separate future work.
+`distributionFunction`, `decreasingRearrangement`, `lorentzNorm` and the bundled type `LorentzLp`
+now live in `Mathlib/MeasureTheory/Function/LorentzSpace/Basic.lean` (Unit 6, 2026-09-20 — moved
+out of this file since they're general-purpose Lorentz-space content, not specific to
+interpolation theory, mirroring where `MeasureTheory.Lp` itself lives relative to this project).
+This file keeps the interpolation-couple-specific content: the Lorentz-couple K-functional and the
+classical `Lᵖ`/Lorentz identification theorems, still stated against the raw-formula
+`lorentzNorm`/`lorentzKFunctional` for now — restating them against `LorentzLp` and the abstract
+`(A₀,A₁)_{θ,q}` machinery (Unit 4) is separate follow-up work, once `LorentzLp` itself is signed
+off and has its `QuasinormedAddCommGroup`/`CompleteSpace` instances.
 
 ## Main definitions
-* `distributionFunction`, `decreasingRearrangement` (§1.18.6).
-* `lorentzNorm p q μ f` — the Lorentz `L_{p,q}` (quasi-)norm.
 * `lorentzKFunctional p₀ q₀ p₁ q₁ t μ f` — the K-functional for the couple of Lorentz spaces
   `(L_{p₀,q₀}, L_{p₁,q₁})`, generalizing Triebel's `K(t,f;L1,L∞)`.
 
@@ -42,26 +42,6 @@ open scoped ENNReal NNReal
 
 variable {α : Type*} [MeasurableSpace α] (μ : Measure α) [SigmaFinite μ]
 variable {E : Type*} [NormedAddCommGroup E]
-
-/-- The distribution function `ϱ(f,σ) = μ{x : σ < ‖f x‖}`, Triebel §1.18.6. -/
-noncomputable def distributionFunction (f : α → E) (σ : ℝ≥0∞) : ℝ≥0∞ :=
-  μ {x | σ < ‖f x‖ₑ}
-
-/-- The decreasing rearrangement `f*(t) = inf{σ : ϱ(f,σ) ≤ t}`, Triebel §1.18.6. -/
-noncomputable def decreasingRearrangement (f : α → E) (t : ℝ≥0∞) : ℝ≥0∞ :=
-  sInf {σ : ℝ≥0∞ | distributionFunction μ f σ ≤ t}
-
-/-- The Lorentz (quasi-)norm `‖f‖_{L_{p,q}}`, Triebel §1.18.6:
-`(∫₀^∞ (t^{1/p} f*(t))^q dt/t)^{1/q}` for `q < ∞`, `sup_t t^{1/p} f*(t)` for `q = ∞`. -/
-noncomputable def lorentzNorm (p q : ℝ≥0∞) (f : α → E) : ℝ≥0∞ :=
-  if q = ⊤ then
-    ⨆ t : ℝ≥0, ENNReal.ofNNReal t ^ p⁻¹.toReal *
-      decreasingRearrangement μ f (ENNReal.ofNNReal t)
-  else
-    (∫⁻ t in Ioi (0 : ℝ),
-      (ENNReal.ofReal t ^ p⁻¹.toReal *
-        decreasingRearrangement μ f (ENNReal.ofReal t)) ^ q.toReal * ENNReal.ofReal t⁻¹)
-      ^ q⁻¹.toReal
 
 /-- The K-functional for the couple of Lorentz spaces `(L_{p₀,q₀}, L_{p₁,q₁})`, generalizing
 Triebel's `K(t,f;L1,L∞)` to arbitrary Lorentz-space legs. -/

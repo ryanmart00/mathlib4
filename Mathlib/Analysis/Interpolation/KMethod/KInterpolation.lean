@@ -4,9 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.KMethod.KFunctional
+import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
+import Mathlib.MeasureTheory.Integral.IntegrableOn
 
 /-!
 # Real interpolation spaces via the K-functional
@@ -82,18 +85,227 @@ def InterpolationCouple.RealInterpolationSpace (θ : ℝ) (q : ℝ≥0∞) : Typ
   {a : InterpolationCouple.sum ι₀ ι₁ //
     InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a < ⊤}
 
+/-- Algebraic identity combining a power-law bound `t^p·C` on the K-functional with the `dt/t`
+weight into a single power of `t`: `ofReal(t^p·C)^n · ofReal(t⁻¹) = ofReal(C^n) · ofReal(t^{pn-1})`.
+Purely `rpow`/`ENNReal` algebra, not specific to interpolation theory. -/
+theorem InterpolationCouple.rpow_pow_dtOverT_eq {t p C n : ℝ} (ht : 0 < t) (hC : 0 ≤ C)
+    (hn : 0 ≤ n) :
+    ENNReal.ofReal (t ^ p * C) ^ n * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal (C ^ n) * ENNReal.ofReal (t ^ (p * n - 1)) := by
+  rw [ENNReal.ofReal_rpow_of_nonneg (by positivity) hn, Real.mul_rpow (Real.rpow_nonneg ht.le _) hC,
+    ← Real.rpow_mul ht.le, ENNReal.ofReal_mul (Real.rpow_nonneg ht.le _)]
+  rw [mul_right_comm, ← Real.rpow_neg_one t, ← ENNReal.ofReal_mul (Real.rpow_nonneg ht.le _),
+    ← Real.rpow_add ht, show p * n + -1 = p * n - 1 by ring]
+  rw [mul_comm (ENNReal.ofReal (C ^ n))]
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `q = ⊤` case of `realInterpolationENorm_meetToSum_lt_top`: for `a` in the meet, `K(t,a)` is
+bounded by `min(‖a₀‖, t‖a₁‖)` (via either representation of the same ambient point,
+`inl₀_fst_eq_inl₁_snd`), so `t^{-θ}K(t,a) ≤ max(‖a₀‖,‖a₁‖)` uniformly (split at `t = 1`), giving a
+finite bound on the `q = ⊤` supremum directly, with no integrability argument needed. -/
+theorem InterpolationCouple.meetToSum_lt_top_of_eq_top (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    (a₀ : A₀) (a₁ : A₁) (ha : (a₀, a₁) ∈ InterpolationCouple.meet ι₀ ι₁) :
+    InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ ⊤
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) < ⊤ := by
+  have hb0 : ∀ t : ℝ, 0 ≤ t → InterpolationCouple.KFunctional ι₀ ι₁ t
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ ‖a₀‖ := by
+    intro t ht
+    rw [InterpolationCouple.meetToSum_apply, InterpolationCouple.inl₀_eq_mk]
+    have h := csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+      (Submodule.Quotient.mk (a₀, 0))) ⟨a₀, 0, rfl, rfl⟩
+    rw [QuasinormedAddCommGroup.norm_zero, mul_zero, add_zero] at h
+    exact h
+  have hb1 : ∀ t : ℝ, 0 ≤ t → InterpolationCouple.KFunctional ι₀ ι₁ t
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ t * ‖a₁‖ := by
+    intro t ht
+    have ha' := ha
+    rw [InterpolationCouple.mem_meet_iff] at ha'
+    rw [InterpolationCouple.meetToSum_apply,
+      InterpolationCouple.inl₀_fst_eq_inl₁_snd ι₀ ι₁ ha', InterpolationCouple.inl₁_eq_mk]
+    have h := csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+      (Submodule.Quotient.mk (0, a₁))) ⟨0, a₁, rfl, rfl⟩
+    rw [QuasinormedAddCommGroup.norm_zero, zero_add] at h
+    exact h
+  unfold InterpolationCouple.realInterpolationENorm
+  simp only [ite_true]
+  have hbound : (⨆ t : ↥(Ioi (0:ℝ)), ENNReal.ofReal ((t:ℝ) ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ)
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩))) ≤
+      ENNReal.ofReal (max ‖a₀‖ ‖a₁‖) := by
+    apply iSup_le
+    intro t
+    apply ENNReal.ofReal_le_ofReal
+    have ht : (0:ℝ) < t := t.2
+    rcases le_total (t:ℝ) 1 with hle | hlt
+    · have hK : InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ)
+          (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ (t:ℝ) * ‖a₁‖ := hb1 t ht.le
+      have hnn : (0:ℝ) ≤ (t:ℝ) ^ (-θ) := Real.rpow_nonneg ht.le _
+      calc (t:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ)
+            (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)
+          ≤ (t:ℝ) ^ (-θ) * ((t:ℝ) * ‖a₁‖) := mul_le_mul_of_nonneg_left hK hnn
+        _ = (t:ℝ) ^ (1 - θ) * ‖a₁‖ := by
+            have hrw : (t:ℝ) ^ (-θ) * (t:ℝ) = (t:ℝ) ^ (1 - θ) := by
+              rw [show (1:ℝ) - θ = -θ + 1 by ring, Real.rpow_add ht, Real.rpow_one]
+            rw [← mul_assoc, hrw]
+        _ ≤ 1 * ‖a₁‖ := by
+            apply mul_le_mul_of_nonneg_right _ (QuasinormedAddCommGroup.norm_nonneg a₁)
+            exact Real.rpow_le_one ht.le hle (by linarith)
+        _ = ‖a₁‖ := one_mul _
+        _ ≤ max ‖a₀‖ ‖a₁‖ := le_max_right _ _
+    · have hK : InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ)
+          (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ ‖a₀‖ := hb0 t ht.le
+      have hnn : (0:ℝ) ≤ (t:ℝ) ^ (-θ) := Real.rpow_nonneg ht.le _
+      calc (t:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ)
+            (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)
+          ≤ (t:ℝ) ^ (-θ) * ‖a₀‖ := mul_le_mul_of_nonneg_left hK hnn
+        _ ≤ 1 * ‖a₀‖ := by
+            apply mul_le_mul_of_nonneg_right _ (QuasinormedAddCommGroup.norm_nonneg a₀)
+            exact Real.rpow_le_one_of_one_le_of_nonpos hlt (by linarith)
+        _ = ‖a₀‖ := one_mul _
+        _ ≤ max ‖a₀‖ ‖a₁‖ := le_max_left _ _
+  exact lt_of_le_of_lt hbound ENNReal.ofReal_lt_top
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `q < ⊤` case of `realInterpolationENorm_meetToSum_lt_top`: split the `dt/t`-integral at `t = 1`
+and bound each piece by an integrable power of `t` (`t^{(1-θ)q-1}` near `0` needs `θ < 1`,
+`t^{-θq-1}` near `∞` needs `θ > 0`), using `rpow_pow_dtOverT_eq` to fold the K-functional bound and
+the `dt/t` weight into a single power. -/
+theorem InterpolationCouple.meetToSum_lt_top_of_ne_top (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    (q : ℝ≥0∞) (hq0 : 0 < q) (hqtop : q ≠ ⊤) (a₀ : A₀) (a₁ : A₁)
+    (ha : (a₀, a₁) ∈ InterpolationCouple.meet ι₀ ι₁) :
+    InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) < ⊤ := by
+  have hb0 : ∀ t : ℝ, 0 ≤ t → InterpolationCouple.KFunctional ι₀ ι₁ t
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ ‖a₀‖ := by
+    intro t ht
+    rw [InterpolationCouple.meetToSum_apply, InterpolationCouple.inl₀_eq_mk]
+    have h := csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+      (Submodule.Quotient.mk (a₀, 0))) ⟨a₀, 0, rfl, rfl⟩
+    rw [QuasinormedAddCommGroup.norm_zero, mul_zero, add_zero] at h
+    exact h
+  have hb1 : ∀ t : ℝ, 0 ≤ t → InterpolationCouple.KFunctional ι₀ ι₁ t
+      (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ t * ‖a₁‖ := by
+    intro t ht
+    have ha' := ha
+    rw [InterpolationCouple.mem_meet_iff] at ha'
+    rw [InterpolationCouple.meetToSum_apply,
+      InterpolationCouple.inl₀_fst_eq_inl₁_snd ι₀ ι₁ ha', InterpolationCouple.inl₁_eq_mk]
+    have h := csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+      (Submodule.Quotient.mk (0, a₁))) ⟨0, a₁, rfl, rfl⟩
+    rw [QuasinormedAddCommGroup.norm_zero, zero_add] at h
+    exact h
+  have hqtoreal : 0 < q.toReal := ENNReal.toReal_pos hq0.ne' hqtop
+  have hqinvtoreal : 0 ≤ q⁻¹.toReal := ENNReal.toReal_nonneg
+  unfold InterpolationCouple.realInterpolationENorm
+  simp only [hqtop, ite_false]
+  suffices hfin : ∫⁻ t in Ioi (0:ℝ), ENNReal.ofReal (t ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ t
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal *
+        ENNReal.ofReal t⁻¹ < ⊤ by
+    rw [← ENNReal.ofReal_toReal hfin.ne,
+      ENNReal.ofReal_rpow_of_nonneg ENNReal.toReal_nonneg hqinvtoreal]
+    exact ENNReal.ofReal_lt_top
+  have hle1 : ∀ t ∈ Ioc (0:ℝ) 1, ENNReal.ofReal (t ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ t
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal * ENNReal.ofReal t⁻¹ ≤
+      ENNReal.ofReal (‖a₁‖ ^ q.toReal) * ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) := by
+    rintro t ⟨ht0, ht1⟩
+    rw [← InterpolationCouple.rpow_pow_dtOverT_eq (p := 1 - θ) ht0
+      (QuasinormedAddCommGroup.norm_nonneg a₁) hqtoreal.le]
+    have hreal : t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t
+          (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ t ^ (1 - θ) * ‖a₁‖ := by
+      have hK := hb1 t ht0.le
+      have hnn : (0:ℝ) ≤ t ^ (-θ) := Real.rpow_nonneg ht0.le _
+      calc t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t
+            (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)
+          ≤ t ^ (-θ) * (t * ‖a₁‖) := mul_le_mul_of_nonneg_left hK hnn
+        _ = t ^ (1 - θ) * ‖a₁‖ := by
+            have hrw : t ^ (-θ) * t = t ^ (1 - θ) := by
+              rw [show (1:ℝ) - θ = -θ + 1 by ring, Real.rpow_add ht0, Real.rpow_one]
+            rw [← mul_assoc, hrw]
+    gcongr
+  have hle2 : ∀ t ∈ Ioi (1:ℝ), ENNReal.ofReal (t ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ t
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal * ENNReal.ofReal t⁻¹ ≤
+      ENNReal.ofReal (‖a₀‖ ^ q.toReal) * ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) := by
+    intro t ht1
+    have ht0 : (0:ℝ) < t := lt_trans one_pos ht1
+    rw [← InterpolationCouple.rpow_pow_dtOverT_eq (p := -θ) ht0
+      (QuasinormedAddCommGroup.norm_nonneg a₀) hqtoreal.le]
+    have hreal : t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t
+          (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩) ≤ t ^ (-θ) * ‖a₀‖ := by
+      have hK := hb0 t ht0.le
+      have hnn : (0:ℝ) ≤ t ^ (-θ) := Real.rpow_nonneg ht0.le _
+      exact mul_le_mul_of_nonneg_left hK hnn
+    gcongr
+  have hint1 : ∫⁻ t in Ioc (0:ℝ) 1, ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) < ⊤ := by
+    apply IntegrableOn.setLIntegral_lt_top
+    exact (intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one).mp
+      (intervalIntegral.intervalIntegrable_rpow' (by nlinarith))
+  have hint2 : ∫⁻ t in Ioi (1:ℝ), ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) < ⊤ :=
+    (integrableOn_Ioi_rpow_of_lt (by nlinarith) one_pos).setLIntegral_lt_top
+  have hpiece1 : ∫⁻ t in Ioc (0:ℝ) 1, ENNReal.ofReal (t ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ t
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal *
+      ENNReal.ofReal t⁻¹ < ⊤ := by
+    calc ∫⁻ t in Ioc (0:ℝ) 1, ENNReal.ofReal (t ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ t
+            (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal *
+          ENNReal.ofReal t⁻¹
+        ≤ ∫⁻ t in Ioc (0:ℝ) 1,
+            ENNReal.ofReal (‖a₁‖ ^ q.toReal) * ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) :=
+          setLIntegral_mono' measurableSet_Ioc hle1
+      _ = ENNReal.ofReal (‖a₁‖ ^ q.toReal) *
+            ∫⁻ t in Ioc (0:ℝ) 1, ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) :=
+          lintegral_const_mul' _ _ ENNReal.ofReal_ne_top
+      _ < ⊤ := ENNReal.mul_lt_top ENNReal.ofReal_lt_top hint1
+  have hpiece2 : ∫⁻ t in Ioi (1:ℝ), ENNReal.ofReal (t ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ t
+        (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal *
+      ENNReal.ofReal t⁻¹ < ⊤ := by
+    calc ∫⁻ t in Ioi (1:ℝ), ENNReal.ofReal (t ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ t
+            (InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩)) ^ q.toReal *
+          ENNReal.ofReal t⁻¹
+        ≤ ∫⁻ t in Ioi (1:ℝ),
+            ENNReal.ofReal (‖a₀‖ ^ q.toReal) * ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) :=
+          setLIntegral_mono' measurableSet_Ioi hle2
+      _ = ENNReal.ofReal (‖a₀‖ ^ q.toReal) *
+            ∫⁻ t in Ioi (1:ℝ), ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) :=
+          lintegral_const_mul' _ _ ENNReal.ofReal_ne_top
+      _ < ⊤ := ENNReal.mul_lt_top ENNReal.ofReal_lt_top hint2
+  have hsplit : Ioi (0:ℝ) = Ioc (0:ℝ) 1 ∪ Ioi (1:ℝ) := by
+    ext x
+    simp only [mem_Ioi, mem_union, mem_Ioc]
+    constructor
+    · intro hx
+      by_cases h : x ≤ 1
+      · exact Or.inl ⟨hx, h⟩
+      · exact Or.inr (not_le.mp h)
+    · rintro (⟨h1, _⟩ | h)
+      · exact h1
+      · linarith
+  rw [hsplit]
+  exact lt_of_le_of_lt (lintegral_union_le _ _ _) (ENNReal.add_lt_top.2 ⟨hpiece1, hpiece2⟩)
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `A₀∩A₁` (viewed inside `A₀+A₁` via `meetToSum`) always has finite `(θ,q)`-quasinorm, for any
 `0 < θ < 1` and `0 < q ≤ ∞` — the "`A₀∩A₁` embeds into `(A₀,A₁)_{θ,q}`" half of Triebel's sandwich.
 The actual content: for `a` in the meet, `K(t,a)` is bounded by `min(‖a₀‖, t‖a₁‖)` for *either*
 representation `a₀`/`a₁` of the *same* ambient point (`inl₀_fst_eq_inl₁_snd`), and
 `t ↦ t^{-θ}·min(C₀, tC₁)` is integrable against `dt/t` over `(0,∞)` exactly when `0 < θ < 1` — the
-elementary calculus fact this whole sandwich rests on. STATEMENT ONLY — proof deferred. -/
+elementary calculus fact this whole sandwich rests on. Split into the `q = ⊤` case
+(`meetToSum_lt_top_of_eq_top`) and the `q < ⊤` case (`meetToSum_lt_top_of_ne_top`) above. -/
 theorem InterpolationCouple.realInterpolationENorm_meetToSum_lt_top
     (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q)
     (a : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q
       (InterpolationCouple.meetToSum ι₀ ι₁ a) < ⊤ := by
-  sorry
+  obtain ⟨⟨a₀, a₁⟩, ha⟩ := a
+  by_cases hqtop : q = ⊤
+  · subst hqtop
+    exact InterpolationCouple.meetToSum_lt_top_of_eq_top ι₀ ι₁ θ hθ0 hθ1 a₀ a₁ ha
+  · exact InterpolationCouple.meetToSum_lt_top_of_ne_top ι₀ ι₁ θ hθ0 hθ1 q hq hqtop a₀ a₁ ha
 
 /-- The quasi-triangle inequality for `realInterpolationENorm`: a Minkowski-type inequality for
 the `(θ,q)`-quasinorm, with some constant `C` depending on `θ`, `q`, and the legs' own

@@ -15,10 +15,8 @@ import Mathlib.Analysis.MeanInequalitiesPow
 /-!
 # Real interpolation spaces via the K-functional
 
-DRAFT — under review, statement-design stage (Unit 4 of the quasi-Banach generalization of the
-interpolation-couple framework; see `PROGRESS-interpolation-theory.md`). No proof has been
-attempted on anything below; this file exists to get the exact statements in front of Ryan before
-any tactic is written, per the project's statement-review gate.
+Unit 4 of the quasi-Banach generalization of the interpolation-couple framework (see
+`PROGRESS-interpolation-theory.md`) — DONE, zero sorries.
 
 Lives in its own `KMethod` directory (alongside `KFunctional.lean`), rather than folded into
 `KFunctional.lean` itself, on the expectation that other real-interpolation methods (e.g. the
@@ -33,13 +31,10 @@ L-method) will eventually get their own sibling directories/files.
   other way to express non-membership.
 * `InterpolationCouple.RealInterpolationSpace`: `(A₀,A₁)_{θ,q}`, the subtype of `A₀+A₁` with
   finite `(θ,q)`-quasinorm. Deliberately just the bare subtype for now — no algebraic structure
-  (`AddCommGroup`, let alone `QuasinormedAddCommGroup`) is registered on it yet, since
-  constructing even the `AddCommGroup` instance needs the quasi-triangle inequality
-  (`realInterpolationENorm_add_le` below) to know the subtype is closed under `+` at all. That
-  instance work is deliberately left for *after* these statements are signed off and proved, not
-  bundled into this drafting pass.
+  (`AddCommGroup`, let alone `QuasinormedAddCommGroup`) is registered on it yet; that instance
+  work (now unblocked by `realInterpolationENorm_add_le` below) is future work, not yet started.
 
-## Main statements (all `sorry`)
+## Main theorems (all proved)
 
 * `realInterpolationENorm_meetToSum_lt_top`: the "`A₀∩A₁` embeds" half of Triebel's sandwich
   `A₀∩A₁ ⊂ (A₀,A₁)_{θ,q} ⊂ A₀+A₁` — the "`⊂ A₀+A₁`" half is definitional (`RealInterpolationSpace`
@@ -51,6 +46,8 @@ L-method) will eventually get their own sibling directories/files.
   the K-functional's own naturality lemma (`InterpolationCat.Hom.kFunctional_sumMap_le`,
   `KFunctional.lean`) to the `(θ,q)`-quasinorm — Triebel §1.3.3's "exact interpolation functor of
   type `θ`" claim, in inequality form.
+* `InterpolationCat.Hom.realInterpolationENorm_iso_le`: Unit 5's two-sided quasi-norm-equivalence
+  transport corollary, lifted from `kFunctional_iso_le` (`KFunctional.lean`).
 -/
 
 open MeasureTheory Set

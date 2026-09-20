@@ -749,3 +749,35 @@ theorem InterpolationCat.Hom.realInterpolationENorm_sumMap_le {C D : Interpolati
         exact mul_inv_cancel₀ hqtoreal.ne'
       rw [this, ENNReal.rpow_one]
     rwa [hconst] at hfinal
+
+/-- Unit 5's promised "transport" payoff, lifted from `kFunctional_iso_le` to the `(θ,q)`-
+quasinorm: a couple-level quasi-norm equivalence (`e : C ≅ D` in `InterpolationCat 𝕜`) bounds
+`realInterpolationENorm` in *both* directions, by applying `realInterpolationENorm_sumMap_le` to
+`e.hom` and separately to `e.inv`. In particular (not stated separately, since it's an immediate
+corollary of either inequality having a finite RHS iff its LHS is finite): `a` has finite
+`(θ,q)`-quasinorm in `C` iff `e.hom.sumMap a` does in `D` — i.e. `e.hom.sumMap` restricts to a map
+between the two `RealInterpolationSpace`s. STATEMENT ONLY — proof deferred. -/
+theorem InterpolationCat.Hom.realInterpolationENorm_iso_le {C D : InterpolationCat 𝕜} (e : C ≅ D)
+    (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q)
+    (M₀ M₁ N₀ N₁ : ℝ) (hM₀ : 0 < M₀) (hM₁ : 0 < M₁) (hN₀ : 0 < N₀) (hN₁ : 0 < N₁)
+    (h₀ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₀ ≤ M₀)
+    (h₁ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₁ ≤ M₁)
+    (g₀ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₀ ≤ N₀)
+    (g₁ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₁ ≤ N₁)
+    (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
+    InterpolationCouple.realInterpolationENorm D.ι₀ D.ι₁ θ q (e.hom.sumMap a) ≤
+      ENNReal.ofReal (M₀ ^ (1 - θ) * M₁ ^ θ) *
+        InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q a ∧
+    InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q a ≤
+      ENNReal.ofReal (N₀ ^ (1 - θ) * N₁ ^ θ) *
+        InterpolationCouple.realInterpolationENorm D.ι₀ D.ι₁ θ q (e.hom.sumMap a) := by
+  have hcomp := congrArg InterpolationCat.Hom.sumMap e.hom_inv_id
+  rw [InterpolationCat.Hom.sumMap_comp, InterpolationCat.Hom.sumMap_id] at hcomp
+  have hinv : e.inv.sumMap (e.hom.sumMap a) = a := by
+    have := DFunLike.congr_fun hcomp a
+    simpa using this
+  refine ⟨InterpolationCat.Hom.realInterpolationENorm_sumMap_le e.hom θ hθ0 hθ1 q hq
+    M₀ M₁ hM₀ hM₁ h₀ h₁ a, ?_⟩
+  have hstep := InterpolationCat.Hom.realInterpolationENorm_sumMap_le e.inv θ hθ0 hθ1 q hq
+    N₀ N₁ hN₀ hN₁ g₀ g₁ (e.hom.sumMap a)
+  rwa [hinv] at hstep

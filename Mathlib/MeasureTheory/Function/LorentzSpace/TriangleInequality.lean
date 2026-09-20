@@ -27,6 +27,18 @@ itself from the sub-additivity of the distribution function,
 (which would need `r ≥ 1`), plus a change-of-variables `t ↦ 2u` rescaling identity for the
 defining integral, this gives the triangle inequality with an explicit (not claimed sharp)
 constant, for every `p, q` — including `q = 0`/`q = ⊤`, handled directly rather than excluded.
+
+Also proves `lorentzNorm_eq_zero_iff` (`lorentzNorm p q μ f = 0 ↔ f =ᵐ[μ] 0`, for `0 < q`) — the
+other axiom `LorentzLp.instQuasinormedAddCommGroup` needs. **Genuinely** needs `0 < q`: at `q = 0`,
+`lorentzNorm` is constantly `1` (`lorentzNorm_zero_exponent`), so the forward direction is simply
+false there, not just unproved (see `Basic.lean`'s module docstring/design discussion). The
+argument: `lorentzNorm p q μ f = 0` forces the decreasing rearrangement `f*` to vanish on all of
+`(0,∞)` (via `iSup`/`lintegral` both forcing "every term/a.e. value is `0`", then, in the
+`lintegral` case, upgrading "a.e. `0`" to "everywhere `0`" using that `f*` is antitone —
+`antitone_eq_zero_of_ae_restrict_eq_zero`, a short general argument comparing an antitone
+function's null-set to a concrete interval `Ioc 0 t₀` of positive Lebesgue measure). `f*` vanishing
+on `(0,∞)` then forces `f =ᵐ[μ] 0` via the distribution function (`ϱ(f,σ) = 0` for all `σ > 0`,
+then a countable-union-of-null-sets argument, `ae_eq_zero_of_distributionFunction_eq_zero`).
 -/
 
 open MeasureTheory Set
@@ -463,3 +475,195 @@ theorem lorentzNorm_add_le (p q : ℝ≥0∞) (f g : α → E) :
     · unfold lorentzNorm
       simp only [if_neg hqtop]
       exact lorentzNorm_finite_add_le p q hq0 hqtop f g
+
+/-- `ϱ(f,·)` is antitone: a bigger threshold gives a smaller-or-equal super-level set. -/
+theorem distributionFunction_antitone (f : α → E) :
+    Antitone (fun σ => distributionFunction μ f σ) := by
+  intro σ₁ σ₂ hσ
+  apply measure_mono
+  intro x hx
+  simp only [Set.mem_ofPred_eq] at hx ⊢
+  exact lt_of_le_of_lt hσ hx
+
+/-- Unlike `lorentzNorm_zero_le_one` (valid for all `p, q`), this pins the value down to
+*exactly* `0` — needs `0 < q` (see the module docstring: the `q = 0` corner has `lorentzNorm = 1`
+identically, so this is genuinely false there, not just harder to prove). -/
+theorem lorentzNorm_zero_of_pos (p : ℝ≥0∞) {q : ℝ≥0∞} (hq : 0 < q) :
+    lorentzNorm μ p q (0 : α → E) = 0 := by
+  unfold lorentzNorm
+  split
+  · simp [decreasingRearrangement_zero]
+  · rename_i hqtop
+    have hqtoReal : 0 < q.toReal := ENNReal.toReal_pos hq.ne' hqtop
+    have hqinvtoReal : 0 < q⁻¹.toReal :=
+      ENNReal.toReal_pos (ENNReal.inv_ne_zero.mpr hqtop) (ENNReal.inv_ne_top.mpr hq.ne')
+    simp_rw [decreasingRearrangement_zero, mul_zero, ENNReal.zero_rpow_of_pos hqtoReal, zero_mul,
+      lintegral_zero, ENNReal.zero_rpow_of_pos hqinvtoReal]
+
+/-- If `f*` vanishes on all of `(0,∞)`, so does `ϱ(f,·)` — a near-optimal representative
+`σ' < σ` from `f*(ε) = 0`'s defining `sInf` gives `ϱ(f,σ) ≤ ϱ(f,σ') ≤ ε` for every `ε > 0`. -/
+theorem distributionFunction_eq_zero_of_forall_pos (f : α → E)
+    (h : ∀ t : ℝ≥0∞, 0 < t → decreasingRearrangement μ f t = 0) (σ : ℝ≥0∞) (hσ : 0 < σ) :
+    distributionFunction μ f σ = 0 := by
+  refine le_antisymm (ENNReal.le_of_forall_pos_le_add ?_) zero_le
+  intro ε hε _
+  have hεt := h (ε : ℝ≥0∞) (by exact_mod_cast hε)
+  unfold decreasingRearrangement at hεt
+  obtain ⟨σ', hσ'mem, hσ'lt⟩ := sInf_lt_iff.mp (hεt ▸ hσ)
+  simp only [Set.mem_ofPred_eq] at hσ'mem
+  calc distributionFunction μ f σ ≤ distributionFunction μ f σ' :=
+        distributionFunction_antitone f hσ'lt.le
+    _ ≤ (ε : ℝ≥0∞) := hσ'mem
+    _ = 0 + ε := by rw [zero_add]
+
+/-- `ϱ(f,σ) = 0` for every `σ > 0` forces `f =ᵐ[μ] 0`: `{x : f x ≠ 0} = ⋃ₙ {x : (n:ℝ≥0∞)⁻¹ <
+‖f x‖ₑ}`, a countable union of `ϱ`-null sets. -/
+theorem ae_eq_zero_of_distributionFunction_eq_zero (f : α → E)
+    (h : ∀ σ : ℝ≥0∞, 0 < σ → distributionFunction μ f σ = 0) : f =ᵐ[μ] 0 := by
+  rw [Filter.EventuallyEq, ae_iff]
+  have hunion : {x : α | ¬ f x = (0 : α → E) x} ⊆ ⋃ n : ℕ, {x : α | (n : ℝ≥0∞)⁻¹ < ‖f x‖ₑ} := by
+    intro x hx
+    simp only [Pi.zero_apply] at hx
+    have hpos : 0 < ‖f x‖ₑ := by
+      rw [enorm_pos]
+      exact hx
+    obtain ⟨n, hn⟩ := ENNReal.exists_inv_nat_lt hpos.ne'
+    exact Set.mem_iUnion.mpr ⟨n, hn⟩
+  refine le_antisymm ?_ zero_le
+  calc μ {x : α | ¬ f x = (0 : α → E) x}
+      ≤ μ (⋃ n : ℕ, {x : α | (n : ℝ≥0∞)⁻¹ < ‖f x‖ₑ}) := measure_mono hunion
+    _ ≤ ∑' n : ℕ, μ {x : α | (n : ℝ≥0∞)⁻¹ < ‖f x‖ₑ} := measure_iUnion_le _
+    _ = 0 := by
+        apply ENNReal.tsum_eq_zero.mpr
+        intro n
+        rcases eq_or_ne n 0 with hn0 | hn0
+        · subst hn0
+          simp
+        · exact h ((n : ℝ≥0∞)⁻¹) (ENNReal.inv_pos.mpr (ENNReal.natCast_ne_top n))
+
+/-- The `q = ⊤` case of `lorentzNorm_eq_zero_iff`'s forward direction: `⨆` of nonneg terms `= 0`
+forces every term `= 0` directly (no a.e./measure-theoretic argument needed, unlike the finite-`q`
+case below). -/
+theorem lorentzNorm_top_eq_zero_imp (p : ℝ≥0∞) (f : α → E)
+    (h : lorentzNorm μ p ⊤ f = 0) : ∀ t : ℝ≥0∞, 0 < t → decreasingRearrangement μ f t = 0 := by
+  unfold lorentzNorm at h
+  rw [if_pos rfl] at h
+  have hterm : ∀ t : ℝ≥0,
+      (t:ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ f (t:ℝ≥0∞) = 0 :=
+    fun t => le_antisymm (h ▸ le_iSup
+      (fun t : ℝ≥0 => (t:ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ f (t:ℝ≥0∞)) t)
+      zero_le
+  have hfin : ∀ t : ℝ≥0, 0 < t → decreasingRearrangement μ f (t:ℝ≥0∞) = 0 := by
+    intro t ht
+    have hne : (t:ℝ≥0∞) ^ p⁻¹.toReal ≠ 0 :=
+      (ENNReal.rpow_pos (by exact_mod_cast ht) (by simp)).ne'
+    rcases mul_eq_zero.mp (hterm t) with h1 | h2
+    · exact absurd h1 hne
+    · exact h2
+  intro t ht
+  rcases eq_or_ne t ⊤ with rfl | htne
+  · exact le_antisymm
+      ((decreasingRearrangement_antitone f le_top).trans_eq (hfin 1 one_pos)) zero_le
+  · have ht' : 0 < t.toNNReal := ENNReal.toNNReal_pos ht.ne' htne
+    have := hfin t.toNNReal ht'
+    rwa [ENNReal.coe_toNNReal htne] at this
+
+/-- An antitone `g : ℝ → ℝ≥0∞` that vanishes Lebesgue-a.e. on `(0,∞)` vanishes *everywhere* on
+`(0,∞)`: if `g t₀ ≠ 0` for some `t₀ > 0`, antitonicity forces `g ≠ 0` on the whole interval
+`Ioc 0 t₀`, which has positive Lebesgue measure — contradicting a.e.-vanishing. The key step
+letting `lorentzNorm_finite_eq_zero_imp` upgrade "a.e. `0`" (from `lintegral_eq_zero_iff`) to
+"everywhere `0`" (needed to feed `distributionFunction_eq_zero_of_forall_pos`). -/
+theorem antitone_eq_zero_of_ae_restrict_eq_zero {g : ℝ → ℝ≥0∞} (hg : Antitone g)
+    (h : ∀ᵐ t ∂(volume.restrict (Ioi (0 : ℝ))), g t = 0) (t₀ : ℝ) (ht₀ : 0 < t₀) : g t₀ = 0 := by
+  by_contra hne
+  have hpos : 0 < g t₀ := zero_le.lt_of_ne (Ne.symm hne)
+  rw [ae_restrict_iff' measurableSet_Ioi] at h
+  rw [ae_iff] at h
+  have hsub : Ioc (0:ℝ) t₀ ⊆ {t | ¬(t ∈ Ioi (0:ℝ) → g t = 0)} := by
+    intro t ht
+    simp only [mem_ofPred_eq, not_forall]
+    refine ⟨ht.1, ?_⟩
+    have : g t₀ ≤ g t := hg ht.2
+    exact fun hc => absurd (hc ▸ this) (not_le.mpr hpos)
+  have hle : volume (Ioc (0:ℝ) t₀) ≤ 0 := h ▸ measure_mono hsub
+  rw [Real.volume_Ioc] at hle
+  simp only [nonpos_iff_eq_zero, ENNReal.ofReal_eq_zero] at hle
+  linarith
+
+/-- Measurability of `lorentzNorm`'s defining integrand at the *unshifted* argument `t` (as
+opposed to `lorentzNorm_integrand_measurable`'s `t/2`) — needed to invoke
+`lintegral_eq_zero_iff` directly against `lorentzNorm`'s own literal formula. -/
+theorem lorentzNorm_integrand_measurable' (p : ℝ≥0∞) (h : α → E) (r : ℝ) :
+    Measurable (fun t : ℝ =>
+      (ENNReal.ofReal t ^ p⁻¹.toReal * decreasingRearrangement μ h (ENNReal.ofReal t)) ^ r *
+        ENNReal.ofReal t⁻¹) := by
+  have h1 : Measurable (fun t : ℝ => ENNReal.ofReal t ^ p⁻¹.toReal) :=
+    ENNReal.continuous_rpow_const.measurable.comp ENNReal.measurable_ofReal
+  have h2 : Measurable (fun t : ℝ => decreasingRearrangement μ h (ENNReal.ofReal t)) :=
+    (decreasingRearrangement_measurable h).comp ENNReal.measurable_ofReal
+  have h3 : Measurable (fun t : ℝ => ENNReal.ofReal t⁻¹) :=
+    ENNReal.measurable_ofReal.comp measurable_inv
+  exact (ENNReal.continuous_rpow_const.measurable.comp (h1.mul h2)).mul h3
+
+/-- The `0 < q < ⊤` case of `lorentzNorm_eq_zero_iff`'s forward direction. -/
+theorem lorentzNorm_finite_eq_zero_imp (p q : ℝ≥0∞) (hq0 : q ≠ 0) (hqtop : q ≠ ⊤) (f : α → E)
+    (h : lorentzNorm μ p q f = 0) :
+    ∀ t : ℝ, 0 < t → decreasingRearrangement μ f (ENNReal.ofReal t) = 0 := by
+  unfold lorentzNorm at h
+  rw [if_neg hqtop] at h
+  set F : ℝ → ℝ≥0∞ := fun t =>
+    (ENNReal.ofReal t ^ p⁻¹.toReal * decreasingRearrangement μ f (ENNReal.ofReal t)) ^ q.toReal *
+      ENNReal.ofReal t⁻¹ with hFdef
+  change (∫⁻ t in Ioi (0:ℝ), F t) ^ q⁻¹.toReal = 0 at h
+  have hsinv : 0 < q⁻¹.toReal :=
+    ENNReal.toReal_pos (ENNReal.inv_ne_zero.mpr hqtop) (ENNReal.inv_ne_top.mpr hq0)
+  have hr : 0 < q.toReal := ENNReal.toReal_pos hq0 hqtop
+  have hint0 : (∫⁻ t in Ioi (0:ℝ), F t) = 0 := by
+    rcases ENNReal.rpow_eq_zero_iff.mp h with ⟨h1, _⟩ | ⟨_, h2⟩
+    · exact h1
+    · exact absurd h2 (not_lt.mpr hsinv.le)
+  have hFmeas : Measurable F := lorentzNorm_integrand_measurable' p f q.toReal
+  have hFae : F =ᵐ[volume.restrict (Ioi (0:ℝ))] 0 :=
+    (lintegral_eq_zero_iff hFmeas).mp hint0
+  have hgae : ∀ᵐ t ∂(volume.restrict (Ioi (0:ℝ))),
+      decreasingRearrangement μ f (ENNReal.ofReal t) = 0 := by
+    filter_upwards [hFae, ae_restrict_mem measurableSet_Ioi] with t hFt htmem
+    simp only [Pi.zero_apply, hFdef] at hFt
+    have hweight : ENNReal.ofReal t⁻¹ ≠ 0 := by
+      simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
+      exact inv_pos.mpr htmem
+    have hbase : (ENNReal.ofReal t ^ p⁻¹.toReal *
+        decreasingRearrangement μ f (ENNReal.ofReal t)) ^ q.toReal = 0 :=
+      (mul_eq_zero.mp hFt).resolve_right hweight
+    have hpow : ENNReal.ofReal t ^ p⁻¹.toReal *
+        decreasingRearrangement μ f (ENNReal.ofReal t) = 0 := by
+      rcases ENNReal.rpow_eq_zero_iff.mp hbase with ⟨h1, _⟩ | ⟨_, h2⟩
+      · exact h1
+      · exact absurd h2 (not_lt.mpr hr.le)
+    have hne : ENNReal.ofReal t ^ p⁻¹.toReal ≠ 0 :=
+      (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr htmem) (by simp)).ne'
+    exact (mul_eq_zero.mp hpow).resolve_left hne
+  intro t ht
+  apply antitone_eq_zero_of_ae_restrict_eq_zero _ hgae t ht
+  exact (decreasingRearrangement_antitone f).comp_monotone ENNReal.ofReal_mono
+
+/-- **The full characterization of when `lorentzNorm` vanishes**, for `0 < q` — see the module
+docstring for why `0 < q` is genuinely needed, not just a convenience hypothesis. -/
+theorem lorentzNorm_eq_zero_iff (p q : ℝ≥0∞) (hq : 0 < q) (f : α → E) :
+    lorentzNorm μ p q f = 0 ↔ f =ᵐ[μ] 0 := by
+  constructor
+  · intro h
+    apply ae_eq_zero_of_distributionFunction_eq_zero f
+    apply distributionFunction_eq_zero_of_forall_pos f
+    rcases eq_or_ne q ⊤ with hqtop | hqtop
+    · subst hqtop
+      exact lorentzNorm_top_eq_zero_imp p f h
+    · intro t ht
+      rcases eq_or_ne t ⊤ with rfl | htne
+      · have h1 := lorentzNorm_finite_eq_zero_imp p q hq.ne' hqtop f h 1 one_pos
+        exact le_antisymm ((decreasingRearrangement_antitone f le_top).trans_eq h1) zero_le
+      · have ht' : 0 < t.toReal := ENNReal.toReal_pos ht.ne' htne
+        have := lorentzNorm_finite_eq_zero_imp p q hq.ne' hqtop f h t.toReal ht'
+        rwa [ENNReal.ofReal_toReal htne] at this
+  · intro hf
+    rw [lorentzNorm_congr_ae p q hf, lorentzNorm_zero_of_pos p hq]

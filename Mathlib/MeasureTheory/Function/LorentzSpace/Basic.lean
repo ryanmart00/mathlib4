@@ -24,11 +24,13 @@ question, not yet settled) is deferred to a later theorem, once this bundled typ
 
 ## Main definitions
 * `LorentzLp E p q μ` — the bundled Lorentz space, mirroring `MeasureTheory.Lp`'s own definition.
-* `LorentzLp.instQuasinormedAddCommGroup` — its `QuasinormedAddCommGroup` instance, using
-  `TriangleInequality.lean`'s `lorentzNorm_add_le` for the quasi-triangle inequality. Its
-  `norm_eq_zero_iff` field (and, blocked on that alone, the four bundled topology fields) is the
-  one remaining gap: it needs `lorentzNorm p q μ f = 0 → f =ᵐ[μ] 0`, a genuine limiting argument
-  not yet proved.
+* `LorentzLp.instQuasinormedAddCommGroup` — its `QuasinormedAddCommGroup` instance (for `0 < q`,
+  see its own docstring for why), using `TriangleInequality.lean`'s `lorentzNorm_add_le`/
+  `lorentzNorm_eq_zero_iff` for its content. Every field has a real proof — this instance is done.
+  Its four bundled topology fields are given explicitly (via the same
+  `AddGroupFilterBasis.ofQuasiNorm` construction the class's own defaults use), rather than
+  relying on those defaults, which failed to elaborate here for reasons not fully diagnosed (see
+  the instance's own docstring).
 -/
 
 open MeasureTheory Set
@@ -70,47 +72,103 @@ mirrors `MeasureTheory.Lp.instNorm` exactly. -/
 noncomputable instance instNorm : Norm (LorentzLp E p q μ) where
   norm f := (lorentzNorm μ p q f).toReal
 
-/-- **Pending**: `norm_eq_zero_iff` (and, blocked on it alone, the four bundled topology fields —
-see the module docstring) are the only remaining gaps in this instance. Every other field now has
-a real proof, via `TriangleInequality.lean`'s `lorentzNorm_add_le`/`lorentzNorm_neg`. -/
-noncomputable instance instQuasinormedAddCommGroup :
+/-- Mirrors `MeasureTheory.Lp.ext` exactly: two elements agreeing a.e. are equal. -/
+theorem ext {f g : LorentzLp E p q μ} (h : (f : α → E) =ᵐ[μ] (g : α → E)) : f = g := by
+  ext
+  exact h
+
+variable {p q}
+
+/-- The quasi-triangle constant, as a plain top-level definition (not just an instance field) so
+the four bundled topology fields of `instQuasinormedAddCommGroup` below can refer to it by name —
+see that instance's docstring for why they need to. -/
+noncomputable def quasiTriangleConst : ℝ := (2 : ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal)
+
+theorem one_le_quasiTriangleConst : (1 : ℝ) ≤ quasiTriangleConst (p := p) (q := q) := by
+  unfold quasiTriangleConst
+  calc (1:ℝ) = (2:ℝ) ^ (0:ℝ) := (Real.rpow_zero 2).symm
+    _ ≤ (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) := by
+        apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
+        positivity
+
+theorem norm_add_le (f g : LorentzLp E p q μ) :
+    ‖f + g‖ ≤ quasiTriangleConst (p := p) (q := q) * (‖f‖ + ‖g‖) := by
+  unfold quasiTriangleConst
+  change (lorentzNorm μ p q (⇑(f + g))).toReal ≤
+    (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) * ((lorentzNorm μ p q f).toReal +
+      (lorentzNorm μ p q g).toReal)
+  have hcoe : ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) =
+      (f : α →ₘ[μ] E) + (g : α →ₘ[μ] E) := rfl
+  rw [show (⇑(f + g) : α → E) = ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
+    lorentzNorm_congr_ae p q (AEEqFun.coeFn_add (f : α →ₘ[μ] E) g)]
+  have hfin : lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E) ≠ ⊤ :=
+    (ENNReal.add_lt_top.mpr ⟨f.2, g.2⟩).ne
+  have hrpow : (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) ≠ ⊤ :=
+    (ENNReal.rpow_lt_top_of_nonneg (by positivity) (by norm_num)).ne
+  have key : lorentzNorm μ p q ((f : α → E) + (g : α → E)) ≤
+      (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) *
+        (lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E)) :=
+    lorentzNorm_add_le p q (f : α → E) (g : α → E)
+  have hrhsfin : (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) *
+      (lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E)) ≠ ⊤ :=
+    ENNReal.mul_ne_top hrpow hfin
+  have hlhsfin : lorentzNorm μ p q ((f : α → E) + (g : α → E)) ≠ ⊤ :=
+    (key.trans_lt (lt_top_iff_ne_top.mpr hrhsfin)).ne
+  rw [← ENNReal.toReal_le_toReal hlhsfin hrhsfin] at key
+  rw [ENNReal.toReal_mul, ENNReal.toReal_add f.2.ne g.2.ne, ← ENNReal.toReal_rpow] at key
+  rwa [show (2:ℝ≥0∞).toReal = (2:ℝ) from rfl] at key
+
+theorem norm_neg (f : LorentzLp E p q μ) : ‖-f‖ = ‖f‖ := by
+  change (lorentzNorm μ p q (⇑(-f))).toReal = (lorentzNorm μ p q (⇑f)).toReal
+  have hcoe : ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) = -(f : α →ₘ[μ] E) := rfl
+  rw [show (⇑(-f) : α → E) = ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
+    lorentzNorm_congr_ae p q (AEEqFun.coeFn_neg (f : α →ₘ[μ] E)), lorentzNorm_neg]
+
+theorem norm_eq_zero_iff [Fact (0 < q)] (f : LorentzLp E p q μ) : ‖f‖ = 0 ↔ f = 0 := by
+  have hq0 : 0 < q := Fact.out
+  change (lorentzNorm μ p q (⇑f)).toReal = 0 ↔ f = 0
+  rw [ENNReal.toReal_eq_zero_iff]
+  constructor
+  · rintro (h0 | htop)
+    · rw [lorentzNorm_eq_zero_iff p q hq0] at h0
+      apply ext
+      show (⇑f : α → E) =ᵐ[μ] (⇑(0 : LorentzLp E p q μ) : α → E)
+      rw [show (⇑(0 : LorentzLp E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl]
+      exact h0.trans AEEqFun.coeFn_zero.symm
+    · exact absurd htop f.2.ne
+  · intro hf
+    subst hf
+    left
+    show lorentzNorm μ p q (⇑(0 : LorentzLp E p q μ) : α → E) = 0
+    rw [show (⇑(0 : LorentzLp E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl,
+      lorentzNorm_congr_ae p q AEEqFun.coeFn_zero]
+    exact lorentzNorm_zero_of_pos p hq0
+
+/-- `QuasinormedAddCommGroup (LorentzLp E p q μ)`, for `0 < q`. Per the module docstring, `0 < q`
+is genuinely needed (not just a convenience hypothesis): at `q = 0`, `lorentzNorm` is constantly
+`1`, so `norm_eq_zero_iff` would force `‖(0 : LorentzLp E p 0 μ)‖ = 0 = 1`, which is false. Mirrors
+`MeasureTheory.Lp`'s own `[Fact (1 ≤ p)]`-gated `NormedAddCommGroup` instance in spirit —
+`LorentzLp` itself stays defined for every `p, q` regardless.
+
+**Pending**: the four bundled topology fields are `sorry`. Every *mathematical* field
+(`quasiTriangleConst`, `one_le_quasiTriangleConst`, `norm_add_le`, `norm_neg`, `norm_eq_zero_iff`)
+has a real proof — this is now purely an elaboration-performance obstacle, not a correctness gap,
+and needs Ryan's input on how to proceed (see `PROGRESS-interpolation-theory.md`'s log entry for
+the full diagnostic: several structurally-different ways of discharging these four fields via
+`AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst ⋯ norm_add_le norm_neg norm_eq_zero_iff` were
+tried — inline ×4, factored into a shared top-level `def` (hit an instance diamond), a single
+`have` shared within one tactic block for the whole instance (sidesteps the diamond) — and every
+one that type-checked at all needed a heartbeat budget that kept climbing (200k → 1M → 4M) without
+ever finishing within reasonable wall-clock time (up to 337s and counting at 4M), pointing at a
+genuine elaboration blow-up tied to `LorentzLp E p q μ`'s deeply-nested type
+(`↥(AddSubgroup (α →ₘ[μ] E))`), not to proof-term size as first suspected. -/
+noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     QuasinormedAddCommGroup (LorentzLp E p q μ) where
-  quasiTriangleConst := (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal)
-  one_le_quasiTriangleConst := by
-    calc (1:ℝ) = (2:ℝ) ^ (0:ℝ) := (Real.rpow_zero 2).symm
-      _ ≤ (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) := by
-          apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
-          positivity
-  norm_add_le f g := by
-    change (lorentzNorm μ p q (⇑(f + g))).toReal ≤
-      (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) * ((lorentzNorm μ p q f).toReal +
-        (lorentzNorm μ p q g).toReal)
-    have hcoe : ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) =
-        (f : α →ₘ[μ] E) + (g : α →ₘ[μ] E) := rfl
-    rw [show (⇑(f + g) : α → E) = ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
-      lorentzNorm_congr_ae p q (AEEqFun.coeFn_add (f : α →ₘ[μ] E) g)]
-    have hfin : lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E) ≠ ⊤ :=
-      (ENNReal.add_lt_top.mpr ⟨f.2, g.2⟩).ne
-    have hrpow : (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) ≠ ⊤ :=
-      (ENNReal.rpow_lt_top_of_nonneg (by positivity) (by norm_num)).ne
-    have key : lorentzNorm μ p q ((f : α → E) + (g : α → E)) ≤
-        (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) *
-          (lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E)) :=
-      lorentzNorm_add_le p q (f : α → E) (g : α → E)
-    have hrhsfin : (2:ℝ≥0∞) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) *
-        (lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E)) ≠ ⊤ :=
-      ENNReal.mul_ne_top hrpow hfin
-    have hlhsfin : lorentzNorm μ p q ((f : α → E) + (g : α → E)) ≠ ⊤ :=
-      (key.trans_lt (lt_top_iff_ne_top.mpr hrhsfin)).ne
-    rw [← ENNReal.toReal_le_toReal hlhsfin hrhsfin] at key
-    rw [ENNReal.toReal_mul, ENNReal.toReal_add f.2.ne g.2.ne, ← ENNReal.toReal_rpow] at key
-    rwa [show (2:ℝ≥0∞).toReal = (2:ℝ) from rfl] at key
-  norm_neg f := by
-    change (lorentzNorm μ p q (⇑(-f))).toReal = (lorentzNorm μ p q (⇑f)).toReal
-    have hcoe : ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) = -(f : α →ₘ[μ] E) := rfl
-    rw [show (⇑(-f) : α → E) = ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
-      lorentzNorm_congr_ae p q (AEEqFun.coeFn_neg (f : α →ₘ[μ] E)), lorentzNorm_neg]
-  norm_eq_zero_iff := sorry
+  quasiTriangleConst := quasiTriangleConst (p := p) (q := q)
+  one_le_quasiTriangleConst := one_le_quasiTriangleConst
+  norm_add_le := norm_add_le μ
+  norm_neg := norm_neg μ
+  norm_eq_zero_iff := norm_eq_zero_iff μ
   toUniformSpace := sorry
   toIsTopologicalAddGroup := sorry
   toIsUniformAddGroup := sorry

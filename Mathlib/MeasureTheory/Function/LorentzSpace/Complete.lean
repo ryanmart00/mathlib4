@@ -8,6 +8,7 @@ import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Order.Filter.ENNReal
 import Mathlib.Probability.BorelCantelli
+import Mathlib.Analysis.SpecificLimits.Basic
 
 /-!
 # Completeness of `LorentzSpace`
@@ -557,3 +558,124 @@ theorem distributionFunction_le_of_lorentzBC (p q : ℝ≥0∞) (hq0 : q ≠ 0) 
             mul_le_mul_of_nonneg_right (min_le_right _ _) hrate_nonneg
         _ = ((1 / 2 : ℝ) ^ (k + 2)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) *
             Real.log 2 ^ q⁻¹.toReal := heq
+
+/-- **The a.e. limit construction**: given a sequence of raw functions with `lorentzNorm`-summable
+(at the `lorentzBCConst`/`lorentzBCRate` geometric rate) consecutive differences, the telescoping
+partial sums converge a.e. Chains `distributionFunction_le_of_lorentzBC` (turning `lorentzNorm`
+smallness into a `distributionFunction` bound) into `ae_summable_norm_of_distributionFunction_le`
+(Borel–Cantelli) to get a.e. absolute summability of the differences, then a generic
+(no `lorentzNorm` content) telescoping-sum argument — identical in spirit to the corresponding
+step of `Lp.ae_tendsto_of_cauchy_eLpNorm'`, just reached via a different route (Borel–Cantelli
+directly, rather than a Minkowski-inequality bound on the whole tail sum's `eLpNorm`). -/
+theorem exists_ae_tendsto_of_lorentzNorm_lt [CompleteSpace E] (p q : ℝ≥0∞) (hq0 : q ≠ 0)
+    {g : ℕ → α → E}
+    (hsmall : ∀ k, lorentzNorm μ p q (g (k + 1) - g k) <
+      ENNReal.ofReal (lorentzBCConst p q * lorentzBCRate p ^ k)) :
+    ∀ᵐ x ∂μ, ∃ l : E, Tendsto (fun n => g n x) atTop (𝓝 l) := by
+  have hσ0 : ∀ k : ℕ, (0 : ℝ) ≤ (1 / 2 : ℝ) ^ (k + 1) := fun k => by positivity
+  have hσsum : Summable (fun k : ℕ => (1 / 2 : ℝ) ^ (k + 1)) :=
+    (summable_nat_add_iff 1).mpr summable_geometric_two
+  have hbd : ∀ k, distributionFunction μ (g (k + 1) - g k)
+      (ENNReal.ofReal ((1 / 2 : ℝ) ^ (k + 1))) ≤ ENNReal.ofReal ((1 / 2 : ℝ) ^ (k + 1)) :=
+    fun k => distributionFunction_le_of_lorentzBC p q hq0 k (hsmall k)
+  have hsummable_ae : ∀ᵐ x ∂μ, Summable (fun k => ‖(g (k + 1) - g k) x‖) :=
+    ae_summable_norm_of_distributionFunction_le hσ0 hσsum hσ0 hσsum hbd
+  refine hsummable_ae.mono fun x hx => ?_
+  simp only [Pi.sub_apply] at hx
+  have hsum : Summable (fun i => g (i + 1) x - g i x) := hx.of_norm
+  have htel := hsum.hasSum.tendsto_sum_nat
+  rw [funext fun n => Finset.sum_range_sub (fun m => g m x) n] at htel
+  exact ⟨∑' i, (g (i + 1) x - g i x) + g 0 x, by simpa using htel.add_const (g 0 x)⟩
+
+/-- `LorentzSpace`'s own quasinorm, on the coercion of a *difference* of two of its elements, back
+to the underlying `distributionFunction`/`lorentzNorm` formulas on raw functions. Needed since the
+rest of this file's argument works with raw functions throughout (mirroring
+`distributionFunction`/`lorentzNorm`'s own domain), only ever returning to the bundled
+`LorentzSpace` type at the very end. -/
+theorem lorentzNorm_coe_sub_eq (p q : ℝ≥0∞) (f g : LorentzSpace E p q μ) :
+    lorentzNorm μ p q ((f : α → E) - (g : α → E)) = ENNReal.ofReal ‖f - g‖ := by
+  have hcoe : ((f - g : LorentzSpace E p q μ) : α →ₘ[μ] E) =
+      (f : α →ₘ[μ] E) - (g : α →ₘ[μ] E) := rfl
+  have h1 : (⇑(f - g) : α → E) = ((f - g : LorentzSpace E p q μ) : α →ₘ[μ] E) := rfl
+  have h2 : lorentzNorm μ p q ((f : α → E) - (g : α → E)) =
+      lorentzNorm μ p q (⇑(f - g)) := by
+    rw [h1, hcoe]
+    exact (lorentzNorm_congr_ae p q (AEEqFun.coeFn_sub (f : α →ₘ[μ] E) g)).symm
+  rw [h2]
+  change lorentzNorm μ p q (⇑(f - g)) = ENNReal.ofReal (lorentzNorm μ p q (⇑(f - g))).toReal
+  rw [ENNReal.ofReal_toReal (f - g).2.ne]
+
+/-- The unified (`q = ⊤` or `0 < q < ⊤`) form of the Fatou-for-`lorentzNorm` chain, combining
+`lorentzNorm_top_le_liminf_of_tendsto_ae`/`_finite_le_liminf_of_tendsto_ae` — the two remaining
+uses in this file (bounding the limit's `lorentzNorm` from a controlled sequence's) need this
+regardless of which case `q` is in, so both are gated on `0 < q` (not split further) from here on,
+matching `LorentzSpace.instQuasinormedAddCommGroup`'s own gating. -/
+theorem lorentzNorm_le_liminf_of_tendsto_ae (p q : ℝ≥0∞) (hq0 : q ≠ 0) {g : ℕ → α → E}
+    {glim : α → E} (hgmeas : ∀ n, AEMeasurable (fun x => ‖g n x‖ₑ) μ)
+    (hglimmeas : AEMeasurable (fun x => ‖glim x‖ₑ) μ)
+    (hg : ∀ᵐ x ∂μ, Tendsto (fun k => g k x) atTop (𝓝 (glim x))) :
+    lorentzNorm μ p q glim ≤ liminf (fun k => lorentzNorm μ p q (g k)) atTop := by
+  rcases eq_or_ne q ⊤ with hqtop | hqtop
+  · subst hqtop
+    exact lorentzNorm_top_le_liminf_of_tendsto_ae p hgmeas hglimmeas hg
+  · exact lorentzNorm_finite_le_liminf_of_tendsto_ae p q hq0 hqtop hgmeas hglimmeas hg
+
+/-- **`lorentzNorm(g n - glim) → 0`**, given genuine (arbitrary-pair, not just consecutive)
+`lorentzNorm`-Cauchy control on `g` and a.e. pointwise convergence to `glim`. Mirrors
+`Lp.cauchy_tendsto_of_tendsto` exactly: for fixed `n`, apply the Fatou bound above to the sequence
+`m ↦ g n - g m` (converging a.e. to `g n - glim` as `m → ∞`), then bound the resulting `liminf`
+using `h_cau` directly (frequently, for `m` large, `lorentzNorm (g n - g m) < B N ≤ ε` once `n`
+itself is `≥ N`). -/
+theorem lorentzNorm_tendsto_zero_of_tendsto_ae (p q : ℝ≥0∞) (hq0 : q ≠ 0)
+    {g : ℕ → α → E} (hgmeas : ∀ n, AEStronglyMeasurable (g n) μ)
+    {glim : α → E} (hglimmeas : AEStronglyMeasurable glim μ)
+    {B : ℕ → ℝ≥0∞} (hB : ∑' i, B i ≠ ⊤)
+    (h_cau : ∀ N n m : ℕ, N ≤ n → N ≤ m → lorentzNorm μ p q (g n - g m) < B N)
+    (h_lim : ∀ᵐ x ∂μ, Tendsto (fun n => g n x) atTop (𝓝 (glim x))) :
+    Tendsto (fun n => lorentzNorm μ p q (g n - glim)) atTop (𝓝 0) := by
+  rw [ENNReal.tendsto_atTop_zero]
+  intro ε hε
+  obtain ⟨N, hBN⟩ : ∃ N : ℕ, B N ≤ ε := by
+    suffices h_tendsto_zero : ∃ N : ℕ, ∀ n : ℕ, N ≤ n → B n ≤ ε from
+      ⟨h_tendsto_zero.choose, h_tendsto_zero.choose_spec _ le_rfl⟩
+    exact (ENNReal.tendsto_atTop_zero.mp (ENNReal.tendsto_atTop_zero_of_tsum_ne_top hB)) ε hε
+  refine ⟨N, fun n hn => ?_⟩
+  have hsub_meas : ∀ m, AEMeasurable (fun x => ‖(g n - g m) x‖ₑ) μ := by
+    intro m
+    have h1 : AEMeasurable (fun x => ‖(g n - g m) x‖) μ :=
+      ((hgmeas n).sub (hgmeas m)).norm.aemeasurable
+    simpa only [ofReal_norm] using h1.ennreal_ofReal
+  have hlim_meas : AEMeasurable (fun x => ‖(g n - glim) x‖ₑ) μ := by
+    have h1 : AEMeasurable (fun x => ‖(g n - glim) x‖) μ :=
+      ((hgmeas n).sub hglimmeas).norm.aemeasurable
+    simpa only [ofReal_norm] using h1.ennreal_ofReal
+  have h_ae : ∀ᵐ x ∂μ, Tendsto (fun m => (g n - g m) x) atTop (𝓝 ((g n - glim) x)) := by
+    filter_upwards [h_lim] with x hx
+    simpa using tendsto_const_nhds.sub hx
+  have h_sub : lorentzNorm μ p q (g n - glim) ≤
+      liminf (fun m => lorentzNorm μ p q (g n - g m)) atTop :=
+    lorentzNorm_le_liminf_of_tendsto_ae p q hq0 hsub_meas hlim_meas h_ae
+  refine h_sub.trans ?_
+  refine liminf_le_of_frequently_le' (frequently_atTop.mpr ?_)
+  refine fun N1 => ⟨max N N1, le_max_right _ _, ?_⟩
+  exact (h_cau N n (max N N1) hn (le_max_left _ _)).le.trans hBN
+
+/-- **`lorentzNorm(glim) < ⊤`**, given each `g n` has finite `lorentzNorm` and
+`lorentzNorm (g n - glim) → 0`. Mirrors `Lp.memLp_of_cauchy_tendsto`: pick `N` with
+`lorentzNorm (g N - glim) ≤ 1` (from `h_tendsto`), write `glim = (glim - g N) + g N`, and bound via
+a single application of the quasi-triangle inequality (`lorentzNorm_add_le`) — no infinite-sum
+control needed, unlike a naive telescoping-sum bound. -/
+theorem lorentzNorm_lt_top_of_tendsto_zero (p q : ℝ≥0∞) {g : ℕ → α → E}
+    (hg : ∀ n, lorentzNorm μ p q (g n) < ⊤) (glim : α → E)
+    (h_tendsto : Tendsto (fun n => lorentzNorm μ p q (g n - glim)) atTop (𝓝 0)) :
+    lorentzNorm μ p q glim < ⊤ := by
+  rw [ENNReal.tendsto_atTop_zero] at h_tendsto
+  obtain ⟨N, h1⟩ := h_tendsto 1 zero_lt_one
+  specialize h1 N le_rfl
+  have h_add : glim = (glim - g N) + g N := by abel
+  rw [h_add]
+  refine lt_of_le_of_lt (lorentzNorm_add_le p q _ _) ?_
+  have h_neg : glim - g N = -(g N - glim) := by abel
+  rw [h_neg, lorentzNorm_neg]
+  refine ENNReal.mul_lt_top (ENNReal.rpow_lt_top_of_nonneg (by positivity) (by norm_num)) ?_
+  exact ENNReal.add_lt_top.mpr ⟨lt_of_le_of_lt h1 ENNReal.one_lt_top, hg N⟩

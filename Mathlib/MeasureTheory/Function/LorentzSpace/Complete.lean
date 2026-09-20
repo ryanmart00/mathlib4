@@ -155,3 +155,58 @@ theorem distributionFunction_le_of_lorentzNorm_finite_lt (p q : ℝ≥0∞) (hq0
             ENNReal.rpow_one]
       _ ≤ (∫⁻ t in Ioi (0 : ℝ), F t) ^ inv := by gcongr
   exact absurd (ht.trans_le hgoal) (lt_irrefl _)
+
+/-- **Fatou's lemma for `distributionFunction`**: if `g k → glim` a.e. pointwise, the distribution
+function of the limit is bounded by the `liminf` of the distribution functions along the sequence.
+Via indicator functions and the genuine Fatou's lemma for `lintegral` (`lintegral_liminf_le'`):
+`{x | σ < ‖glim x‖ₑ}` is, up to the a.e.-convergence null set, contained in the `liminf` (in the
+filter sense) of `{x | σ < ‖g k x‖ₑ}`, since `‖g k x‖ₑ → ‖glim x‖ₑ` and strict inequalities are
+eventually preserved under a limit. This is the tool that will let `f_lim`'s (finite) `lorentzNorm`
+be bounded from the `lorentzNorm`s along a controlled sequence, without needing a `lorentzNorm`
+bound on an *infinite sum* (hence without needing any general multi-term/quasi-Banach summability
+machinery beyond the single-application quasi-triangle inequality already in hand). -/
+theorem distributionFunction_le_liminf_of_tendsto_ae {g : ℕ → α → E} {glim : α → E}
+    (hgmeas : ∀ n, AEMeasurable (fun x => ‖g n x‖ₑ) μ)
+    (hglimmeas : AEMeasurable (fun x => ‖glim x‖ₑ) μ)
+    (hg : ∀ᵐ x ∂μ, Tendsto (fun k => g k x) atTop (𝓝 (glim x))) (σ : ℝ≥0∞) :
+    distributionFunction μ glim σ ≤ liminf (fun k => distributionFunction μ (g k) σ) atTop := by
+  set S : ℕ → Set α := fun k => {x | σ < ‖g k x‖ₑ} with hSdef
+  set Slim : Set α := {x | σ < ‖glim x‖ₑ} with hSlimdef
+  have hSmeas : ∀ n, NullMeasurableSet (S n) μ := fun n =>
+    (hgmeas n).nullMeasurableSet_preimage measurableSet_Ioi
+  have hSlimmeas : NullMeasurableSet Slim μ :=
+    hglimmeas.nullMeasurableSet_preimage measurableSet_Ioi
+  have hindmeas : ∀ n, AEMeasurable ((S n).indicator (1 : α → ℝ≥0∞)) μ := fun n =>
+    aemeasurable_const.indicator₀ (hSmeas n)
+  have hpt : ∀ᵐ x ∂μ, Slim.indicator (1 : α → ℝ≥0∞) x ≤
+      liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop := by
+    filter_upwards [hg] with x hx
+    by_cases hxS : x ∈ Slim
+    · have hcont : Tendsto (fun k => ‖g k x‖ₑ) atTop (𝓝 ‖glim x‖ₑ) :=
+        (continuous_enorm.tendsto _).comp hx
+      have hev : ∀ᶠ k in atTop, x ∈ S k := hcont.eventually_const_lt hxS
+      rw [indicator_of_mem hxS]
+      have hind1 : ∀ᶠ k in atTop, (1 : ℝ≥0∞) ≤ (S k).indicator (1 : α → ℝ≥0∞) x := by
+        filter_upwards [hev] with k hk
+        simp [indicator_of_mem hk]
+      calc (1 : ℝ≥0∞) = liminf (fun _ : ℕ => (1 : ℝ≥0∞)) atTop := (liminf_const 1).symm
+        _ ≤ liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop :=
+            liminf_le_liminf hind1
+    · rw [indicator_of_notMem hxS]
+      exact zero_le
+  have hfatou : ∫⁻ x, liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop ∂μ ≤
+      liminf (fun k => ∫⁻ x, (S k).indicator (1 : α → ℝ≥0∞) x ∂μ) atTop :=
+    lintegral_liminf_le' (u := (atTop : Filter ℕ)) hindmeas
+  have hmono : ∫⁻ x, Slim.indicator (1 : α → ℝ≥0∞) x ∂μ ≤
+      ∫⁻ x, liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop ∂μ :=
+    lintegral_mono_ae hpt
+  have heq1 : ∫⁻ x, Slim.indicator (1 : α → ℝ≥0∞) x ∂μ = μ Slim :=
+    lintegral_indicator_one₀ hSlimmeas
+  have heq2 : ∀ n, ∫⁻ x, (S n).indicator (1 : α → ℝ≥0∞) x ∂μ = μ (S n) := fun n =>
+    lintegral_indicator_one₀ (hSmeas n)
+  unfold distributionFunction
+  change μ Slim ≤ liminf (fun k => μ (S k)) atTop
+  calc μ Slim = ∫⁻ x, Slim.indicator (1 : α → ℝ≥0∞) x ∂μ := heq1.symm
+    _ ≤ ∫⁻ x, liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop ∂μ := hmono
+    _ ≤ liminf (fun k => ∫⁻ x, (S k).indicator (1 : α → ℝ≥0∞) x ∂μ) atTop := hfatou
+    _ = liminf (fun k => μ (S k)) atTop := by simp_rw [heq2]

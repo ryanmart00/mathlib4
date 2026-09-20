@@ -6,6 +6,7 @@ Authors: Ryan Martinez
 import Mathlib.MeasureTheory.Function.LorentzSpace.Basic
 import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+import Mathlib.Order.Filter.ENNReal
 
 /-!
 # Completeness of `LorentzSpace`
@@ -210,3 +211,86 @@ theorem distributionFunction_le_liminf_of_tendsto_ae {g : ℕ → α → E} {gli
     _ ≤ ∫⁻ x, liminf (fun k => (S k).indicator (1 : α → ℝ≥0∞) x) atTop ∂μ := hmono
     _ ≤ liminf (fun k => ∫⁻ x, (S k).indicator (1 : α → ℝ≥0∞) x ∂μ) atTop := hfatou
     _ = liminf (fun k => μ (S k)) atTop := by simp_rw [heq2]
+
+/-- The reverse direction of `le_decreasingRearrangement_of_lt_distributionFunction`: if `f*(t) <
+σ`, then `ϱ(f,σ) ≤ t` (a near-optimal representative `σ' < σ` from `f*(t)`'s defining `sInf`
+gives `ϱ(f,σ) ≤ ϱ(f,σ') ≤ t`). Mirrors the inline argument already used in
+`distributionFunction_eq_zero_of_forall_pos` (`TriangleInequality.lean`), extracted here for
+`decreasingRearrangement_le_liminf_of_tendsto_ae`'s own use. -/
+theorem distributionFunction_le_of_lt_decreasingRearrangement (f : α → E) (t σ : ℝ≥0∞)
+    (h : decreasingRearrangement μ f t < σ) : distributionFunction μ f σ ≤ t := by
+  unfold decreasingRearrangement at h
+  obtain ⟨σ', hσ'mem, hσ'lt⟩ := sInf_lt_iff.mp h
+  simp only [Set.mem_ofPred_eq] at hσ'mem
+  exact (distributionFunction_antitone f hσ'lt.le).trans hσ'mem
+
+/-- **Fatou's lemma for `decreasingRearrangement`**: derived from the `distributionFunction`
+version above via the rearrangement's own `sInf`-based defining property. For `σ > L` (`L` the
+target `liminf`), `L < σ` gives (`frequently_lt_of_liminf_lt`) infinitely many `k` with
+`(g k)*(t) < σ`, hence `ϱ(g k,σ) ≤ t` for infinitely many `k`
+(`distributionFunction_le_of_lt_decreasingRearrangement`), hence `liminf_k ϱ(g k,σ) ≤ t`
+(`liminf_le_of_frequently_le'`); combined with the `distributionFunction` Fatou bound at this same
+`σ`, `ϱ(glim,σ) ≤ t`, i.e. `σ` is itself a valid candidate in `glim*(t)`'s defining `sInf` set, so
+`glim*(t) ≤ σ`. Taking `σ ↓ L` (via `ENNReal.le_of_forall_pos_le_add`) gives `glim*(t) ≤ L`. -/
+theorem decreasingRearrangement_le_liminf_of_tendsto_ae {g : ℕ → α → E} {glim : α → E}
+    (hgmeas : ∀ n, AEMeasurable (fun x => ‖g n x‖ₑ) μ)
+    (hglimmeas : AEMeasurable (fun x => ‖glim x‖ₑ) μ)
+    (hg : ∀ᵐ x ∂μ, Tendsto (fun k => g k x) atTop (𝓝 (glim x))) (t : ℝ≥0∞) :
+    decreasingRearrangement μ glim t ≤
+      liminf (fun k => decreasingRearrangement μ (g k) t) atTop := by
+  apply ENNReal.le_of_forall_pos_le_add
+  intro ε hε _
+  set L := liminf (fun k => decreasingRearrangement μ (g k) t) atTop with hLdef
+  rcases eq_or_ne L ⊤ with hLtop | hLtop
+  · rw [hLtop, top_add]
+    exact le_top
+  have hLlt : L < L + (ε : ℝ≥0∞) := ENNReal.lt_add_right hLtop (by exact_mod_cast hε.ne')
+  have hfreq : ∃ᶠ k in atTop, decreasingRearrangement μ (g k) t < L + ε :=
+    frequently_lt_of_liminf_lt (h := hLlt)
+  have hfreq2 : ∃ᶠ k in atTop, distributionFunction μ (g k) (L + ε) ≤ t :=
+    hfreq.mono (fun k hk => distributionFunction_le_of_lt_decreasingRearrangement (g k) t _ hk)
+  have hliminf_le_t : liminf (fun k => distributionFunction μ (g k) (L + ε)) atTop ≤ t :=
+    liminf_le_of_frequently_le' hfreq2
+  have hbound : distributionFunction μ glim (L + ε) ≤
+      liminf (fun k => distributionFunction μ (g k) (L + ε)) atTop :=
+    distributionFunction_le_liminf_of_tendsto_ae hgmeas hglimmeas hg (L + ε)
+  have hle : distributionFunction μ glim (L + ε) ≤ t := hbound.trans hliminf_le_t
+  unfold decreasingRearrangement
+  exact csInf_le' hle
+
+/-- **Fatou's lemma for `lorentzNorm`, `q = ⊤` case**: `glim`'s `lorentzNorm` is bounded by the
+`liminf` of the `lorentzNorm`s along an a.e.-convergent sequence. Since `lorentzNorm` at `q = ⊤` is
+a plain `iSup` (no integral), this is immediate from the `decreasingRearrangement` Fatou bound
+above plus constant-multiplication commuting with `liminf`
+(`ENNReal.liminf_const_mul_of_ne_top`) — no further integral-level Fatou argument is needed here
+(unlike the finite-`q` case). This is the tool `LorentzSpace`'s completeness proof needs to show
+`f_lim` itself has finite `lorentzNorm` (`lorentzNorm(g k)` bounded uniformly in `k` from a single
+quasi-triangle-inequality application, `liminf` of a bounded sequence is finite) and, applied again
+to `g m - g k` as `m → ∞`, that `g k → f_lim` in `lorentzNorm`. -/
+theorem lorentzNorm_top_le_liminf_of_tendsto_ae (p : ℝ≥0∞) {g : ℕ → α → E} {glim : α → E}
+    (hgmeas : ∀ n, AEMeasurable (fun x => ‖g n x‖ₑ) μ)
+    (hglimmeas : AEMeasurable (fun x => ‖glim x‖ₑ) μ)
+    (hg : ∀ᵐ x ∂μ, Tendsto (fun k => g k x) atTop (𝓝 (glim x))) :
+    lorentzNorm μ p ⊤ glim ≤ liminf (fun k => lorentzNorm μ p ⊤ (g k)) atTop := by
+  unfold lorentzNorm
+  simp only [ite_true]
+  apply iSup_le
+  intro u
+  have hrearr := decreasingRearrangement_le_liminf_of_tendsto_ae hgmeas hglimmeas hg (u : ℝ≥0∞)
+  have hane_top : (u : ℝ≥0∞) ^ p⁻¹.toReal ≠ ⊤ :=
+    ENNReal.rpow_ne_top_of_nonneg ENNReal.toReal_nonneg (by simp)
+  calc (u : ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ glim (u : ℝ≥0∞)
+      ≤ (u : ℝ≥0∞) ^ p⁻¹.toReal *
+          liminf (fun k => decreasingRearrangement μ (g k) (u : ℝ≥0∞)) atTop := by gcongr
+    _ = liminf (fun k => (u : ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ (g k) (u : ℝ≥0∞))
+          atTop := (ENNReal.liminf_const_mul_of_ne_top hane_top).symm
+    _ ≤ liminf (fun k => lorentzNorm μ p ⊤ (g k)) atTop := by
+        have hle_all : ∀ k, (u : ℝ≥0∞) ^ p⁻¹.toReal *
+            decreasingRearrangement μ (g k) (u : ℝ≥0∞) ≤ lorentzNorm μ p ⊤ (g k) := by
+          intro k
+          unfold lorentzNorm
+          simp only [ite_true]
+          exact le_iSup
+            (fun v : ℝ≥0 => (v : ℝ≥0∞) ^ p⁻¹.toReal * decreasingRearrangement μ (g k) (v : ℝ≥0∞))
+            u
+        exact liminf_le_liminf (Filter.Eventually.of_forall hle_all)

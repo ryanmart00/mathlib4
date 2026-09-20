@@ -10,11 +10,11 @@ import Mathlib.Analysis.Interpolation.QuasiNorm
 # Lorentz spaces: the bundled type
 
 Mirrors `MeasureTheory.Lp` (`Mathlib/MeasureTheory/Function/LpSpace/Basic.lean`) as closely as
-possible: `LorentzLp E p q μ`, the Lorentz space `L_{p,q}(μ)` as an `AddSubgroup (α →ₘ[μ] E)`, cut
-out by `lorentzNorm p q μ f < ∞` in place of `eLpNorm f p μ < ∞`. A `Complete.lean` proving
+possible: `LorentzSpace E p q μ`, the Lorentz space `L_{p,q}(μ)` as an `AddSubgroup (α →ₘ[μ] E)`,
+cut out by `lorentzNorm p q μ f < ∞` in place of `eLpNorm f p μ < ∞`. A `Complete.lean` proving
 `CompleteSpace` is expected to follow, mirroring `LpSpace/Complete.lean`.
 
-Per Ryan (2026-09-20): unlike `Lp`, which is genuinely normed for `1 ≤ p`, `LorentzLp` is given
+Per Ryan (2026-09-20): unlike `Lp`, which is genuinely normed for `1 ≤ p`, `LorentzSpace` is given
 only a `QuasinormedAddCommGroup` instance here, for **all** `p, q` — the literal `f*`-based Lorentz
 quasinorm is not a genuine norm even for `p > 1` (Hunt's maximal-function `f**` trick is needed for
 that, and is *not* attempted here). This is exactly the case the quasi-Banach generalization
@@ -23,8 +23,8 @@ recovers the genuine `Lᵖ` norm (up to a `QuasiNormEquiv`, or perhaps literal e
 question, not yet settled) is deferred to a later theorem, once this bundled type exists.
 
 ## Main definitions
-* `LorentzLp E p q μ` — the bundled Lorentz space, mirroring `MeasureTheory.Lp`'s own definition.
-* `LorentzLp.instQuasinormedAddCommGroup` — its `QuasinormedAddCommGroup` instance (for `0 < q`,
+* `LorentzSpace E p q μ` — the bundled Lorentz space, mirroring `MeasureTheory.Lp`'s own definition.
+* `LorentzSpace.instQuasinormedAddCommGroup` — its `QuasinormedAddCommGroup` instance (for `0 < q`,
   see its own docstring for why), using `TriangleInequality.lean`'s `lorentzNorm_add_le`/
   `lorentzNorm_eq_zero_iff` for its content. Every field, including the four bundled topology
   ones, has a real proof — this instance is fully done, zero `sorry`.
@@ -38,10 +38,11 @@ finishing in reasonable wall-clock time. Per Ryan's suggestion to look at how `L
 structured: `Lp`'s own `instNormedAddCommGroup` (`LpSpace/Basic.lean`) is scrupulous about *never*
 leaving a local definition's type to be inferred — every intermediate piece is either a separately
 named, explicitly-typed instance (`Lp.instAddCommGroup : AddCommGroup (Lp E p μ) := inferInstance`)
-or wrapped in `fast_instance%`. Applying that discipline here (`let hB :
-AddGroupFilterBasis (LorentzLp E p q μ) := ...`, with the type spelled out, instead of `have hB :=
-...` left to be inferred) resolved the *entire* problem outright — down from a multi-hundred-second
-non-terminating elaboration to under three seconds. `let` (not `have`) was also needed so that
+or wrapped in `fast_instance%`. Applying that discipline here
+(`let hB : AddGroupFilterBasis (LorentzSpace E p q μ) := ...`, with the type spelled out, instead
+of `have hB := ...` left to be inferred) resolved the *entire* problem outright — down from a
+multi-hundred-second non-terminating elaboration to under three seconds. `let` (not `have`) was
+also needed so that
 `hB`'s definition itself stays visible to later `rcases`/`rintro` calls that need to unfold it,
 `have` bindings are opaque to reduction, but their type still gets fixed the same way `let`'s does,
 which is what fixes the performance problem specifically.
@@ -57,7 +58,7 @@ variable (p q : ℝ≥0∞)
 /-- The Lorentz space `L_{p,q}(μ)`: elements of `α →ₘ[μ] E` such that `lorentzNorm p q μ f < ∞`.
 Mirrors `MeasureTheory.Lp` exactly (`Mathlib/MeasureTheory/Function/LpSpace/Basic.lean`), with
 `lorentzNorm` in place of `eLpNorm`. -/
-noncomputable def LorentzLp {α} (E : Type*) {m : MeasurableSpace α} [NormedAddCommGroup E]
+noncomputable def LorentzSpace {α} (E : Type*) {m : MeasurableSpace α} [NormedAddCommGroup E]
     (p q : ℝ≥0∞) (μ : Measure α := by volume_tac) : AddSubgroup (α →ₘ[μ] E) where
   carrier := { f | lorentzNorm μ p q f < ∞ }
   zero_mem' := by
@@ -73,21 +74,21 @@ noncomputable def LorentzLp {α} (E : Type*) {m : MeasurableSpace α} [NormedAdd
     rw [Set.mem_ofPred_eq] at hf ⊢
     rwa [lorentzNorm_congr_ae p q (AEEqFun.coeFn_neg f), lorentzNorm_neg]
 
-namespace LorentzLp
+namespace LorentzSpace
 
 /-- Coercion straight to functions `α → E`, bypassing the intermediate `α →ₘ[μ] E` — mirrors
 `MeasureTheory.Lp.instCoeFun` exactly (needed so `lorentzNorm μ p q f` elaborates for
-`f : LorentzLp E p q μ` below). -/
-noncomputable instance instCoeFun : CoeFun (LorentzLp E p q μ) (fun _ => α → E) :=
+`f : LorentzSpace E p q μ` below). -/
+noncomputable instance instCoeFun : CoeFun (LorentzSpace E p q μ) (fun _ => α → E) :=
   ⟨fun f => ((f : α →ₘ[μ] E) : α → E)⟩
 
-/-- The Lorentz quasinorm on `LorentzLp E p q μ`, via `ENNReal.toReal (lorentzNorm ...)` —
+/-- The Lorentz quasinorm on `LorentzSpace E p q μ`, via `ENNReal.toReal (lorentzNorm ...)` —
 mirrors `MeasureTheory.Lp.instNorm` exactly. -/
-noncomputable instance instNorm : Norm (LorentzLp E p q μ) where
+noncomputable instance instNorm : Norm (LorentzSpace E p q μ) where
   norm f := (lorentzNorm μ p q f).toReal
 
 /-- Mirrors `MeasureTheory.Lp.ext` exactly: two elements agreeing a.e. are equal. -/
-theorem ext {f g : LorentzLp E p q μ} (h : (f : α → E) =ᵐ[μ] (g : α → E)) : f = g := by
+theorem ext {f g : LorentzSpace E p q μ} (h : (f : α → E) =ᵐ[μ] (g : α → E)) : f = g := by
   ext
   exact h
 
@@ -105,15 +106,15 @@ theorem one_le_quasiTriangleConst : (1 : ℝ) ≤ quasiTriangleConst (p := p) (q
         apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
         positivity
 
-theorem norm_add_le (f g : LorentzLp E p q μ) :
+theorem norm_add_le (f g : LorentzSpace E p q μ) :
     ‖f + g‖ ≤ quasiTriangleConst (p := p) (q := q) * (‖f‖ + ‖g‖) := by
   unfold quasiTriangleConst
   change (lorentzNorm μ p q (⇑(f + g))).toReal ≤
     (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) * ((lorentzNorm μ p q f).toReal +
       (lorentzNorm μ p q g).toReal)
-  have hcoe : ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) =
+  have hcoe : ((f + g : LorentzSpace E p q μ) : α →ₘ[μ] E) =
       (f : α →ₘ[μ] E) + (g : α →ₘ[μ] E) := rfl
-  rw [show (⇑(f + g) : α → E) = ((f + g : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
+  rw [show (⇑(f + g) : α → E) = ((f + g : LorentzSpace E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
     lorentzNorm_congr_ae p q (AEEqFun.coeFn_add (f : α →ₘ[μ] E) g)]
   have hfin : lorentzNorm μ p q (f : α → E) + lorentzNorm μ p q (g : α → E) ≠ ⊤ :=
     (ENNReal.add_lt_top.mpr ⟨f.2, g.2⟩).ne
@@ -132,13 +133,13 @@ theorem norm_add_le (f g : LorentzLp E p q μ) :
   rw [ENNReal.toReal_mul, ENNReal.toReal_add f.2.ne g.2.ne, ← ENNReal.toReal_rpow] at key
   rwa [show (2:ℝ≥0∞).toReal = (2:ℝ) from rfl] at key
 
-theorem norm_neg (f : LorentzLp E p q μ) : ‖-f‖ = ‖f‖ := by
+theorem norm_neg (f : LorentzSpace E p q μ) : ‖-f‖ = ‖f‖ := by
   change (lorentzNorm μ p q (⇑(-f))).toReal = (lorentzNorm μ p q (⇑f)).toReal
-  have hcoe : ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) = -(f : α →ₘ[μ] E) := rfl
-  rw [show (⇑(-f) : α → E) = ((-f : LorentzLp E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
+  have hcoe : ((-f : LorentzSpace E p q μ) : α →ₘ[μ] E) = -(f : α →ₘ[μ] E) := rfl
+  rw [show (⇑(-f) : α → E) = ((-f : LorentzSpace E p q μ) : α →ₘ[μ] E) from rfl, hcoe,
     lorentzNorm_congr_ae p q (AEEqFun.coeFn_neg (f : α →ₘ[μ] E)), lorentzNorm_neg]
 
-theorem norm_eq_zero_iff [Fact (0 < q)] (f : LorentzLp E p q μ) : ‖f‖ = 0 ↔ f = 0 := by
+theorem norm_eq_zero_iff [Fact (0 < q)] (f : LorentzSpace E p q μ) : ‖f‖ = 0 ↔ f = 0 := by
   have hq0 : 0 < q := Fact.out
   change (lorentzNorm μ p q (⇑f)).toReal = 0 ↔ f = 0
   rw [ENNReal.toReal_eq_zero_iff]
@@ -146,23 +147,24 @@ theorem norm_eq_zero_iff [Fact (0 < q)] (f : LorentzLp E p q μ) : ‖f‖ = 0 �
   · rintro (h0 | htop)
     · rw [lorentzNorm_eq_zero_iff p q hq0] at h0
       apply ext
-      show (⇑f : α → E) =ᵐ[μ] (⇑(0 : LorentzLp E p q μ) : α → E)
-      rw [show (⇑(0 : LorentzLp E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl]
+      show (⇑f : α → E) =ᵐ[μ] (⇑(0 : LorentzSpace E p q μ) : α → E)
+      rw [show (⇑(0 : LorentzSpace E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl]
       exact h0.trans AEEqFun.coeFn_zero.symm
     · exact absurd htop f.2.ne
   · intro hf
     subst hf
     left
-    show lorentzNorm μ p q (⇑(0 : LorentzLp E p q μ) : α → E) = 0
-    rw [show (⇑(0 : LorentzLp E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl,
+    show lorentzNorm μ p q (⇑(0 : LorentzSpace E p q μ) : α → E) = 0
+    rw [show (⇑(0 : LorentzSpace E p q μ) : α → E) = ((0 : α →ₘ[μ] E) : α → E) from rfl,
       lorentzNorm_congr_ae p q AEEqFun.coeFn_zero]
     exact lorentzNorm_zero_of_pos p hq0
 
-/-- `QuasinormedAddCommGroup (LorentzLp E p q μ)`, for `0 < q`. Per the module docstring, `0 < q`
-is genuinely needed (not just a convenience hypothesis): at `q = 0`, `lorentzNorm` is constantly
-`1`, so `norm_eq_zero_iff` would force `‖(0 : LorentzLp E p 0 μ)‖ = 0 = 1`, which is false. Mirrors
-`MeasureTheory.Lp`'s own `[Fact (1 ≤ p)]`-gated `NormedAddCommGroup` instance in spirit —
-`LorentzLp` itself stays defined for every `p, q` regardless.
+/-- `QuasinormedAddCommGroup (LorentzSpace E p q μ)`, for `0 < q`. Per the module docstring,
+`0 < q` is genuinely needed (not just a convenience hypothesis): at `q = 0`, `lorentzNorm` is
+constantly `1`, so `norm_eq_zero_iff` would force `‖(0 : LorentzSpace E p 0 μ)‖ = 0 = 1`, which is
+false. Mirrors `MeasureTheory.Lp`'s own `[Fact (1 ≤ p)]`-gated `NormedAddCommGroup` instance in
+spirit —
+`LorentzSpace` itself stays defined for every `p, q` regardless.
 
 The four bundled topology fields are given explicitly (mirroring `AddGroupFilterBasis.ofQuasiNorm`'s
 own docstring pattern, `QuasiNorm.lean`) via the local `hB` computed once below, rather than relying
@@ -171,8 +173,8 @@ identifier" error referencing earlier fields — not investigated further since 
 works). See the module docstring's "elaboration-performance lesson" for why `hB` needs an explicit
 type ascription and `let` rather than `have`. -/
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
-    QuasinormedAddCommGroup (LorentzLp E p q μ) := by
-  let hB : AddGroupFilterBasis (LorentzLp E p q μ) :=
+    QuasinormedAddCommGroup (LorentzSpace E p q μ) := by
+  let hB : AddGroupFilterBasis (LorentzSpace E p q μ) :=
     AddGroupFilterBasis.ofQuasiNorm (quasiTriangleConst (p := p) (q := q))
       one_le_quasiTriangleConst (norm_add_le μ) (norm_neg μ) (norm_eq_zero_iff μ)
   refine
@@ -187,8 +189,8 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
       nhds_zero_hasBasis := ?_ }
   · exact hB.isTopologicalAddGroup
   · exact hB.isUniformAddGroup
-  · change (@nhds (LorentzLp E p q μ) hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
-      fun ε : ℝ => {x : LorentzLp E p q μ | ‖x‖ < ε}
+  · change (@nhds (LorentzSpace E p q μ) hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
+      fun ε : ℝ => {x : LorentzSpace E p q μ | ‖x‖ < ε}
     rw [hB.nhds_eq (x₀ := 0), AddGroupFilterBasis.N_zero]
     refine (FilterBasis.hasBasis hB.toFilterBasis).to_hasBasis' ?_ ?_
     · rintro s ⟨ε, hε, rfl⟩
@@ -196,4 +198,4 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     · rintro ε hε
       exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩
 
-end LorentzLp
+end LorentzSpace

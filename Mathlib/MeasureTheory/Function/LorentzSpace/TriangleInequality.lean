@@ -14,8 +14,8 @@ Mirrors `MeasureTheory.Function.LpSeminorm.TriangleInequality` (relative to
 a.e. equality, behavior on `0`/negation) plus the main result, `lorentzNorm_add_le` — a genuine
 *quasi*-triangle inequality (constant `2 ^ (1 + p⁻¹.toReal + q⁻¹.toReal)`, not `1`), valid
 uniformly for **all** `p q : ℝ≥0∞` including the degenerate `q = 0`/`q = ⊤` cases. This is what
-lets `LorentzSpace/Basic.lean` close `LorentzLp.add_mem'` and
-`LorentzLp.instQuasinormedAddCommGroup.norm_add_le`.
+lets `LorentzSpace/Basic.lean` close `LorentzSpace.add_mem'` and
+`LorentzSpace.instQuasinormedAddCommGroup.norm_add_le`.
 
 ## Mathematical content
 
@@ -29,8 +29,9 @@ defining integral, this gives the triangle inequality with an explicit (not clai
 constant, for every `p, q` — including `q = 0`/`q = ⊤`, handled directly rather than excluded.
 
 Also proves `lorentzNorm_eq_zero_iff` (`lorentzNorm p q μ f = 0 ↔ f =ᵐ[μ] 0`, for `0 < q`) — the
-other axiom `LorentzLp.instQuasinormedAddCommGroup` needs. **Genuinely** needs `0 < q`: at `q = 0`,
-`lorentzNorm` is constantly `1` (`lorentzNorm_zero_exponent`), so the forward direction is simply
+other axiom `LorentzSpace.instQuasinormedAddCommGroup` needs. **Genuinely** needs `0 < q`: at
+`q = 0`, `lorentzNorm` is constantly `1` (`lorentzNorm_zero_exponent`), so the forward direction is
+simply
 false there, not just unproved (see `Basic.lean`'s module docstring/design discussion). The
 argument: `lorentzNorm p q μ f = 0` forces the decreasing rearrangement `f*` to vanish on all of
 `(0,∞)` (via `iSup`/`lintegral` both forcing "every term/a.e. value is `0`", then, in the
@@ -123,7 +124,7 @@ theorem decreasingRearrangement_zero (t : ℝ≥0∞) :
   simp [distributionFunction_zero]
 
 /-- `lorentzNorm` of the zero function is at most `1` (in fact `0` unless `p = q = 0`, an
-otherwise-unused degenerate case — `≤ 1` is all that's needed for `LorentzLp.zero_mem'`, and is
+otherwise-unused degenerate case — `≤ 1` is all that's needed for `LorentzSpace.zero_mem'`, and is
 uniformly true, so no case restriction on `p, q` is imposed here). -/
 theorem lorentzNorm_zero_le_one (p q : ℝ≥0∞) : lorentzNorm μ p q (0 : α → E) ≤ 1 := by
   unfold lorentzNorm
@@ -452,8 +453,8 @@ theorem lorentzNorm_zero_exponent (p : ℝ≥0∞) (h : α → E) : lorentzNorm 
 /-- **The quasi-triangle inequality for `lorentzNorm`**, uniformly for all `p q : ℝ≥0∞` — no
 positivity/finiteness hypotheses on `p, q` are needed: the degenerate cases `q = 0`/`q = ⊤` are
 handled directly (giving a trivial or one-sided bound that the same constant still dominates)
-rather than excluded. This is what makes `LorentzLp`'s `QuasinormedAddCommGroup` instance work for
-*every* `p, q`, not just `p, q ≥ 1` (`LorentzSpace/Basic.lean`). -/
+rather than excluded. This is what makes `LorentzSpace`'s `QuasinormedAddCommGroup` instance work
+for *every* `p, q`, not just `p, q ≥ 1` (`LorentzSpace/Basic.lean`). -/
 theorem lorentzNorm_add_le (p q : ℝ≥0∞) (f g : α → E) :
     lorentzNorm μ p q (f + g) ≤
       2 ^ (1 + p⁻¹.toReal + q⁻¹.toReal) * (lorentzNorm μ p q f + lorentzNorm μ p q g) := by

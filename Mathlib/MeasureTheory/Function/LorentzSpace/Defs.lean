@@ -13,7 +13,7 @@ The Lorentz `L_{p,q}(μ)` (quasi-)norm, Triebel *Interpolation Theory, Function 
 Differential Operators* §1.18.6, built from the decreasing rearrangement of a function.
 Split into its own file, mirroring `MeasureTheory.Function.LpSeminorm.Defs` relative to
 `LpSeminorm/TriangleInequality.lean` and `LpSpace/Basic.lean`: the raw formulas here have no
-dependency on the bundled `LorentzLp` type (`LorentzSpace/Basic.lean`) or on the quasi-triangle
+dependency on the bundled `LorentzSpace` type (`LorentzSpace/Basic.lean`) or on the quasi-triangle
 inequality (`LorentzSpace/TriangleInequality.lean`), and both of those depend on this file, so
 this has to be the bottom of that chain to avoid a cycle.
 

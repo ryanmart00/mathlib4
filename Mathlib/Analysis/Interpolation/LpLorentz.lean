@@ -14,14 +14,14 @@ Following Triebel, *Interpolation Theory, Function Spaces, Differential Operator
 The end goal (per Ryan): the Marcinkiewicz interpolation theorem, i.e. that real-interpolating
 two weak-`Lᵖ` (Lorentz `L_{p,∞}`) spaces gives the usual `Lᵖ` space.
 
-`distributionFunction`, `decreasingRearrangement`, `lorentzNorm` and the bundled type `LorentzLp`
+`distributionFunction`, `decreasingRearrangement`, `lorentzNorm` and the bundled type `LorentzSpace`
 now live in `Mathlib/MeasureTheory/Function/LorentzSpace/Basic.lean` (Unit 6, 2026-09-20 — moved
 out of this file since they're general-purpose Lorentz-space content, not specific to
 interpolation theory, mirroring where `MeasureTheory.Lp` itself lives relative to this project).
 This file keeps the interpolation-couple-specific content: the Lorentz-couple K-functional and the
 classical `Lᵖ`/Lorentz identification theorems, still stated against the raw-formula
-`lorentzNorm`/`lorentzKFunctional` for now — restating them against `LorentzLp` and the abstract
-`(A₀,A₁)_{θ,q}` machinery (Unit 4) is separate follow-up work, once `LorentzLp` itself is signed
+`lorentzNorm`/`lorentzKFunctional` for now — restating them against `LorentzSpace` and the abstract
+`(A₀,A₁)_{θ,q}` machinery (Unit 4) is separate follow-up work, once `LorentzSpace` itself is signed
 off and has its `QuasinormedAddCommGroup`/`CompleteSpace` instances.
 
 ## Main definitions

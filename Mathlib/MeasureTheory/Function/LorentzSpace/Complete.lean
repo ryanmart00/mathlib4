@@ -431,3 +431,129 @@ theorem ae_summable_norm_of_distributionFunction_le {h : ℕ → α → E}
     apply Summable.of_nonneg_of_le (fun k => norm_nonneg _) (fun k => hcomp (k + N) (by omega))
     exact hσsum.comp_injective (add_left_injective N)
   exact (summable_nat_add_iff N).mp hsummable_tail
+
+/-- Real-valued repackaging of `distributionFunction_le_of_lorentzNorm_top_lt`, matching the
+shape `ae_summable_norm_of_distributionFunction_le` needs (`σ, t : ℕ → ℝ`, not `ℝ≥0∞`/`ℝ≥0`). -/
+theorem distributionFunction_le_of_lorentzNorm_top_lt_real (p : ℝ≥0∞) (f : α → E) (σ t : ℝ)
+    (ht : 0 ≤ t) (h : lorentzNorm μ p ⊤ f < ENNReal.ofReal (t ^ p⁻¹.toReal * σ)) :
+    distributionFunction μ f (ENNReal.ofReal σ) ≤ ENNReal.ofReal t := by
+  have hpr : (0 : ℝ) ≤ p⁻¹.toReal := ENNReal.toReal_nonneg
+  have hcast : (t.toNNReal : ℝ≥0∞) ^ p⁻¹.toReal = ENNReal.ofReal (t ^ p⁻¹.toReal) := by
+    rw [show ((t.toNNReal : ℝ≥0) : ℝ≥0∞) = ENNReal.ofReal t from rfl,
+      ENNReal.ofReal_rpow_of_nonneg ht hpr]
+  have h' : lorentzNorm μ p ⊤ f < (t.toNNReal : ℝ≥0∞) ^ p⁻¹.toReal * ENNReal.ofReal σ := by
+    rw [hcast, ← ENNReal.ofReal_mul (by positivity)]
+    exact h
+  have key := distributionFunction_le_of_lorentzNorm_top_lt p f (ENNReal.ofReal σ) t.toNNReal h'
+  rwa [show ((t.toNNReal : ℝ≥0) : ℝ≥0∞) = ENNReal.ofReal t from rfl] at key
+
+/-- Real-valued repackaging of `distributionFunction_le_of_lorentzNorm_finite_lt` (same reason as
+the `q = ⊤` version above). -/
+theorem distributionFunction_le_of_lorentzNorm_finite_lt_real (p q : ℝ≥0∞) (hq0 : q ≠ 0)
+    (hqtop : q ≠ ⊤) (f : α → E) (σ s : ℝ) (hσ : 0 ≤ σ) (hs : 0 < s)
+    (h : lorentzNorm μ p q f <
+      ENNReal.ofReal (s ^ p⁻¹.toReal * σ * Real.log 2 ^ q⁻¹.toReal)) :
+    distributionFunction μ f (ENNReal.ofReal σ) ≤ ENNReal.ofReal (2 * s) := by
+  have hpr : (0 : ℝ) ≤ p⁻¹.toReal := ENNReal.toReal_nonneg
+  have hlog2 : (0 : ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have heq : ENNReal.ofReal s ^ p⁻¹.toReal * ENNReal.ofReal σ *
+      ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal =
+      ENNReal.ofReal (s ^ p⁻¹.toReal * σ * Real.log 2 ^ q⁻¹.toReal) := by
+    rw [ENNReal.ofReal_rpow_of_nonneg hs.le hpr,
+      ENNReal.ofReal_rpow_of_nonneg hlog2 ENNReal.toReal_nonneg,
+      ← ENNReal.ofReal_mul (by positivity), ← ENNReal.ofReal_mul (by positivity)]
+  have h' : lorentzNorm μ p q f <
+      ENNReal.ofReal s ^ p⁻¹.toReal * ENNReal.ofReal σ *
+        ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal := heq ▸ h
+  exact distributionFunction_le_of_lorentzNorm_finite_lt p q hq0 hqtop f (ENNReal.ofReal σ)
+    (ENNReal.ofReal_ne_top) s hs h'
+
+/-- The geometric rate a controlled sequence's consecutive `lorentzNorm` differences need to decay
+at, for `ae_summable_norm_of_distributionFunction_le` to apply at the concrete threshold/measure
+scales `σ k = t k := (1/2)^(k+1)` used by `distributionFunction_le_of_lorentzBC` below. Chosen so
+that (mirroring `Basic.lean`'s `quasiTriangleConst`) the same rate works uniformly whether `q = ⊤`
+or `0 < q < ⊤`, since — as `distributionFunction_le_of_lorentzBC`'s proof shows — the two
+Chebyshev bounds' required rates coincide exactly (only the required *constant* prefactor differs,
+absorbed into `lorentzBCConst`). -/
+noncomputable def lorentzBCRate (p : ℝ≥0∞) : ℝ := (1 / 2 : ℝ) ^ (p⁻¹.toReal + 1)
+
+/-- The constant prefactor accompanying `lorentzBCRate`: the smaller of what the `q = ⊤` and
+`0 < q < ⊤` Chebyshev bounds each need, so `distributionFunction_le_of_lorentzBC` can use a single
+`κ * lorentzBCRate p ^ k` target regardless of which case `q` falls into. -/
+noncomputable def lorentzBCConst (p q : ℝ≥0∞) : ℝ :=
+  min ((1 / 2 : ℝ) ^ (p⁻¹.toReal + 1))
+    ((1 / 2 : ℝ) ^ (2 * p⁻¹.toReal + 1) * Real.log 2 ^ q⁻¹.toReal)
+
+theorem lorentzBCRate_pos (p : ℝ≥0∞) : 0 < lorentzBCRate p := by
+  unfold lorentzBCRate; positivity
+
+theorem lorentzBCRate_lt_one (p : ℝ≥0∞) : lorentzBCRate p < 1 := by
+  unfold lorentzBCRate
+  exact Real.rpow_lt_one (by norm_num) (by norm_num) (by positivity)
+
+theorem lorentzBCConst_pos (p q : ℝ≥0∞) : 0 < lorentzBCConst p q := by
+  unfold lorentzBCConst
+  apply lt_min <;> positivity
+
+/-- **The Chebyshev/Borel–Cantelli glue**: `lorentzNorm`-smallness at the `lorentzBCConst`/
+`lorentzBCRate` geometric rate gives exactly the `distributionFunction` bound
+`ae_summable_norm_of_distributionFunction_le` needs, at the concrete scales `σ k = t k =
+(1/2)^(k+1)` — uniformly for **every** `q` (with `0 < q`, as required throughout this file), via
+whichever of the two Chebyshev lemmas applies. The two case computations both reduce to a clean
+algebraic identity (`lorentzBCRate p ^ (k+1)` — or its finite-`q` analogue with the extra
+`(log 2)^{q⁻¹.toReal}` factor — equals exactly the target the corresponding Chebyshev lemma needs),
+so `lorentzBCConst`'s role is only to handle the *initial* constant mismatch between the two
+branches, never the exponential rate itself. -/
+theorem distributionFunction_le_of_lorentzBC (p q : ℝ≥0∞) (hq0 : q ≠ 0) {h : α → E} (k : ℕ)
+    (hsmall : lorentzNorm μ p q h < ENNReal.ofReal (lorentzBCConst p q * lorentzBCRate p ^ k)) :
+    distributionFunction μ h (ENNReal.ofReal ((1 / 2 : ℝ) ^ (k + 1))) ≤
+      ENNReal.ofReal ((1 / 2 : ℝ) ^ (k + 1)) := by
+  have hrate_nonneg : (0 : ℝ) ≤ lorentzBCRate p ^ k := pow_nonneg (lorentzBCRate_pos p).le k
+  rcases eq_or_ne q ⊤ with hqtop | hqtop
+  · subst hqtop
+    apply distributionFunction_le_of_lorentzNorm_top_lt_real p h _ _ (by positivity)
+    refine hsmall.trans_le (ENNReal.ofReal_le_ofReal ?_)
+    have heq : lorentzBCRate p ^ (k + 1) =
+        ((1 / 2 : ℝ) ^ (k + 1)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) := by
+      unfold lorentzBCRate
+      have hone : (1 / 2 : ℝ) ^ (k + 1) = (1 / 2 : ℝ) ^ ((k + 1 : ℕ) : ℝ) :=
+        (Real.rpow_natCast _ _).symm
+      rw [hone, ← Real.rpow_natCast ((1 / 2 : ℝ) ^ (p⁻¹.toReal + 1)) (k + 1),
+        ← Real.rpow_mul (by norm_num), ← Real.rpow_mul (by norm_num),
+        ← Real.rpow_add (by norm_num)]
+      ring_nf
+    calc lorentzBCConst p ⊤ * lorentzBCRate p ^ k
+        ≤ lorentzBCRate p * lorentzBCRate p ^ k :=
+          mul_le_mul_of_nonneg_right (min_le_left _ _) hrate_nonneg
+      _ = lorentzBCRate p ^ (k + 1) := (pow_succ' _ _).symm
+      _ = ((1 / 2 : ℝ) ^ (k + 1)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) := heq
+  · have hs : (0 : ℝ) < (1 / 2 : ℝ) ^ (k + 2) := by positivity
+    have key := distributionFunction_le_of_lorentzNorm_finite_lt_real (μ := μ) p q hq0 hqtop h
+      ((1 / 2 : ℝ) ^ (k + 1)) ((1 / 2 : ℝ) ^ (k + 2)) (by positivity) hs (h := ?_)
+    · rwa [show (2 : ℝ) * (1 / 2 : ℝ) ^ (k + 2) = (1 / 2 : ℝ) ^ (k + 1) from by ring] at key
+    · refine hsmall.trans_le (ENNReal.ofReal_le_ofReal ?_)
+      have hLHS : ((1 / 2 : ℝ) ^ (2 * p⁻¹.toReal + 1) * Real.log 2 ^ q⁻¹.toReal) *
+          lorentzBCRate p ^ k =
+          (1 / 2 : ℝ) ^ ((k + 2 : ℝ) * p⁻¹.toReal + (k + 1 : ℝ)) * Real.log 2 ^ q⁻¹.toReal := by
+        unfold lorentzBCRate
+        rw [← Real.rpow_natCast ((1 / 2 : ℝ) ^ (p⁻¹.toReal + 1)) k, ← Real.rpow_mul (by norm_num),
+          mul_right_comm, ← Real.rpow_add (by norm_num)]
+        ring_nf
+      have hRHS : ((1 / 2 : ℝ) ^ (k + 2)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) *
+            Real.log 2 ^ q⁻¹.toReal =
+          (1 / 2 : ℝ) ^ ((k + 2 : ℝ) * p⁻¹.toReal + (k + 1 : ℝ)) * Real.log 2 ^ q⁻¹.toReal := by
+        have hone : ∀ n : ℕ, (1 / 2 : ℝ) ^ n = (1 / 2 : ℝ) ^ ((n : ℕ) : ℝ) := fun n =>
+          (Real.rpow_natCast _ _).symm
+        rw [hone (k + 1), hone (k + 2), ← Real.rpow_mul (by norm_num),
+          ← Real.rpow_add (by norm_num)]
+        push_cast
+        ring_nf
+      have heq : ((1 / 2 : ℝ) ^ (2 * p⁻¹.toReal + 1) * Real.log 2 ^ q⁻¹.toReal) *
+          lorentzBCRate p ^ k =
+          ((1 / 2 : ℝ) ^ (k + 2)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) *
+            Real.log 2 ^ q⁻¹.toReal := hLHS.trans hRHS.symm
+      calc lorentzBCConst p q * lorentzBCRate p ^ k
+          ≤ ((1 / 2 : ℝ) ^ (2 * p⁻¹.toReal + 1) * Real.log 2 ^ q⁻¹.toReal) * lorentzBCRate p ^ k :=
+            mul_le_mul_of_nonneg_right (min_le_right _ _) hrate_nonneg
+        _ = ((1 / 2 : ℝ) ^ (k + 2)) ^ p⁻¹.toReal * (1 / 2 : ℝ) ^ (k + 1) *
+            Real.log 2 ^ q⁻¹.toReal := heq

@@ -10,6 +10,7 @@ import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 import Mathlib.MeasureTheory.Integral.IntegrableOn
+import Mathlib.Analysis.MeanInequalitiesPow
 
 /-!
 # Real interpolation spaces via the K-functional
@@ -97,6 +98,30 @@ theorem InterpolationCouple.rpow_pow_dtOverT_eq {t p C n : ℝ} (ht : 0 < t) (hC
   rw [mul_right_comm, ← Real.rpow_neg_one t, ← ENNReal.ofReal_mul (Real.rpow_nonneg ht.le _),
     ← Real.rpow_add ht, show p * n + -1 = p * n - 1 by ring]
   rw [mul_comm (ENNReal.ofReal (C ^ n))]
+
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The K-functional, extended to all of `ℝ` via `max t 0`, is globally measurable — monotone
+(via `kFunctional_mono`, itself only proved on `t ≥ 0`) composed with the globally-monotone `max
+· 0`. `K` itself is *not* known to be measurable on all of `ℝ` (its behaviour for `t < 0` was never
+pinned down), so this `max`-extended stand-in, agreeing with `K` exactly on `Ioi 0`
+(`kFunctional_max_eq`), is used wherever a *globally* measurable stand-in for `K` is needed on a
+`Set.Ioi 0`-restricted integral or supremum. -/
+theorem InterpolationCouple.kFunctional_max_measurable
+    (a : InterpolationCouple.sum ι₀ ι₁) :
+    Measurable (fun t : ℝ => InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a) := by
+  have hmono : Monotone (fun t : ℝ =>
+      InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a) := by
+    intro s t hst
+    exact InterpolationCouple.kFunctional_mono ι₀ ι₁ (le_max_right s 0)
+      (max_le_max hst le_rfl) a
+  exact Monotone.measurable hmono
+
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.kFunctional_max_eq
+    (a : InterpolationCouple.sum ι₀ ι₁) {t : ℝ} (ht : 0 < t) :
+    InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a =
+      InterpolationCouple.KFunctional ι₀ ι₁ t a := by
+  rw [max_eq_left ht.le]
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `q = ⊤` case of `realInterpolationENorm_meetToSum_lt_top`: for `a` in the meet, `K(t,a)` is
@@ -307,22 +332,208 @@ theorem InterpolationCouple.realInterpolationENorm_meetToSum_lt_top
     exact InterpolationCouple.meetToSum_lt_top_of_eq_top ι₀ ι₁ θ hθ0 hθ1 a₀ a₁ ha
   · exact InterpolationCouple.meetToSum_lt_top_of_ne_top ι₀ ι₁ θ hθ0 hθ1 q hq hqtop a₀ a₁ ha
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The quasi-triangle inequality for `realInterpolationENorm`: a Minkowski-type inequality for
-the `(θ,q)`-quasinorm, with some constant `C` depending on `θ`, `q`, and the legs' own
-`quasiTriangleConst`s. This is what will let `RealInterpolationSpace` actually be built as a
+the `(θ,q)`-quasinorm, with some constant `C` depending on `q` and the legs' own
+`quasiTriangleConst`s (in fact, not on `θ` at all — the pointwise `K`-subadditivity step is
+`θ`-independent). This is what will let `RealInterpolationSpace` actually be built as a
 `QuasinormedAddCommGroup` (closure of the defining subtype under `+`, plus the class's own
-`norm_add_le` field) — no instance work has been attempted yet, this is purely the analytic fact
-it would rest on. STATEMENT ONLY — proof deferred; likely the single hardest piece of Unit 4,
-needing genuine control of `K(t, a+b)` against `K(t,a) + K(t,b)` (itself following from `K`'s own
-subadditivity, an easy consequence of its defining infimum, propagated through the `(θ,q)`
-integral/supremum via a Minkowski-style argument). -/
+`norm_add_le` field).
+
+Proof: `K(t,a+b) ≤ Ck·(K(t,a)+K(t,b))` (`kFunctional_add_le`, `Ck := max` of the legs'
+`quasiTriangleConst`s) gives, pointwise in `t`, `t^{-θ}K(t,a+b) ≤ Ck·(t^{-θ}K(t,a)+t^{-θ}K(t,b))`.
+For `q = ⊤` this is already enough (`sup` of a sum is at most the sum of `sup`s). For `q < ⊤`,
+raise to the `q`-th power and apply `ENNReal.rpow_add_le_mul_rpow_add_rpow'` (the *unconditional*
+`0 < p` generalization of Minkowski's inequality's pointwise step, via the `LpAddConst`
+machinery — valid for every `p`, not just `p ≥ 1`, which is exactly what makes `0 < q < ∞`
+tractable here without splitting into `q ≥ 1`/`q < 1` sub-cases) to fold the `Ck`-bound and the
+sum into a single constant times `(t^{-θ}K(t,a))^q+(t^{-θ}K(t,a))^q`; integrate `dt/t`; apply the
+same `rpow_add_le_mul_rpow_add_rpow'` fact a *second* time (now at the reciprocal exponent
+`q⁻¹.toReal`) to pull the `1/q`-th root of a sum apart into a sum of `1/q`-th roots. -/
 theorem InterpolationCouple.realInterpolationENorm_add_le
-    (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q) :
+    (θ : ℝ) (_hθ0 : 0 < θ) (_hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q) :
     ∃ C : ℝ≥0∞, 0 < C ∧ ∀ a b : InterpolationCouple.sum ι₀ ι₁,
       InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
         C * (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
           InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) := by
-  sorry
+  set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) with hCkdef
+  have hCk_pos : 0 < Ck := lt_of_lt_of_le zero_lt_one
+    (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  have hpt : ∀ (a b : InterpolationCouple.sum ι₀ ι₁) (t : ℝ), 0 ≤ t →
+      ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ≤
+        ENNReal.ofReal Ck * (ENNReal.ofReal (t ^ (-θ) *
+            InterpolationCouple.KFunctional ι₀ ι₁ t a) +
+          ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b)) := by
+    intro a b t ht
+    have hK := InterpolationCouple.kFunctional_add_le ι₀ ι₁ t ht a b
+    have hnn : (0:ℝ) ≤ t ^ (-θ) := Real.rpow_nonneg ht _
+    have hnnKa : (0:ℝ) ≤ t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a :=
+      mul_nonneg hnn (InterpolationCouple.kFunctional_nonneg ι₀ ι₁ t ht a)
+    have hnnKb : (0:ℝ) ≤ t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b :=
+      mul_nonneg hnn (InterpolationCouple.kFunctional_nonneg ι₀ ι₁ t ht b)
+    have hrw : t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b) ≤
+        Ck * (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a +
+          t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b) := by
+      calc t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)
+          ≤ t ^ (-θ) * (Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+              InterpolationCouple.KFunctional ι₀ ι₁ t b)) := mul_le_mul_of_nonneg_left hK hnn
+        _ = Ck * (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a +
+              t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b) := by ring
+    calc ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b))
+        ≤ ENNReal.ofReal (Ck * (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a +
+            t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b)) :=
+          ENNReal.ofReal_le_ofReal hrw
+      _ = ENNReal.ofReal Ck * ENNReal.ofReal (t ^ (-θ) *
+            InterpolationCouple.KFunctional ι₀ ι₁ t a +
+            t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b) :=
+          ENNReal.ofReal_mul hCk_pos.le
+      _ = ENNReal.ofReal Ck * (ENNReal.ofReal (t ^ (-θ) *
+            InterpolationCouple.KFunctional ι₀ ι₁ t a) +
+            ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b)) := by
+          rw [ENNReal.ofReal_add hnnKa hnnKb]
+  by_cases hqtop : q = ⊤
+  · subst hqtop
+    refine ⟨ENNReal.ofReal Ck, ENNReal.ofReal_pos.mpr hCk_pos, fun a b => ?_⟩
+    unfold InterpolationCouple.realInterpolationENorm
+    simp only [ite_true]
+    apply iSup_le
+    intro t
+    have ht : (0:ℝ) < (t:ℝ) := t.2
+    calc ENNReal.ofReal ((t:ℝ) ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ) (a + b))
+        ≤ ENNReal.ofReal Ck * (ENNReal.ofReal ((t:ℝ) ^ (-θ) *
+            InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ) a) +
+            ENNReal.ofReal ((t:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (t:ℝ) b)) :=
+          hpt a b (t:ℝ) ht.le
+      _ ≤ ENNReal.ofReal Ck * ((⨆ s : Ioi (0:ℝ), ENNReal.ofReal
+            ((s:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (s:ℝ) a)) +
+            (⨆ s : Ioi (0:ℝ), ENNReal.ofReal
+              ((s:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (s:ℝ) b))) := by
+          gcongr
+          · exact le_iSup (fun s : ↥(Ioi (0:ℝ)) => ENNReal.ofReal
+              ((s:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (s:ℝ) a)) t
+          · exact le_iSup (fun s : ↥(Ioi (0:ℝ)) => ENNReal.ofReal
+              ((s:ℝ) ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (s:ℝ) b)) t
+  · have hq' : 0 < q.toReal := ENNReal.toReal_pos hq.ne' hqtop
+    have hqinv' : 0 < q⁻¹.toReal := by
+      rw [ENNReal.toReal_inv]; positivity
+    set q' := q.toReal with hq'def
+    set L1 := ENNReal.LpAddConst (ENNReal.ofReal q')⁻¹ with hL1def
+    set L2 := ENNReal.LpAddConst (ENNReal.ofReal q⁻¹.toReal)⁻¹ with hL2def
+    have hL1_pos : 0 < L1 := pos_iff_ne_zero.mpr (ENNReal.LpAddConst_ne_zero _)
+    have hL1_lt_top : L1 < ⊤ := ENNReal.LpAddConst_lt_top _
+    have hL2_pos : 0 < L2 := pos_iff_ne_zero.mpr (ENNReal.LpAddConst_ne_zero _)
+    have hL2_lt_top : L2 < ⊤ := ENNReal.LpAddConst_lt_top _
+    set K1 := ENNReal.ofReal Ck ^ q' * L1 with hK1def
+    have hK1_pos : 0 < K1 := by
+      apply ENNReal.mul_pos
+      · exact (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr hCk_pos) ENNReal.ofReal_ne_top).ne'
+      · exact hL1_pos.ne'
+    have hK1_lt_top : K1 < ⊤ := by
+      apply ENNReal.mul_lt_top
+      · exact ENNReal.rpow_lt_top_of_nonneg hq'.le ENNReal.ofReal_ne_top
+      · exact hL1_lt_top
+    set C := K1 ^ q⁻¹.toReal * L2 with hCdef
+    have hC_pos : 0 < C := by
+      apply ENNReal.mul_pos
+      · exact (ENNReal.rpow_pos hK1_pos hK1_lt_top.ne).ne'
+      · exact hL2_pos.ne'
+    refine ⟨C, hC_pos, fun a b => ?_⟩
+    set Ha : ℝ → ℝ≥0∞ := fun s => ENNReal.ofReal (s ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ (max s 0) a) ^ q' with hHadef
+    set Hb : ℝ → ℝ≥0∞ := fun s => ENNReal.ofReal (s ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ (max s 0) b) ^ q' with hHbdef
+    set Hab : ℝ → ℝ≥0∞ := fun s => ENNReal.ofReal (s ^ (-θ) *
+      InterpolationCouple.KFunctional ι₀ ι₁ (max s 0) (a + b)) ^ q' with hHabdef
+    have hHa_meas : Measurable Ha :=
+      (ENNReal.measurable_ofReal.comp ((measurable_id.pow_const _).mul
+        (InterpolationCouple.kFunctional_max_measurable ι₀ ι₁ a))).pow_const _
+    have hHb_meas : Measurable Hb :=
+      (ENNReal.measurable_ofReal.comp ((measurable_id.pow_const _).mul
+        (InterpolationCouple.kFunctional_max_measurable ι₀ ι₁ b))).pow_const _
+    have heqA : ∫⁻ t in Ioi (0:ℝ), ENNReal.ofReal (t ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ t a) ^ q' * ENNReal.ofReal t⁻¹ =
+        ∫⁻ t in Ioi (0:ℝ), Ha t * ENNReal.ofReal t⁻¹ := by
+      apply setLIntegral_congr_fun measurableSet_Ioi
+      intro t ht
+      rw [hHadef]
+      simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ a (mem_Ioi.mp ht)]
+    have heqB : ∫⁻ t in Ioi (0:ℝ), ENNReal.ofReal (t ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ t b) ^ q' * ENNReal.ofReal t⁻¹ =
+        ∫⁻ t in Ioi (0:ℝ), Hb t * ENNReal.ofReal t⁻¹ := by
+      apply setLIntegral_congr_fun measurableSet_Ioi
+      intro t ht
+      rw [hHbdef]
+      simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ b (mem_Ioi.mp ht)]
+    have heqAB : ∫⁻ t in Ioi (0:ℝ), ENNReal.ofReal (t ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ^ q' * ENNReal.ofReal t⁻¹ =
+        ∫⁻ t in Ioi (0:ℝ), Hab t * ENNReal.ofReal t⁻¹ := by
+      apply setLIntegral_congr_fun measurableSet_Ioi
+      intro t ht
+      rw [hHabdef]
+      simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ (a + b) (mem_Ioi.mp ht)]
+    unfold InterpolationCouple.realInterpolationENorm
+    simp only [hqtop, ite_false, ← hq'def, heqA, heqB, heqAB]
+    change (∫⁻ t in Ioi (0:ℝ), Hab t * ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal ≤
+      C * ((∫⁻ t in Ioi (0:ℝ), Ha t * ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal +
+        (∫⁻ t in Ioi (0:ℝ), Hb t * ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal)
+    have hptq : ∀ t ∈ Ioi (0:ℝ), Hab t ≤ K1 * (Ha t + Hb t) := by
+      intro t ht
+      have ht0 : (0:ℝ) < t := ht
+      have hHab_eq : Hab t = ENNReal.ofReal (t ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ^ q' := by
+        rw [hHabdef]; simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ (a + b) ht0]
+      have hHa_eq : Ha t = ENNReal.ofReal (t ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ t a) ^ q' := by
+        rw [hHadef]; simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ a ht0]
+      have hHb_eq : Hb t = ENNReal.ofReal (t ^ (-θ) *
+          InterpolationCouple.KFunctional ι₀ ι₁ t b) ^ q' := by
+        rw [hHbdef]; simp only [InterpolationCouple.kFunctional_max_eq ι₀ ι₁ b ht0]
+      rw [hHab_eq, hHa_eq, hHb_eq]
+      have hstep := hpt a b t ht0.le
+      have hpow : ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ^ q' ≤
+          (ENNReal.ofReal Ck * (ENNReal.ofReal (t ^ (-θ) *
+            InterpolationCouple.KFunctional ι₀ ι₁ t a) +
+            ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b))) ^ q' :=
+        ENNReal.rpow_le_rpow hstep hq'.le
+      rw [ENNReal.mul_rpow_of_nonneg _ _ hq'.le] at hpow
+      calc ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ^ q'
+          ≤ ENNReal.ofReal Ck ^ q' * (ENNReal.ofReal (t ^ (-θ) *
+              InterpolationCouple.KFunctional ι₀ ι₁ t a) +
+              ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b)) ^ q' := hpow
+        _ ≤ ENNReal.ofReal Ck ^ q' * (L1 * (ENNReal.ofReal (t ^ (-θ) *
+              InterpolationCouple.KFunctional ι₀ ι₁ t a) ^ q' +
+              ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b) ^ q')) := by
+            gcongr
+            exact ENNReal.rpow_add_le_mul_rpow_add_rpow' _ _ hq'.le
+        _ = K1 * (ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a) ^ q' +
+              ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b) ^ q') := by
+            rw [hK1def]; ring
+    have hmeasinv : Measurable (fun t : ℝ => ENNReal.ofReal t⁻¹) :=
+      ENNReal.measurable_ofReal.comp measurable_inv
+    set Ia := ∫⁻ t in Ioi (0:ℝ), Ha t * ENNReal.ofReal t⁻¹ with hIadef
+    set Ib := ∫⁻ t in Ioi (0:ℝ), Hb t * ENNReal.ofReal t⁻¹ with hIbdef
+    set Iab := ∫⁻ t in Ioi (0:ℝ), Hab t * ENNReal.ofReal t⁻¹ with hIabdef
+    have hmulA : Measurable (fun t : ℝ => Ha t * ENNReal.ofReal t⁻¹) := hHa_meas.mul hmeasinv
+    have hintstep : Iab ≤ K1 * (Ia + Ib) := by
+      rw [hIadef, hIbdef, hIabdef, ← lintegral_add_left' hmulA.aemeasurable,
+        ← lintegral_const_mul' _ _ hK1_lt_top.ne]
+      apply setLIntegral_mono' measurableSet_Ioi
+      intro t ht
+      calc Hab t * ENNReal.ofReal t⁻¹
+          ≤ K1 * (Ha t + Hb t) * ENNReal.ofReal t⁻¹ := by gcongr; exact hptq t ht
+        _ = K1 * (Ha t * ENNReal.ofReal t⁻¹ + Hb t * ENNReal.ofReal t⁻¹) := by ring
+    have hfinal1 := ENNReal.rpow_le_rpow hintstep hqinv'.le
+    rw [ENNReal.mul_rpow_of_nonneg _ _ hqinv'.le] at hfinal1
+    change Iab ^ q⁻¹.toReal ≤ C * (Ia ^ q⁻¹.toReal + Ib ^ q⁻¹.toReal)
+    calc Iab ^ q⁻¹.toReal
+        ≤ K1 ^ q⁻¹.toReal * (Ia + Ib) ^ q⁻¹.toReal := hfinal1
+      _ ≤ K1 ^ q⁻¹.toReal * (L2 * (Ia ^ q⁻¹.toReal + Ib ^ q⁻¹.toReal)) := by
+          gcongr
+          exact ENNReal.rpow_add_le_mul_rpow_add_rpow' _ _ hqinv'.le
+      _ = C * (Ia ^ q⁻¹.toReal + Ib ^ q⁻¹.toReal) := by
+          rw [hCdef]; ring
 
 /-- Rescale `x` by a power of `c` (any element of norm `> 1`) to land in the "shell"
 `[ε/‖c‖, ε)`. Pure real-number `rpow` algebra: the identity that lets `kFunctional_sumMap_le`'s
@@ -374,30 +585,6 @@ theorem InterpolationCouple.lintegral_Ioi_comp_mul_left_div_self {c : ℝ} (hc :
   have h1 := congrArg ((ENNReal.ofReal c⁻¹)⁻¹ * ·) hmap
   rw [ENNReal.inv_mul_cancel_left h0 htop, ENNReal.inv_mul_cancel_left h0 htop] at h1
   exact h1.symm
-
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
-/-- The K-functional, extended to all of `ℝ` via `max t 0`, is globally measurable — monotone
-(via `kFunctional_mono`, itself only proved on `t ≥ 0`) composed with the globally-monotone `max
-· 0`. `K` itself is *not* known to be measurable on all of `ℝ` (its behaviour for `t < 0` was never
-pinned down), so this `max`-extended stand-in, agreeing with `K` exactly on `Ioi 0`
-(`kFunctional_max_eq`), is what `lintegral_Ioi_comp_mul_left_div_self` above is actually applied
-to. -/
-theorem InterpolationCouple.kFunctional_max_measurable
-    (a : InterpolationCouple.sum ι₀ ι₁) :
-    Measurable (fun t : ℝ => InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a) := by
-  have hmono : Monotone (fun t : ℝ =>
-      InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a) := by
-    intro s t hst
-    exact InterpolationCouple.kFunctional_mono ι₀ ι₁ (le_max_right s 0)
-      (max_le_max hst le_rfl) a
-  exact Monotone.measurable hmono
-
-omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
-theorem InterpolationCouple.kFunctional_max_eq
-    (a : InterpolationCouple.sum ι₀ ι₁) {t : ℝ} (ht : 0 < t) :
-    InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) a =
-      InterpolationCouple.KFunctional ι₀ ι₁ t a := by
-  rw [max_eq_left ht.le]
 
 /-- Triebel §1.3.3's "exact interpolation functor of type `θ`" property, in inequality form: a
 morphism `T : C ⟶ D` bounded by `M₀, M₁` on the legs (in the same "arbitrary upper bound" sense as

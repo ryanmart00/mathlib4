@@ -124,6 +124,79 @@ theorem InterpolationCouple.kFunctional_le_two_mul_max_mul_norm (t : ℝ) (ht : 
         apply mul_le_mul_of_nonneg_left hxlt.le (by positivity)
     _ = 2 * max 1 t * ‖a‖ + ε := by field_simp
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `K`-functional subadditivity: `K(t,a+b) ≤ Ck·(K(t,a)+K(t,b))`, `Ck := max` of the two legs'
+`quasiTriangleConst`s. Combine near-optimal representations of `a` and `b` separately into a
+single representation of `a+b`, then bound via each leg's own quasi-triangle inequality. This is
+the fact that lets `realInterpolationENorm_add_le` propagate a triangle-type bound through the
+`(θ,q)` integral/supremum. -/
+theorem InterpolationCouple.kFunctional_add_le (t : ℝ) (ht : 0 ≤ t)
+    (a b : InterpolationCouple.sum ι₀ ι₁) :
+    InterpolationCouple.KFunctional ι₀ ι₁ t (a + b) ≤
+      max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+        (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) *
+        (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+          InterpolationCouple.KFunctional ι₀ ι₁ t b) := by
+  set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) with hCkdef
+  have hCk_pos : 0 < Ck := lt_of_lt_of_le zero_lt_one
+    (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  have h2Ck_pos : (0:ℝ) < 2 * Ck := by linarith
+  apply le_of_forall_pos_le_add
+  intro ε hε
+  obtain ⟨ra, ⟨a₀, a₁, ha, hraeq⟩, hralt⟩ := Real.lt_sInf_add_pos
+    (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ t a) (div_pos hε h2Ck_pos)
+  obtain ⟨rb, ⟨b₀, b₁, hb, hrbeq⟩, hrblt⟩ := Real.lt_sInf_add_pos
+    (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ t b) (div_pos hε h2Ck_pos)
+  subst hraeq
+  subst hrbeq
+  have hralt' : ‖a₀‖ + t * ‖a₁‖ <
+      InterpolationCouple.KFunctional ι₀ ι₁ t a + ε / (2 * Ck) := hralt
+  have hrblt' : ‖b₀‖ + t * ‖b₁‖ <
+      InterpolationCouple.KFunctional ι₀ ι₁ t b + ε / (2 * Ck) := hrblt
+  have hrep : (Submodule.Quotient.mk (a₀ + b₀, a₁ + b₁) : InterpolationCouple.sum ι₀ ι₁) =
+      a + b := by
+    rw [← ha, ← hb]; rfl
+  have hbound : InterpolationCouple.KFunctional ι₀ ι₁ t (a + b) ≤
+      ‖a₀ + b₀‖ + t * ‖a₁ + b₁‖ :=
+    csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht (a + b))
+      ⟨a₀ + b₀, a₁ + b₁, hrep, rfl⟩
+  have h0 : ‖a₀ + b₀‖ ≤ Ck * (‖a₀‖ + ‖b₀‖) :=
+    (QuasinormedAddCommGroup.norm_add_le a₀ b₀).trans
+      (mul_le_mul_of_nonneg_right (le_max_left _ _)
+        (add_nonneg (QuasinormedAddCommGroup.norm_nonneg a₀)
+          (QuasinormedAddCommGroup.norm_nonneg b₀)))
+  have h1 : ‖a₁ + b₁‖ ≤ Ck * (‖a₁‖ + ‖b₁‖) :=
+    (QuasinormedAddCommGroup.norm_add_le a₁ b₁).trans
+      (mul_le_mul_of_nonneg_right (le_max_right _ _)
+        (add_nonneg (QuasinormedAddCommGroup.norm_nonneg a₁)
+          (QuasinormedAddCommGroup.norm_nonneg b₁)))
+  have hcomb : ‖a₀ + b₀‖ + t * ‖a₁ + b₁‖ ≤
+      Ck * ((‖a₀‖ + t * ‖a₁‖) + (‖b₀‖ + t * ‖b₁‖)) := by
+    have := mul_le_mul_of_nonneg_left h1 ht
+    nlinarith [h0]
+  have hfin : Ck * ((‖a₀‖ + t * ‖a₁‖) + (‖b₀‖ + t * ‖b₁‖)) ≤
+      Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+        InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε := by
+    have heps : ε / (2 * Ck) + ε / (2 * Ck) = ε / Ck := by
+      field_simp
+      ring
+    have hsum : (‖a₀‖ + t * ‖a₁‖) + (‖b₀‖ + t * ‖b₁‖) ≤
+        (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+          InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε / Ck := by
+      rw [← heps]; linarith [hralt', hrblt']
+    calc Ck * ((‖a₀‖ + t * ‖a₁‖) + (‖b₀‖ + t * ‖b₁‖))
+        ≤ Ck * ((InterpolationCouple.KFunctional ι₀ ι₁ t a +
+            InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε / Ck) :=
+          mul_le_mul_of_nonneg_left hsum hCk_pos.le
+      _ = Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+            InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε := by field_simp
+  calc InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)
+      ≤ ‖a₀ + b₀‖ + t * ‖a₁ + b₁‖ := hbound
+    _ ≤ Ck * ((‖a₀‖ + t * ‖a₁‖) + (‖b₀‖ + t * ‖b₁‖)) := hcomb
+    _ ≤ Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+          InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε := hfin
+
 /-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
 proof deferred. -/
 theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :

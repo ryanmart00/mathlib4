@@ -138,7 +138,31 @@ theorem AEEqFun.measureEdist_triangle (f g h : α →ₘ[μ] E) :
 `f = g` as elements of `α →ₘ[μ] E`. -/
 theorem AEEqFun.eq_of_measureEdist_eq_zero {f g : α →ₘ[μ] E}
     (h : AEEqFun.measureEdist μ f g = 0) : f = g := by
-  sorry
+  unfold AEEqFun.measureEdist at h
+  rw [ENNReal.tsum_eq_zero] at h
+  have hedist : AEStronglyMeasurable (fun x => edist (f x) (g x)) μ :=
+    continuous_edist.comp_aestronglyMeasurable₂ f.aestronglyMeasurable g.aestronglyMeasurable
+  have hfgmeas : AEMeasurable (fun x => min 1 (edist (f x) (g x))) μ :=
+    aemeasurable_const.min hedist.aemeasurable
+  have hae : ∀ n : ℕ, ∀ᵐ x ∂μ, x ∈ spanningSets μ n → f x = g x := by
+    intro n
+    have hdpart : AEEqFun.dPart μ n f g = 0 := by
+      rcases mul_eq_zero.mp (h n) with h1 | h1
+      · exact absurd h1 (pow_ne_zero n (by simp))
+      · exact h1
+    rw [AEEqFun.dPart, setLIntegral_eq_zero_iff' (measurableSet_spanningSets μ n)
+      hfgmeas.restrict] at hdpart
+    filter_upwards [hdpart] with x hx hxs
+    rcases le_total (edist (f x) (g x)) 1 with hle | hle
+    · rw [min_eq_right hle] at hx
+      exact edist_eq_zero.mp (hx hxs)
+    · rw [min_eq_left hle] at hx
+      exact absurd (hx hxs) one_ne_zero
+  have hglobal : f =ᵐ[μ] g := by
+    filter_upwards [ae_all_iff.mpr hae] with x hx
+    obtain ⟨n, hn⟩ := mem_iUnion.mp (iUnion_spanningSets μ ▸ mem_univ x)
+    exact hx n hn
+  exact AEEqFun.ext hglobal
 
 /-- Translation invariance of `measureEdist`, needed for `+` to be continuous on the resulting
 topology. -/

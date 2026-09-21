@@ -116,15 +116,22 @@ theorem AEEqFun.dPart_triangle (n : ℕ) (f g h : α →ₘ[μ] E) :
       exact min_le_right _ _
 
 theorem AEEqFun.measureEdist_self (f : α →ₘ[μ] E) : AEEqFun.measureEdist μ f f = 0 := by
-  sorry
+  unfold AEEqFun.measureEdist
+  simp [AEEqFun.dPart_self]
 
 theorem AEEqFun.measureEdist_comm (f g : α →ₘ[μ] E) :
     AEEqFun.measureEdist μ f g = AEEqFun.measureEdist μ g f := by
-  sorry
+  unfold AEEqFun.measureEdist
+  simp_rw [AEEqFun.dPart_comm μ _ f g]
 
 theorem AEEqFun.measureEdist_triangle (f g h : α →ₘ[μ] E) :
     AEEqFun.measureEdist μ f h ≤ AEEqFun.measureEdist μ f g + AEEqFun.measureEdist μ g h := by
-  sorry
+  unfold AEEqFun.measureEdist
+  rw [← ENNReal.tsum_add]
+  refine ENNReal.tsum_le_tsum fun n => ?_
+  rw [← mul_add]
+  gcongr
+  exact AEEqFun.dPart_triangle μ n f g h
 
 /-- The crux fact for `EMetricSpace.eq_of_edist_eq_zero`: `dPart μ n f g = 0` for every `n` in
 `μ`'s exhausting sequence forces `f =ᵐ[μ] g` on all of `α` (via `iUnion_spanningSets`), hence

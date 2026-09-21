@@ -18,7 +18,10 @@ two weak-`Lᵖ` (Lorentz `L_{p,∞}`) spaces gives the usual `Lᵖ` space.
 now live in `Mathlib/MeasureTheory/Function/LorentzSpace/Basic.lean` (Unit 6, 2026-09-20 — moved
 out of this file since they're general-purpose Lorentz-space content, not specific to
 interpolation theory, mirroring where `MeasureTheory.Lp` itself lives relative to this project).
-This file keeps the interpolation-couple-specific content: the Lorentz-couple K-functional and the
+`lorentzNorm_diag` (`L_{p,p} = Lᵖ`) moved out for the same reason, to
+`Mathlib/MeasureTheory/Function/LorentzSpace/Diag.lean` (2026-09-20), alongside its new bundled-type
+form `LorentzSpace.eq_Lp`. This file keeps the interpolation-couple-specific content: the
+Lorentz-couple K-functional and the
 classical `Lᵖ`/Lorentz identification theorems, still stated against the raw-formula
 `lorentzNorm`/`lorentzKFunctional` for now — restating them against `LorentzSpace` and the abstract
 `(A₀,A₁)_{θ,q}` machinery (Unit 4) is separate follow-up work, once `LorentzSpace` itself is signed
@@ -29,7 +32,6 @@ off and has its `QuasinormedAddCommGroup`/`CompleteSpace` instances.
   `(L_{p₀,q₀}, L_{p₁,q₁})`, generalizing Triebel's `K(t,f;L1,L∞)`.
 
 ## Main results (all `sorry` for now)
-* `lorentzNorm_diag`: `L_{p,p} = Lᵖ` (§1.18.6, Lemma).
 * `lorentzNorm_top_eq_iSup`: `L_{p,∞}` is the classical weak-`Lᵖ`/Marcinkiewicz space.
 * `kFunctional_L1_Linfty`: `K(t,f;L1,L∞) = ∫₀ᵗ f*(τ) dτ` (§1.18.6, Theorem 1 proof, eq. 9).
 * `lorentzKFunctional_equiv_lorentzNorm`: the general identification (§1.18.6, Theorem 2).
@@ -55,11 +57,6 @@ noncomputable def lorentzRealInterpolationNorm (p₀ q₀ p₁ q₁ θ q : ℝ�
   (∫⁻ t in Ioi (0 : ℝ),
     (ENNReal.ofReal t ^ (-θ.toReal) * lorentzKFunctional μ p₀ q₀ p₁ q₁ t f) ^ q.toReal *
       ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal
-
-/-- Triebel §1.18.6, Lemma: `L_{p,p} = Lᵖ`. -/
-theorem lorentzNorm_diag (p : ℝ≥0∞) (f : α → E) :
-    lorentzNorm μ p p f = eLpNorm f p μ := by
-  sorry
 
 /-- Triebel §1.18.6, Lemma: `L_{p,∞}` is the classical weak-`Lᵖ` (Marcinkiewicz) space:
 `‖f‖_{L_{p,∞}} = sup_σ σ · ϱ(f,σ)^{1/p}`. -/

@@ -92,7 +92,28 @@ theorem AEEqFun.dPart_comm (n : ℕ) (f g : α →ₘ[μ] E) :
 
 theorem AEEqFun.dPart_triangle (n : ℕ) (f g h : α →ₘ[μ] E) :
     AEEqFun.dPart μ n f h ≤ AEEqFun.dPart μ n f g + AEEqFun.dPart μ n g h := by
-  sorry
+  unfold AEEqFun.dPart
+  have hedist : AEStronglyMeasurable (fun x => edist (f x) (g x)) μ :=
+    continuous_edist.comp_aestronglyMeasurable₂ f.aestronglyMeasurable g.aestronglyMeasurable
+  have hfg : AEMeasurable (fun x => min 1 (edist (f x) (g x))) μ :=
+    aemeasurable_const.min hedist.aemeasurable
+  rw [← lintegral_add_left' hfg.restrict]
+  apply setLIntegral_mono' (measurableSet_spanningSets μ n)
+  intro x _
+  have htri : edist (f x) (h x) ≤ edist (f x) (g x) + edist (g x) (h x) := edist_triangle _ _ _
+  have hstep1 : min 1 (edist (f x) (h x)) ≤ min 1 (edist (f x) (g x) + edist (g x) (h x)) :=
+    min_le_min le_rfl htri
+  refine hstep1.trans ?_
+  by_cases hx : (1 : ℝ≥0∞) ≤ edist (f x) (g x)
+  · calc min 1 (edist (f x) (g x) + edist (g x) (h x)) ≤ 1 := min_le_left _ _
+      _ ≤ min 1 (edist (f x) (g x)) + min 1 (edist (g x) (h x)) := by
+          rw [min_eq_left hx]; exact le_self_add
+  · by_cases hy : (1 : ℝ≥0∞) ≤ edist (g x) (h x)
+    · calc min 1 (edist (f x) (g x) + edist (g x) (h x)) ≤ 1 := min_le_left _ _
+        _ ≤ min 1 (edist (f x) (g x)) + min 1 (edist (g x) (h x)) := by
+            rw [min_eq_left hy]; exact le_add_self
+    · rw [min_eq_right (not_le.mp hx).le, min_eq_right (not_le.mp hy).le]
+      exact min_le_right _ _
 
 theorem AEEqFun.measureEdist_self (f : α →ₘ[μ] E) : AEEqFun.measureEdist μ f f = 0 := by
   sorry

@@ -87,7 +87,8 @@ theorem AEEqFun.dPart_self (n : ℕ) (f : α →ₘ[μ] E) : AEEqFun.dPart μ n 
 
 theorem AEEqFun.dPart_comm (n : ℕ) (f g : α →ₘ[μ] E) :
     AEEqFun.dPart μ n f g = AEEqFun.dPart μ n g f := by
-  sorry
+  unfold AEEqFun.dPart
+  simp_rw [edist_comm (f _)]
 
 theorem AEEqFun.dPart_triangle (n : ℕ) (f g h : α →ₘ[μ] E) :
     AEEqFun.dPart μ n f h ≤ AEEqFun.dPart μ n f g + AEEqFun.dPart μ n g h := by

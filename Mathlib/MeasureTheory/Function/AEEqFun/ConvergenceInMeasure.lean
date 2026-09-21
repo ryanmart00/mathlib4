@@ -168,4 +168,14 @@ theorem AEEqFun.eq_of_measureEdist_eq_zero {f g : α →ₘ[μ] E}
 topology. -/
 theorem AEEqFun.measureEdist_add_add (f g h : α →ₘ[μ] E) :
     AEEqFun.measureEdist μ (f + h) (g + h) = AEEqFun.measureEdist μ f g := by
-  sorry
+  unfold AEEqFun.measureEdist
+  refine tsum_congr fun n => ?_
+  congr 1
+  unfold AEEqFun.dPart
+  refine setLIntegral_congr_fun_ae (measurableSet_spanningSets μ n) ?_
+  filter_upwards [AEEqFun.coeFn_add f h, AEEqFun.coeFn_add g h] with x hxf hxg _
+  show min 1 (edist ((f + h) x) ((g + h) x)) = min 1 (edist (f x) (g x))
+  rw [hxf, hxg]
+  simp only [Pi.add_apply]
+  rw [edist_eq_enorm_sub, edist_eq_enorm_sub,
+    show f x + h x - (g x + h x) = f x - g x by abel]

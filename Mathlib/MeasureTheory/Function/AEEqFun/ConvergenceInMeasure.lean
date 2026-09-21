@@ -82,7 +82,8 @@ route `LorentzSpace/Basic.lean` needed). `eq_of_measureEdist_eq_zero` is the rem
 let the resulting topology's `+` be shown continuous. -/
 
 theorem AEEqFun.dPart_self (n : ℕ) (f : α →ₘ[μ] E) : AEEqFun.dPart μ n f f = 0 := by
-  sorry
+  unfold AEEqFun.dPart
+  simp [edist_self]
 
 theorem AEEqFun.dPart_comm (n : ℕ) (f g : α →ₘ[μ] E) :
     AEEqFun.dPart μ n f g = AEEqFun.dPart μ n g f := by

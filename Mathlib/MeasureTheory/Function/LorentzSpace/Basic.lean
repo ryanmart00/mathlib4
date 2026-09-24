@@ -28,6 +28,9 @@ question, not yet settled) is deferred to a later theorem, once this bundled typ
   see its own docstring for why), using `TriangleInequality.lean`'s `lorentzNorm_add_le`/
   `lorentzNorm_eq_zero_iff` for its content. Every field, including the four bundled topology
   ones, has a real proof — this instance is fully done, zero `sorry`.
+* `LorentzSpace.lorentzSubmodule`, `LorentzSpace.instModule` (every `p, q`) and
+  `LorentzSpace.instQuasiNormedSpace` (`0 < q`), from the absolute homogeneity
+  `lorentzNorm_const_smul` — mirroring `Lp.LpSubmodule`/`Lp.instModule`/`Lp.instNormedSpace`.
 
 ## A `Lp`-inspired elaboration-performance lesson
 

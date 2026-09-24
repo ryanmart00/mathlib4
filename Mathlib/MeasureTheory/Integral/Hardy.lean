@@ -188,3 +188,55 @@ theorem lintegral_hardy {g : ℝ → ℝ≥0∞} (hg : Measurable g) {l s : ℝ}
         congr 1
         rw [show s = s - 1 + 1 from by ring, ENNReal.rpow_add _ _ hl0 ENNReal.ofReal_ne_top,
           ENNReal.rpow_one, sub_add_cancel]
+
+/-- Power substitution for the Haar measure `dt/t`: `∫₀^∞ H(tᵃ) dt/t = a⁻¹ ∫₀^∞ H(T) dT/T`. -/
+theorem lintegral_Ioi_comp_rpow_mul_inv {a : ℝ} (ha : 0 < a) (H : ℝ → ℝ≥0∞) :
+    ∫⁻ t in Ioi (0 : ℝ), H (t ^ a) * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal a⁻¹ * ∫⁻ t in Ioi (0 : ℝ), H t * ENNReal.ofReal t⁻¹ := by
+  have hf' : ∀ x ∈ Ioi (0 : ℝ), HasDerivWithinAt (fun x : ℝ => x ^ a) (a * x ^ (a - 1))
+      (Ioi (0 : ℝ)) x := fun x hx => (Real.hasDerivAt_rpow_const (Or.inl hx.ne')).hasDerivWithinAt
+  have hmono : MonotoneOn (fun x : ℝ => x ^ a) (Ioi (0 : ℝ)) :=
+    fun x hx y _ hxy => Real.rpow_le_rpow hx.le hxy ha.le
+  have himg : (fun x : ℝ => x ^ a) '' Ioi (0 : ℝ) = Ioi 0 := by
+    ext y
+    constructor
+    · rintro ⟨x, hx, rfl⟩
+      exact Real.rpow_pos_of_pos hx a
+    · intro hy
+      exact ⟨y ^ a⁻¹, Real.rpow_pos_of_pos hy _, Real.rpow_inv_rpow hy.le ha.ne'⟩
+  have key := lintegral_image_eq_lintegral_deriv_mul_of_monotoneOn measurableSet_Ioi hf' hmono
+    (fun x => H x * ENNReal.ofReal x⁻¹)
+  rw [himg] at key
+  have hkey : ∫⁻ t in Ioi (0 : ℝ), H t * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal a * ∫⁻ t in Ioi (0 : ℝ), H (t ^ a) * ENNReal.ofReal t⁻¹ := by
+    rw [key, ← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+    refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
+    have ht' : 0 < t := ht
+    have e : ENNReal.ofReal (a * t ^ (a - 1)) * ENNReal.ofReal (t ^ a)⁻¹ =
+        ENNReal.ofReal a * ENNReal.ofReal t⁻¹ := by
+      rw [← ENNReal.ofReal_mul (by positivity), ← ENNReal.ofReal_mul ha.le]
+      congr 1
+      rw [Real.rpow_sub ht', Real.rpow_one]
+      field_simp
+    calc ENNReal.ofReal (a * t ^ (a - 1)) * (H (t ^ a) * ENNReal.ofReal (t ^ a)⁻¹)
+        = (ENNReal.ofReal (a * t ^ (a - 1)) * ENNReal.ofReal (t ^ a)⁻¹) * H (t ^ a) := by ring
+      _ = _ := by rw [e]; ring
+  rw [hkey, ← mul_assoc, ← ENNReal.ofReal_mul (inv_nonneg.mpr ha.le), inv_mul_cancel₀ ha.ne',
+    ENNReal.ofReal_one, one_mul]
+
+/-- `∫₀ᵀ u^{θ-1} du = T^θ / θ`. -/
+theorem lintegral_Ioc_zero_rpow_sub_one {θ : ℝ} (hθ : 0 < θ) {T : ℝ} (hT : 0 < T) :
+    ∫⁻ u in Ioc 0 T, ENNReal.ofReal u ^ (θ - 1) = ENNReal.ofReal T ^ θ * ENNReal.ofReal θ⁻¹ := by
+  have hT0 : ENNReal.ofReal T ≠ 0 := (ENNReal.ofReal_pos.mpr hT).ne'
+  rw [lintegral_Ioc_zero_eq_mul_lintegral_comp_mul hT]
+  have : ∫⁻ v in Ioc (0 : ℝ) 1, ENNReal.ofReal (T * v) ^ (θ - 1) =
+      ENNReal.ofReal T ^ (θ - 1) * ∫⁻ v in Ioc (0 : ℝ) 1, ENNReal.ofReal v ^ (θ - 1) := by
+    rw [← lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_ne_zero hT0 ENNReal.ofReal_ne_top)]
+    refine setLIntegral_congr_fun measurableSet_Ioc fun v hv => ?_
+    rw [ENNReal.ofReal_mul hT.le, ENNReal.mul_rpow_of_ne_zero hT0
+      (ENNReal.ofReal_pos.mpr hv.1).ne']
+  rw [this, lintegral_Ioc_zero_one_rpow hθ, ← mul_assoc]
+  congr 1
+  rw [show θ = 1 + (θ - 1) by ring, ENNReal.rpow_add _ _ hT0 ENNReal.ofReal_ne_top,
+    ENNReal.rpow_one]
+  ring_nf

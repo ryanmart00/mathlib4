@@ -190,6 +190,127 @@ theorem LorentzSpace.exists_Lr_add_Linfty {r : ℝ≥0∞} (hr0 : 0 < r) (hr : r
 
 end Rearrangement
 
+section Estimates
+
+/-! ### Comparison of the Lorentz quasinorm with `T^{-θ/ρ} (∫₀ᵀ f*^ρ)^{1/ρ}` -/
+
+variable {α : Type*} [MeasurableSpace α] {μ : Measure α}
+variable {E : Type*} [NormedAddCommGroup E]
+
+/-- The Lorentz integrand `T^{(1-θ)/ρ} f*(T)` is at most `T^{-θ/ρ} (∫₀ᵀ f*^ρ)^{1/ρ}`. -/
+theorem rpow_mul_decreasingRearrangement_le_rpow_mul {ρ θ : ℝ} (hρ : 0 < ρ) (f : α → E)
+    {T : ℝ} (hT : 0 < T) :
+    ENNReal.ofReal T ^ ((1 - θ) / ρ) * decreasingRearrangement μ f (ENNReal.ofReal T) ≤
+      ENNReal.ofReal T ^ (-θ / ρ) *
+        (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ ρ) ^ ρ⁻¹ := by
+  have hT0 : ENNReal.ofReal T ≠ 0 := (ENNReal.ofReal_pos.mpr hT).ne'
+  rw [show (1 - θ) / ρ = -θ / ρ + ρ⁻¹ by field_simp; ring,
+    ENNReal.rpow_add _ _ hT0 ENNReal.ofReal_ne_top, mul_assoc]
+  gcongr
+  exact rpow_mul_decreasingRearrangement_le hρ f T
+
+/-- Hardy's inequality applied to `g = f*^ρ` (exponent `s = q/ρ ≥ 1`):
+`∫₀^∞ (T^{-θ/ρ} (∫₀ᵀ f*^ρ)^{1/ρ})^q dT/T ≤ θ^{-q/ρ} ∫₀^∞ (T^{(1-θ)/ρ} f*(T))^q dT/T`. -/
+theorem lintegral_rearrangement_hardy {ρ θ q : ℝ} (hρ : 0 < ρ) (hθ : 0 < θ) (hρq : ρ ≤ q)
+    (f : α → E) :
+    ∫⁻ T in Ioi 0, (ENNReal.ofReal T ^ (-θ / ρ) *
+        (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ ρ) ^ ρ⁻¹) ^ q *
+        ENNReal.ofReal T⁻¹ ≤
+      ENNReal.ofReal θ⁻¹ ^ (q / ρ) *
+        ∫⁻ T in Ioi 0, (ENNReal.ofReal T ^ ((1 - θ) / ρ) *
+          decreasingRearrangement μ f (ENNReal.ofReal T)) ^ q * ENNReal.ofReal T⁻¹ := by
+  have hq : 0 < q := hρ.trans_le hρq
+  have hs : 1 ≤ q / ρ := (one_le_div hρ).mpr hρq
+  set g : ℝ → ℝ≥0∞ := fun s => decreasingRearrangement μ f (ENNReal.ofReal s) ^ ρ with hgdef
+  have hg : Measurable g :=
+    ((decreasingRearrangement_measurable f).comp ENNReal.measurable_ofReal).pow_const ρ
+  have hL : ∀ T ∈ Ioi (0 : ℝ), (ENNReal.ofReal T ^ (-θ / ρ) *
+      (∫⁻ s in Ioc 0 T, g s) ^ ρ⁻¹) ^ q =
+      (ENNReal.ofReal T ^ (-θ) * ∫⁻ s in Ioc 0 T, g s) ^ (q / ρ) := by
+    intro T _
+    rw [ENNReal.mul_rpow_of_nonneg _ _ hq.le, ENNReal.mul_rpow_of_nonneg _ _ (by positivity),
+      ← ENNReal.rpow_mul, ← ENNReal.rpow_mul, ← ENNReal.rpow_mul]
+    congr 2 <;> ring
+  have hR : ∀ T ∈ Ioi (0 : ℝ), (ENNReal.ofReal T ^ (1 - θ) * g T) ^ (q / ρ) =
+      (ENNReal.ofReal T ^ ((1 - θ) / ρ) *
+        decreasingRearrangement μ f (ENNReal.ofReal T)) ^ q := by
+    intro T _
+    rw [hgdef, ENNReal.mul_rpow_of_nonneg _ _ (by positivity),
+      ENNReal.mul_rpow_of_nonneg _ _ hq.le, ← ENNReal.rpow_mul, ← ENNReal.rpow_mul,
+      ← ENNReal.rpow_mul]
+    congr 2
+    · field_simp
+    · field_simp
+  calc _ = ∫⁻ T in Ioi 0, (ENNReal.ofReal T ^ (-θ) * ∫⁻ s in Ioc 0 T, g s) ^ (q / ρ) *
+          ENNReal.ofReal T⁻¹ :=
+        setLIntegral_congr_fun measurableSet_Ioi fun T hT => by rw [hL T hT]
+    _ ≤ ENNReal.ofReal θ⁻¹ ^ (q / ρ) *
+          ∫⁻ T in Ioi 0, (ENNReal.ofReal T ^ (1 - θ) * g T) ^ (q / ρ) * ENNReal.ofReal T⁻¹ :=
+        lintegral_hardy hg hθ hs
+    _ = _ := by
+        congr 1
+        exact setLIntegral_congr_fun measurableSet_Ioi fun T hT => by rw [hR T hT]
+
+/-- The `q = ∞` counterpart of `lintegral_rearrangement_hardy`:
+`T^{-θ/ρ} (∫₀ᵀ f*^ρ)^{1/ρ} ≤ θ^{-1/ρ} ‖f‖_{p,∞}` for `1/p = (1-θ)/ρ`, since
+`f*(u) ≤ u^{-1/p} ‖f‖_{p,∞}`. -/
+theorem rpow_mul_rearrangement_le_lorentzNorm_top {ρ θ : ℝ} (hρ : 0 < ρ) (hθ : 0 < θ)
+    {p : ℝ≥0∞} (hp : p⁻¹.toReal = (1 - θ) / ρ) (f : α → E) {T : ℝ} (hT : 0 < T) :
+    ENNReal.ofReal T ^ (-θ / ρ) *
+        (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ ρ) ^ ρ⁻¹ ≤
+      ENNReal.ofReal θ⁻¹ ^ ρ⁻¹ * lorentzNorm μ p ⊤ f := by
+  set L := lorentzNorm μ p ⊤ f with hLdef
+  have hT0 : ENNReal.ofReal T ≠ 0 := (ENNReal.ofReal_pos.mpr hT).ne'
+  by_cases hL : L = ⊤
+  · rw [hL, ENNReal.mul_top (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr (inv_pos.mpr hθ))
+      ENNReal.ofReal_ne_top).ne']
+    exact le_top
+  have hpt : ∀ u ∈ Ioc (0 : ℝ) T, decreasingRearrangement μ f (ENNReal.ofReal u) ^ ρ ≤
+      L ^ ρ * ENNReal.ofReal u ^ (θ - 1) := by
+    intro u hu
+    have hu0 : ENNReal.ofReal u ≠ 0 := (ENNReal.ofReal_pos.mpr hu.1).ne'
+    have h1 : ENNReal.ofReal u ^ p⁻¹.toReal * decreasingRearrangement μ f (ENNReal.ofReal u) ≤
+        L := by
+      rw [hLdef, lorentzNorm, ite_eq_left rfl]
+      have := le_iSup (fun t : ℝ≥0 => (t : ℝ≥0∞) ^ p⁻¹.toReal *
+        decreasingRearrangement μ f (t : ℝ≥0∞)) u.toNNReal
+      simpa [ENNReal.ofReal] using this
+    have h2 : decreasingRearrangement μ f (ENNReal.ofReal u) ≤
+        L * ENNReal.ofReal u ^ (-p⁻¹.toReal) := by
+      rw [ENNReal.rpow_neg, ← div_eq_mul_inv]
+      rw [ENNReal.le_div_iff_mul_le (Or.inl (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr hu.1)
+        ENNReal.ofReal_ne_top).ne') (Or.inl (ENNReal.rpow_ne_top_of_ne_zero hu0
+          ENNReal.ofReal_ne_top)), mul_comm]
+      exact h1
+    calc decreasingRearrangement μ f (ENNReal.ofReal u) ^ ρ
+        ≤ (L * ENNReal.ofReal u ^ (-p⁻¹.toReal)) ^ ρ := by gcongr
+      _ = L ^ ρ * ENNReal.ofReal u ^ (θ - 1) := by
+          rw [ENNReal.mul_rpow_of_nonneg _ _ hρ.le, ← ENNReal.rpow_mul, hp]
+          congr 2
+          field_simp
+          ring
+  have hint : ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ ρ ≤
+      L ^ ρ * (ENNReal.ofReal T ^ θ * ENNReal.ofReal θ⁻¹) := by
+    calc _ ≤ ∫⁻ s in Ioc 0 T, L ^ ρ * ENNReal.ofReal s ^ (θ - 1) :=
+          setLIntegral_mono' measurableSet_Ioc hpt
+      _ = _ := by
+          rw [lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hρ.le hL),
+            lintegral_Ioc_zero_rpow_sub_one hθ hT]
+  calc _ ≤ ENNReal.ofReal T ^ (-θ / ρ) *
+        (L ^ ρ * (ENNReal.ofReal T ^ θ * ENNReal.ofReal θ⁻¹)) ^ ρ⁻¹ := by
+        gcongr
+    _ = ENNReal.ofReal θ⁻¹ ^ ρ⁻¹ * L := by
+        rw [ENNReal.mul_rpow_of_nonneg _ _ (inv_nonneg.mpr hρ.le),
+          ENNReal.mul_rpow_of_nonneg _ _ (inv_nonneg.mpr hρ.le), ← ENNReal.rpow_mul,
+          ← ENNReal.rpow_mul, mul_inv_cancel₀ hρ.ne', ENNReal.rpow_one]
+        rw [show ENNReal.ofReal T ^ (-θ / ρ) * (L * (ENNReal.ofReal T ^ (θ * ρ⁻¹) *
+            ENNReal.ofReal θ⁻¹ ^ ρ⁻¹)) = (ENNReal.ofReal T ^ (-θ / ρ) *
+            ENNReal.ofReal T ^ (θ * ρ⁻¹)) * (ENNReal.ofReal θ⁻¹ ^ ρ⁻¹ * L) by ring,
+          ← ENNReal.rpow_add _ _ hT0 ENNReal.ofReal_ne_top,
+          show -θ / ρ + θ * ρ⁻¹ = 0 by ring, ENNReal.rpow_zero, one_mul]
+
+end Estimates
+
 variable (𝕜 : Type*) [NontriviallyNormedField 𝕜]
 variable {α : Type*} [MeasurableSpace α] (μ : Measure α) [SigmaFinite μ]
 variable (E : Type*) [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]

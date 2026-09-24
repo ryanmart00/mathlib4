@@ -339,8 +339,8 @@ omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 @[simp]
 theorem InterpolationCouple.sumToAmbient_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
     (a₀ : A₀) (a₁ : A₁) :
-    InterpolationCouple.sumToAmbient ι₀ ι₁ (Submodule.Quotient.mk (a₀, a₁)) = ι₀ a₀ + ι₁ a₁ := by
-  sorry
+    InterpolationCouple.sumToAmbient ι₀ ι₁ (Submodule.Quotient.mk (a₀, a₁)) = ι₀ a₀ + ι₁ a₁ :=
+  rfl
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 @[simp]

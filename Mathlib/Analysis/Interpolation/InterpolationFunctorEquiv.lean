@@ -42,8 +42,7 @@ namespace InterpolationFunctor
 noncomputable def toSumNatTrans (F : InterpolationFunctor.{v, u} 𝕜) :
     F.toFunctor ⟶ (sumInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜).toFunctor where
   app C := ConcreteCategory.ofHom (F.toSum C)
-  naturality C D T := by
-    sorry
+  naturality _ _ T := ConcreteCategory.ext (F.map_toSum T)
 
 /-- An interpolation functor, as an object over the sum functor. -/
 noncomputable def toOver (F : InterpolationFunctor.{v, u} 𝕜) :

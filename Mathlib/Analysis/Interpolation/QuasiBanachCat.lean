@@ -118,10 +118,8 @@ variable {𝕜}
 def ofIso {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) : X ≅ Y where
   hom := ConcreteCategory.ofHom e.toContinuousLinearMap
   inv := ConcreteCategory.ofHom e.symm.toContinuousLinearMap
-  hom_inv_id := by
-    sorry
-  inv_hom_id := by
-    sorry
+  hom_inv_id := ConcreteCategory.ext (ContinuousLinearMap.ext e.symm_apply_apply)
+  inv_hom_id := ConcreteCategory.ext (ContinuousLinearMap.ext e.apply_symm_apply)
 
 /-- Cast an iso in `QuasiBanachCat` into a continuous linear equiv. -/
 def continuousLinearEquivOfIso {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) : X ≃L[𝕜] Y where

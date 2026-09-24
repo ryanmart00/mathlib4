@@ -175,12 +175,45 @@ theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 <
       (le_antisymm h0 (QuasinormedAddCommGroup.norm_nonneg a))
   · exact absurd h0 (realInterpolationConst_pos θ q).ne'
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich, quantitatively: `‖a‖_{θ,q} ≤ c_{θ,q} ‖a‖_{A₀∩A₁}`
 (strengthens `realInterpolationENorm_meetToSum_lt_top`). -/
 theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (b : meet ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b) ≤
       realInterpolationConst θ q * ENNReal.ofReal ‖b‖ := by
-  sorry
+  have hpt : ∀ t : ℝ, 0 < t →
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (meetToSum ι₀ ι₁ b)) ≤
+        ENNReal.ofReal (t ^ (-θ) * min 1 t) * ENNReal.ofReal ‖b‖ := by
+    intro t ht
+    have h0 : 0 ≤ t ^ (-θ) := Real.rpow_nonneg ht.le _
+    rw [← ENNReal.ofReal_mul (mul_nonneg h0 (le_min zero_le_one ht.le))]
+    apply ENNReal.ofReal_le_ofReal
+    have hK := kFunctional_meetToSum_le ι₀ ι₁ t ht.le b
+    nlinarith
+  unfold realInterpolationENorm realInterpolationConst
+  split_ifs with htop
+  · rw [ENNReal.iSup_mul]
+    exact iSup_mono fun t => hpt t t.2
+  · have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    have hr' : 0 ≤ q⁻¹.toReal := ENNReal.toReal_nonneg
+    calc (∫⁻ t in Ioi (0 : ℝ),
+            ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (meetToSum ι₀ ι₁ b)) ^ q.toReal *
+              ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal
+        ≤ (∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal ‖b‖ ^ q.toReal *
+            (ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹))
+              ^ q⁻¹.toReal := by
+          refine ENNReal.rpow_le_rpow (setLIntegral_mono' measurableSet_Ioi fun t ht => ?_) hr'
+          rw [← mul_assoc, ← ENNReal.mul_rpow_of_nonneg _ _ hr.le,
+            mul_comm (ENNReal.ofReal ‖b‖)]
+          gcongr
+          exact hpt t ht
+      _ = (∫⁻ t in Ioi (0 : ℝ),
+            ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal *
+              ENNReal.ofReal ‖b‖ := by
+          rw [lintegral_const_mul' _ _
+              (ENNReal.rpow_ne_top_of_nonneg hr.le ENNReal.ofReal_ne_top),
+            ENNReal.mul_rpow_of_nonneg _ _ hr', ← ENNReal.rpow_mul, ENNReal.toReal_inv,
+            mul_inv_cancel₀ hr.ne', ENNReal.rpow_one, mul_comm]
 
 /-! ### The space -/
 

@@ -72,7 +72,23 @@ theorem distributionFunction_const_smul {c : 𝕜} (hc : c ≠ 0) (f : α → E)
 /-- The decreasing rearrangement is absolutely homogeneous: `(c • f)* = ‖c‖ • f*`. -/
 theorem decreasingRearrangement_const_smul (c : 𝕜) (f : α → E) (t : ℝ≥0∞) :
     decreasingRearrangement μ (c • f) t = ‖c‖ₑ * decreasingRearrangement μ f t := by
-  sorry
+  rcases eq_or_ne c 0 with rfl | hc
+  · rw [zero_smul, enorm_zero, zero_mul]
+    refine le_antisymm (sInf_le ?_) zero_le
+    simp [distributionFunction]
+  have hk0 : ‖c‖ₑ ≠ 0 := enorm_ne_zero.mpr hc
+  have hkt : ‖c‖ₑ ≠ ⊤ := enorm_ne_top
+  have hset : {σ | distributionFunction μ (c • f) σ ≤ t} =
+      (‖c‖ₑ * ·) '' {τ | distributionFunction μ f τ ≤ t} := by
+    ext σ
+    simp only [distributionFunction_const_smul μ hc, Set.mem_ofPred_eq, Set.mem_image]
+    constructor
+    · exact fun hσ => ⟨σ / ‖c‖ₑ, hσ, ENNReal.mul_div_cancel hk0 hkt⟩
+    · rintro ⟨τ, hτ, rfl⟩
+      rwa [mul_comm, ENNReal.mul_div_cancel_right hk0 hkt]
+  unfold decreasingRearrangement
+  rw [hset, sInf_image, sInf_eq_iInf, ENNReal.mul_iInf_of_ne hk0 hkt]
+  simp_rw [ENNReal.mul_iInf_of_ne hk0 hkt]
 
 /-- The Lorentz quasinorm is absolutely homogeneous, for `q ≠ 0` (at `q = 0`, `lorentzNorm` is
 constantly `1`). -/

@@ -214,7 +214,32 @@ theorem InterpolationCouple.kFunctional_smul (t : ℝ) (ht : 0 ≤ t) (c : 𝕜)
     (a : InterpolationCouple.sum ι₀ ι₁) :
     InterpolationCouple.KFunctional ι₀ ι₁ t (c • a) =
       ‖c‖ * InterpolationCouple.KFunctional ι₀ ι₁ t a := by
-  sorry
+  have hle : ∀ (c : 𝕜) (b : InterpolationCouple.sum ι₀ ι₁),
+      InterpolationCouple.KFunctional ι₀ ι₁ t (c • b) ≤
+        ‖c‖ * InterpolationCouple.KFunctional ι₀ ι₁ t b := by
+    intro c b
+    rcases eq_or_ne c 0 with rfl | hc
+    · rw [zero_smul, InterpolationCouple.kFunctional_zero ι₀ ι₁ t ht, norm_zero, zero_mul]
+    have hc' : 0 < ‖c‖ := norm_pos_iff.mpr hc
+    rw [← div_le_iff₀' hc']
+    refine le_csInf (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ t b) ?_
+    rintro r ⟨a₀, a₁, hb, rfl⟩
+    rw [div_le_iff₀' hc']
+    calc InterpolationCouple.KFunctional ι₀ ι₁ t (c • b)
+        ≤ ‖c • a₀‖ + t * ‖c • a₁‖ :=
+          csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht _)
+            ⟨c • a₀, c • a₁, by rw [← hb]; rfl, rfl⟩
+      _ = ‖c‖ * (‖a₀‖ + t * ‖a₁‖) := by
+          rw [QuasiNormedSpace.norm_smul, QuasiNormedSpace.norm_smul]; ring
+  rcases eq_or_ne c 0 with rfl | hc
+  · rw [zero_smul, InterpolationCouple.kFunctional_zero ι₀ ι₁ t ht, norm_zero, zero_mul]
+  refine le_antisymm (hle c a) ?_
+  have h2 := hle c⁻¹ (c • a)
+  rw [smul_smul, inv_mul_cancel₀ hc, one_smul, norm_inv] at h2
+  have hc' : 0 < ‖c‖ := norm_pos_iff.mpr hc
+  calc ‖c‖ * InterpolationCouple.KFunctional ι₀ ι₁ t a
+      ≤ ‖c‖ * (‖c‖⁻¹ * InterpolationCouple.KFunctional ι₀ ι₁ t (c • a)) := by gcongr
+    _ = InterpolationCouple.KFunctional ι₀ ι₁ t (c • a) := by field_simp
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- On the meet, `K(t, a) ≤ min(1, t) · ‖a‖_{A₀ ∩ A₁}` (use the representations `(a₀, 0)` and

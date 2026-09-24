@@ -311,8 +311,8 @@ variable (θ q) in
 noncomputable def quasiTriangleConst [Fact (0 < q)] : ℝ :=
   Classical.choose (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))
 
-theorem one_le_quasiTriangleConst [Fact (0 < q)] : 1 ≤ quasiTriangleConst ι₀ ι₁ θ q := by
-  sorry
+theorem one_le_quasiTriangleConst [Fact (0 < q)] : 1 ≤ quasiTriangleConst ι₀ ι₁ θ q :=
+  (Classical.choose_spec (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))).1
 
 theorem norm_add_le [Fact (0 < q)] (a b : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖a + b‖ ≤ quasiTriangleConst ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by

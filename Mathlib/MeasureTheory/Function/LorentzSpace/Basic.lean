@@ -257,7 +257,13 @@ variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
 is all of `α →ₘ[μ] E`). Mirrors `MeasureTheory.Lp.const_smul_mem_Lp`. -/
 theorem const_smul_mem (c : 𝕜) {f : α →ₘ[μ] E} (hf : f ∈ LorentzSpace E p q μ) :
     c • f ∈ LorentzSpace E p q μ := by
-  sorry
+  change lorentzNorm μ p q ⇑f < ∞ at hf
+  change lorentzNorm μ p q ⇑(c • f) < ∞
+  rw [lorentzNorm_congr_ae p q (AEEqFun.coeFn_smul c f)]
+  rcases eq_or_ne q 0 with rfl | hq
+  · simp [lorentzNorm]
+  · rw [lorentzNorm_const_smul μ p q hq]
+    exact ENNReal.mul_lt_top enorm_lt_top hf
 
 variable (E p q 𝕜) in
 /-- `LorentzSpace E p q μ` as a `𝕜`-submodule of `α →ₘ[μ] E`, with the same carrier. Mirrors

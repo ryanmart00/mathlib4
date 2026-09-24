@@ -209,4 +209,6 @@ same `AddSubgroup` of `α →ₘ[μ] E` as the ordinary `Lᵖ(μ)`, since the un
 exactly (`lorentzNorm_diag`) rather than merely up to equivalence. -/
 theorem LorentzSpace.eq_Lp {p : ℝ≥0∞} (hp : 0 < p) :
     LorentzSpace E p p μ = Lp E p μ := by
-  sorry
+  ext f
+  change lorentzNorm μ p p f < ∞ ↔ eLpNorm f p μ < ∞
+  rw [lorentzNorm_diag μ hp f.aestronglyMeasurable]

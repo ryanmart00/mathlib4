@@ -74,7 +74,14 @@ natural (because `toSum` is injective). -/
 theorem naturality_of_toSum_comp (iso : ∀ C, F.obj C ≅ G.obj C)
     (h : ∀ C, (G.toSum C).comp (iso C).hom.hom = F.toSum C) {C D : InterpolationCat.{v, u} 𝕜}
     (T : C ⟶ D) : F.map T ≫ (iso D).hom = (iso C).hom ≫ G.map T := by
-  sorry
+  refine ConcreteCategory.ext (ContinuousLinearMap.ext fun x => G.toSum_injective D ?_)
+  have e1 := DFunLike.congr_fun (h D) ((F.map T).hom x)
+  have e2 := DFunLike.congr_fun (F.map_toSum T) x
+  have e3 := DFunLike.congr_fun (G.map_toSum T) ((iso C).hom.hom x)
+  have e4 := DFunLike.congr_fun (h C) x
+  simp only [ContinuousLinearMap.comp_apply] at e1 e2 e3 e4
+  simp only [QuasiBanachCat.hom_comp, ContinuousLinearMap.comp_apply]
+  rw [e1, e2, e3, e4]
 
 /-- Build an equivalence from componentwise isomorphisms of quasi-Banach spaces compatible with
 the inclusions into the sum. -/

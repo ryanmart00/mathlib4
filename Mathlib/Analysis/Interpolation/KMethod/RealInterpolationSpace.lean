@@ -430,8 +430,8 @@ variable (θ q) in
 `realInterpolationENorm_meetToSum_le`. -/
 noncomputable def fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     meet ι₀ ι₁ →L[𝕜] RealInterpolationSpace ι₀ ι₁ θ q where
-  toLinearMap := (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict _ (by
-    sorry)
+  toLinearMap := (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict _ fun b =>
+    realInterpolationENorm_meetToSum_lt_top ι₀ ι₁ θ Fact.out Fact.out q Fact.out b
   cont := by
     sorry
 

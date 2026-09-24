@@ -526,7 +526,10 @@ theorem realInterpolationMap_id (C : InterpolationCat 𝕜) :
 theorem realInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
     (φ ≫ ψ).realInterpolationMap θ q =
       (ψ.realInterpolationMap θ q).comp (φ.realInterpolationMap θ q) := by
-  sorry
+  refine ContinuousLinearMap.ext fun a => Subtype.ext ?_
+  change (φ ≫ ψ).sumMap (a : sum C.ι₀ C.ι₁) = ψ.sumMap (φ.sumMap (a : sum C.ι₀ C.ι₁))
+  rw [Hom.sumMap_comp]
+  rfl
 
 /-- The K-method is exact of type `θ` (Triebel §1.3.3): if `‖T.f₀‖ ≤ M₀` and `‖T.f₁‖ ≤ M₁`, then
 the induced map has quasinorm at most `M₀^{1-θ} M₁^θ`. -/

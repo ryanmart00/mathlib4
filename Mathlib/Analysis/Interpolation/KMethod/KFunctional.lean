@@ -202,7 +202,11 @@ theorem InterpolationCouple.kFunctional_add_le (t : ℝ) (ht : 0 ≤ t)
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.kFunctional_zero (t : ℝ) (ht : 0 ≤ t) :
     InterpolationCouple.KFunctional ι₀ ι₁ t 0 = 0 := by
-  sorry
+  refine le_antisymm ?_ (InterpolationCouple.kFunctional_nonneg ι₀ ι₁ t ht 0)
+  refine csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht 0)
+    ⟨0, 0, ?_, by simp⟩
+  rw [Prod.mk_zero_zero]
+  exact Submodule.Quotient.mk_zero _
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The K-functional is absolutely homogeneous: `K(t, c • a) = ‖c‖ · K(t, a)`. -/

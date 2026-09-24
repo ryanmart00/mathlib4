@@ -66,9 +66,18 @@ theorem realInterpolationConst_lt_top {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1)
     realInterpolationConst θ q < ⊤ := by
   sorry
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_zero (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :
     realInterpolationENorm ι₀ ι₁ θ q 0 = 0 := by
-  sorry
+  unfold realInterpolationENorm
+  split_ifs with htop
+  · refine ENNReal.iSup_eq_zero.mpr fun t => ?_
+    rw [kFunctional_zero ι₀ ι₁ _ (le_of_lt t.2), mul_zero, ENNReal.ofReal_zero]
+  · have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    rw [setLIntegral_congr_fun measurableSet_Ioi (g := fun _ => 0) fun t ht => by
+      simp only [kFunctional_zero ι₀ ι₁ t (le_of_lt ht), mul_zero, ENNReal.ofReal_zero,
+        ENNReal.zero_rpow_of_pos hr, zero_mul]]
+    simp [hr]
 
 theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c : 𝕜)
     (a : sum ι₀ ι₁) :

@@ -182,15 +182,20 @@ noncomputable def uniformSpaceOn (s : Set α) : UniformSpace (L0 α E μ) :=
   uniformSpaceOfEDist (AEEqFun.kyFanEdist μ s) (AEEqFun.kyFanEdist_self μ s)
     (AEEqFun.kyFanEdist_comm μ s) (AEEqFun.kyFanEdist_triangle μ s)
 
+/-- The Ky Fan pseudo-extended-metric on `s`, whose uniformity is `uniformSpaceOn μ s`. Not an
+instance; used to access the metric API for a single `s`. -/
+@[instance_reducible]
+noncomputable def pseudoEMetricSpaceOn (s : Set α) : PseudoEMetricSpace (L0 α E μ) where
+  edist := AEEqFun.kyFanEdist μ s
+  edist_self := AEEqFun.kyFanEdist_self μ s
+  edist_comm := AEEqFun.kyFanEdist_comm μ s
+  edist_triangle := AEEqFun.kyFanEdist_triangle μ s
+  toUniformSpace := uniformSpaceOn μ s
+  uniformity_edist := rfl
+
 theorem isUniformAddGroup_uniformSpaceOn (s : Set α) :
     @IsUniformAddGroup (L0 α E μ) (uniformSpaceOn μ s) _ := by
-  let _ : PseudoEMetricSpace (L0 α E μ) :=
-    { edist := AEEqFun.kyFanEdist μ s
-      edist_self := AEEqFun.kyFanEdist_self μ s
-      edist_comm := AEEqFun.kyFanEdist_comm μ s
-      edist_triangle := AEEqFun.kyFanEdist_triangle μ s
-      toUniformSpace := uniformSpaceOn μ s
-      uniformity_edist := rfl }
+  let _ := pseudoEMetricSpaceOn (E := E) μ s
   refine ⟨EMetric.uniformContinuous_iff.mpr fun ε hε => ⟨ε / 2, ENNReal.half_pos hε.ne', ?_⟩⟩
   intro p q hpq
   rw [Prod.edist_eq, max_lt_iff] at hpq
@@ -216,8 +221,19 @@ instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) :=
 instance instContinuousSMul : ContinuousSMul 𝕜 (L0 α E μ) := by
   sorry
 
+theorem instUniformSpace_le_uniformSpaceOn {s : Set α} (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) :
+    instUniformSpace μ ≤ (uniformSpaceOn μ s : UniformSpace (L0 α E μ)) :=
+  (iInf_le _ s).trans ((iInf_le _ hs).trans (iInf_le _ hμs))
+
 instance instT2Space [SigmaFinite μ] : T2Space (L0 α E μ) := by
-  sorry
+  have : T0Space (L0 α E μ) := by
+    refine t0Space_iff_uniformity.mpr fun f g h =>
+      AEEqFun.eq_of_forall_kyFanEdist_eq_zero μ fun s hs hμs => ?_
+    by_contra hne
+    have hmem := @edist_mem_uniformity _ (pseudoEMetricSpaceOn (E := E) μ s) _ (pos_iff_ne_zero.mpr hne)
+    have hfg := h _ (UniformSpace.le_def.mp (instUniformSpace_le_uniformSpaceOn μ hs hμs) hmem)
+    exact lt_irrefl (AEEqFun.kyFanEdist μ s f g) hfg
+  infer_instance
 
 /-- Convergence in `L0` is convergence in measure on every finite-measure set. -/
 theorem tendsto_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} (f : ι → L0 α E μ)

@@ -87,8 +87,8 @@ theorem naturality_of_toSum_comp (iso : ∀ C, F.obj C ≅ G.obj C)
 the inclusions into the sum. -/
 noncomputable def mk' (iso : ∀ C, F.obj C ≅ G.obj C)
     (h : ∀ C, (G.toSum C).comp (iso C).hom.hom = F.toSum C) : F.Equiv G :=
-  Over.isoMk (NatIso.ofComponents iso fun T => naturality_of_toSum_comp iso h T) (by
-    sorry)
+  Over.isoMk (NatIso.ofComponents iso fun T => naturality_of_toSum_comp iso h T)
+    (NatTrans.ext (funext fun C => ConcreteCategory.ext (h C)))
 
 /-- Equal interpolation functors are equivalent. -/
 noncomputable def ofEq (h : F = G) : F.Equiv G :=

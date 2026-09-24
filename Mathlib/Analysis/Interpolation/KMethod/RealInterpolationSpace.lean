@@ -79,10 +79,28 @@ theorem realInterpolationENorm_zero (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :
         ENNReal.zero_rpow_of_pos hr, zero_mul]]
     simp [hr]
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c : 𝕜)
     (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q (c • a) = ‖c‖ₑ * realInterpolationENorm ι₀ ι₁ θ q a := by
-  sorry
+  have hpt : ∀ t : ℝ, 0 < t → ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (c • a)) =
+      ‖c‖ₑ * ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) := by
+    intro t ht
+    rw [kFunctional_smul ι₀ ι₁ t ht.le, mul_left_comm, ENNReal.ofReal_mul (norm_nonneg c),
+      ofReal_norm]
+  unfold realInterpolationENorm
+  split_ifs with htop
+  · rw [ENNReal.mul_iSup]
+    exact iSup_congr fun t => hpt t t.2
+  · have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    rw [setLIntegral_congr_fun measurableSet_Ioi (g := fun t => ‖c‖ₑ ^ q.toReal *
+        (ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) ^ q.toReal * ENNReal.ofReal t⁻¹))
+        fun t ht => by
+          simp only
+          rw [hpt t ht, ENNReal.mul_rpow_of_nonneg _ _ hr.le, mul_assoc],
+      lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr.le enorm_ne_top),
+      ENNReal.mul_rpow_of_nonneg _ _ (by positivity), ← ENNReal.rpow_mul, ENNReal.toReal_inv,
+      mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
 
 theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q a = 0 ↔ a = 0 := by

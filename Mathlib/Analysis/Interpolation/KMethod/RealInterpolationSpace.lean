@@ -79,7 +79,52 @@ theorem realInterpolationConst_pos (θ : ℝ) (q : ℝ≥0∞) : 0 < realInterpo
 
 theorem realInterpolationConst_lt_top {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) :
     realInterpolationConst θ q < ⊤ := by
-  sorry
+  have hpow : ∀ t : ℝ, 0 < t → t ^ (-θ) * t = t ^ (1 - θ) := fun t ht => by
+    rw [show (1 : ℝ) - θ = -θ + 1 by ring, Real.rpow_add ht, Real.rpow_one]
+  unfold realInterpolationConst
+  split_ifs with htop
+  · refine lt_of_le_of_lt (iSup_le fun t => ?_) ENNReal.one_lt_top
+    rw [← ENNReal.ofReal_one]
+    apply ENNReal.ofReal_le_ofReal
+    have ht : (0 : ℝ) < t := t.2
+    rcases le_total (t : ℝ) 1 with h | h
+    · rw [min_eq_right h, hpow t ht]
+      exact Real.rpow_le_one ht.le h (by linarith)
+    · rw [min_eq_left h, mul_one]
+      exact Real.rpow_le_one_of_one_le_of_nonpos h (by linarith)
+  rcases eq_or_ne q 0 with rfl | hq0
+  · simp
+  have hr : 0 < q.toReal := ENNReal.toReal_pos hq0 htop
+  suffices hfin : ∫⁻ t in Ioi (0 : ℝ),
+      ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹ < ⊤ from
+    ENNReal.rpow_lt_top_of_nonneg ENNReal.toReal_nonneg hfin.ne
+  have hle1 : ∀ t ∈ Ioc (0 : ℝ) 1,
+      ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹ ≤
+        ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) := by
+    rintro t ⟨ht0, ht1⟩
+    have h := rpow_pow_dtOverT_eq (p := 1 - θ) ht0 zero_le_one hr.le
+    rw [Real.one_rpow, ENNReal.ofReal_one, one_mul, mul_one] at h
+    rw [min_eq_right ht1, hpow t ht0, h]
+  have hle2 : ∀ t ∈ Ioi (1 : ℝ),
+      ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹ ≤
+        ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) := by
+    intro t ht1
+    have ht0 : (0 : ℝ) < t := lt_trans one_pos ht1
+    have h := rpow_pow_dtOverT_eq (p := -θ) ht0 zero_le_one hr.le
+    rw [Real.one_rpow, ENNReal.ofReal_one, one_mul, mul_one] at h
+    rw [min_eq_left (le_of_lt ht1), mul_one, h]
+  have hint1 : ∫⁻ t in Ioc (0 : ℝ) 1, ENNReal.ofReal (t ^ ((1 - θ) * q.toReal - 1)) < ⊤ := by
+    apply IntegrableOn.setLIntegral_lt_top
+    exact (intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one).mp
+      (intervalIntegral.intervalIntegrable_rpow' (by nlinarith))
+  have hint2 : ∫⁻ t in Ioi (1 : ℝ), ENNReal.ofReal (t ^ (-θ * q.toReal - 1)) < ⊤ :=
+    (integrableOn_Ioi_rpow_of_lt (by nlinarith) one_pos).setLIntegral_lt_top
+  have hsplit : Ioi (0 : ℝ) = Ioc (0 : ℝ) 1 ∪ Ioi (1 : ℝ) := by
+    rw [Ioc_union_Ioi_eq_Ioi zero_le_one]
+  rw [hsplit]
+  exact lt_of_le_of_lt (lintegral_union_le _ _ _) (ENNReal.add_lt_top.2
+    ⟨lt_of_le_of_lt (setLIntegral_mono' measurableSet_Ioc hle1) hint1,
+      lt_of_le_of_lt (setLIntegral_mono' measurableSet_Ioi hle2) hint2⟩)
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_zero (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :

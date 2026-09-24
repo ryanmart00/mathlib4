@@ -94,7 +94,15 @@ theorem decreasingRearrangement_const_smul (c : 𝕜) (f : α → E) (t : ℝ≥
 constantly `1`). -/
 theorem lorentzNorm_const_smul (hq : q ≠ 0) (c : 𝕜) (f : α → E) :
     lorentzNorm μ p q (c • f) = ‖c‖ₑ * lorentzNorm μ p q f := by
-  sorry
+  unfold lorentzNorm
+  simp_rw [decreasingRearrangement_const_smul μ c f, mul_left_comm _ ‖c‖ₑ]
+  split_ifs with htop
+  · exact (ENNReal.mul_iSup _ _).symm
+  have hr : 0 < q.toReal := ENNReal.toReal_pos hq htop
+  simp_rw [ENNReal.mul_rpow_of_nonneg _ _ hr.le, mul_assoc]
+  rw [lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr.le enorm_ne_top),
+    ENNReal.mul_rpow_of_nonneg _ _ (by positivity), ← ENNReal.rpow_mul, ENNReal.toReal_inv,
+    mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
 
 end ConstSMul
 

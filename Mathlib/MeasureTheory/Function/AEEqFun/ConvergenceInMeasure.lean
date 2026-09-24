@@ -106,7 +106,9 @@ theorem kyFanEdist_add_add (s : Set α) (f g h : α →ₘ[μ] E) :
 
 theorem kyFanEdist_neg_neg (s : Set α) (f g : α →ₘ[μ] E) :
     kyFanEdist μ s (-f) (-g) = kyFanEdist μ s f g := by
-  sorry
+  refine lintegral_congr_ae (ae_restrict_of_ae ?_)
+  filter_upwards [coeFn_neg f, coeFn_neg g] with x hxf hxg
+  simp only [hxf, hxg, Pi.neg_apply, edist_neg_neg]
 
 /-- On a finite-measure set, the Ky Fan distance induces convergence in measure. -/
 theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s : Set α}

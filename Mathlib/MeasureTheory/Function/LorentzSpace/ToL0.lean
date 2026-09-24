@@ -48,8 +48,8 @@ theorem toL0ₗ_apply (f : LorentzSpace E p q μ) :
     toL0ₗ μ E 𝕜 p q f = L0.toL0 μ 𝕜 (f : α →ₘ[μ] E) :=
   rfl
 
-theorem toL0ₗ_injective : Function.Injective (toL0ₗ μ E 𝕜 p q) := by
-  sorry
+theorem toL0ₗ_injective : Function.Injective (toL0ₗ μ E 𝕜 p q) :=
+  fun _ _ h => Subtype.ext h
 
 /-- The inclusion `L_{p,q} ↪ L⁰` is continuous, for every `p` and every `q > 0`. -/
 theorem continuous_toL0ₗ [Fact (0 < q)] : Continuous (toL0ₗ μ E 𝕜 p q) := by

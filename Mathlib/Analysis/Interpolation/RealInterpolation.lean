@@ -3,6 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
+import Mathlib.Analysis.Interpolation.InterpolationFunctorEquiv
 import Mathlib.Analysis.Interpolation.KMethod.KInterpolationFunctor
 
 /-!
@@ -15,8 +16,9 @@ The real interpolation functor `(A₀, A₁) ↦ (A₀, A₁)_{θ,q}`, for `0 < 
 
 `realInterpolationFunctor` is the canonical real interpolation functor, and it does not commit to
 any particular construction: it is irreducible, and its only link to a construction is an
-equivalence of interpolation functors (`InterpolationFunctor.Equiv`), which identifies the spaces
-as the same subspace of `A₀ + A₁` with equivalent quasinorms. It is implemented by the K-method
+equivalence of interpolation functors (`InterpolationFunctor.Equiv`, an isomorphism over the sum
+functor), which identifies the spaces as the same subspace of `A₀ + A₁` with equivalent
+quasinorms. It is implemented by the K-method
 (`KMethod/`), so `realInterpolationFunctorEquivK` is trivial. Any other construction (e.g. the
 J-method) gets its own equivalence theorem, in parallel.
 

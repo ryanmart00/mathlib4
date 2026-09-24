@@ -465,11 +465,9 @@ open CategoryTheory InterpolationCouple
 variable {C D E : InterpolationCat 𝕜} (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)]
   [Fact (0 < q)]
 
-/-- The map `(C.A₀, C.A₁)_{θ,q} → (D.A₀, D.A₁)_{θ,q}` induced by a morphism of couples: the
-restriction of `T.sumMap`, bounded by `realInterpolationENorm_sumMap_le`. -/
-noncomputable def realInterpolationMap (T : C ⟶ D) :
-    RealInterpolationSpace C.ι₀ C.ι₁ θ q →L[𝕜] RealInterpolationSpace D.ι₀ D.ι₁ θ q where
-  toLinearMap :=
+/-- The linear map underlying `realInterpolationMap`: the restriction of `T.sumMap`. -/
+noncomputable def realInterpolationMapₗ (T : C ⟶ D) :
+    RealInterpolationSpace C.ι₀ C.ι₁ θ q →ₗ[𝕜] RealInterpolationSpace D.ι₀ D.ι₁ θ q :=
     ((T.sumMap : sum C.ι₀ C.ι₁ →ₗ[𝕜] sum D.ι₀ D.ι₁).comp
       (realInterpolationSubmodule C.ι₀ C.ι₁ θ q).subtype).codRestrict _ (by
         intro a
@@ -481,8 +479,37 @@ noncomputable def realInterpolationMap (T : C ⟶ D) :
           (by linarith) (by linarith) (le_add_of_nonneg_right zero_le_one)
           (le_add_of_nonneg_right zero_le_one) a).trans_lt
             (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ha))
+
+theorem norm_realInterpolationMapₗ_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
+    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
+    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (a : RealInterpolationSpace C.ι₀ C.ι₁ θ q) :
+    ‖T.realInterpolationMapₗ θ q a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
+  have ha : realInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
+  have hb := T.realInterpolationENorm_sumMap_le θ Fact.out Fact.out q Fact.out M₀ M₁ hM₀ hM₁
+    h₀ h₁ (a : sum C.ι₀ C.ι₁)
+  have hM : 0 ≤ M₀ ^ (1 - θ) * M₁ ^ θ :=
+    mul_nonneg (Real.rpow_nonneg hM₀.le _) (Real.rpow_nonneg hM₁.le _)
+  rw [RealInterpolationSpace.norm_def, RealInterpolationSpace.norm_def]
+  change (realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁))).toReal ≤ _
+  calc (realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁))).toReal
+      ≤ (ENNReal.ofReal (M₀ ^ (1 - θ) * M₁ ^ θ) *
+          realInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top ha.ne) hb
+    _ = M₀ ^ (1 - θ) * M₁ ^ θ * (realInterpolationENorm C.ι₀ C.ι₁ θ q a).toReal := by
+        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hM]
+
+/-- The map `(C.A₀, C.A₁)_{θ,q} → (D.A₀, D.A₁)_{θ,q}` induced by a morphism of couples: the
+restriction of `T.sumMap`, bounded by `realInterpolationENorm_sumMap_le`. -/
+noncomputable def realInterpolationMap (T : C ⟶ D) :
+    RealInterpolationSpace C.ι₀ C.ι₁ θ q →L[𝕜] RealInterpolationSpace D.ι₀ D.ι₁ θ q where
+  toLinearMap := T.realInterpolationMapₗ θ q
   cont := by
-    sorry
+    have h₀ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₀
+    have h₁ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₁
+    exact QuasinormedAddCommGroup.continuous_of_bound (T.realInterpolationMapₗ θ q).toAddMonoidHom
+      _ (T.norm_realInterpolationMapₗ_le θ q (by linarith) (by linarith)
+        (le_add_of_nonneg_right zero_le_one) (le_add_of_nonneg_right zero_le_one))
 
 theorem toSum_comp_realInterpolationMap (T : C ⟶ D) :
     (RealInterpolationSpace.toSum D.ι₀ D.ι₁ θ q).comp (T.realInterpolationMap θ q) =

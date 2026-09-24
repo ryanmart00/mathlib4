@@ -59,4 +59,8 @@ theorem norm_realInterpolationFunctor_map_le {C D : InterpolationCat.{v, u} 𝕜
     (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
     (a : (realInterpolationFunctor 𝕜 θ q).obj C) :
     ‖((realInterpolationFunctor 𝕜 θ q).map T).hom a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
-  sorry
+  have key : ∀ (F : InterpolationFunctor.{v, u} 𝕜), F = kInterpolationFunctor 𝕜 θ q →
+      ∀ a : F.obj C, ‖(F.map T).hom a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
+    rintro F rfl a
+    exact T.norm_realInterpolationMap_le θ q hM₀ hM₁ h₀ h₁ a
+  exact key _ (realInterpolationFunctor_def 𝕜 θ q) a

@@ -352,7 +352,7 @@ omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 @[simp]
 theorem InterpolationCouple.sumToAmbient_inl₁ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
     InterpolationCouple.sumToAmbient ι₀ ι₁ (InterpolationCouple.inl₁ ι₀ ι₁ a) = ι₁ a := by
-  sorry
+  rw [InterpolationCouple.inl₁_eq_mk, InterpolationCouple.sumToAmbient_mk, map_zero, zero_add]
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `A₀ + A₁ → 𝒜` is injective, with no hypothesis on `ι₀, ι₁`: the quotient defining the sum is

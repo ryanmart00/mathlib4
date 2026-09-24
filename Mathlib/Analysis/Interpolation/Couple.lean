@@ -343,13 +343,11 @@ theorem InterpolationCouple.sumToAmbient_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
   rfl
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
-@[simp]
 theorem InterpolationCouple.sumToAmbient_inl₀ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
     InterpolationCouple.sumToAmbient ι₀ ι₁ (InterpolationCouple.inl₀ ι₀ ι₁ a) = ι₀ a := by
   rw [InterpolationCouple.inl₀_eq_mk, InterpolationCouple.sumToAmbient_mk, map_zero, add_zero]
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
-@[simp]
 theorem InterpolationCouple.sumToAmbient_inl₁ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
     InterpolationCouple.sumToAmbient ι₀ ι₁ (InterpolationCouple.inl₁ ι₀ ι₁ a) = ι₁ a := by
   rw [InterpolationCouple.inl₁_eq_mk, InterpolationCouple.sumToAmbient_mk, map_zero, zero_add]

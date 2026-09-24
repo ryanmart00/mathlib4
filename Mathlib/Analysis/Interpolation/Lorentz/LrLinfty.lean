@@ -490,7 +490,7 @@ theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
 /-- `‖f‖_{p,q} ≤ A ‖a‖_{θ,q}` on `Lʳ + L^∞`, for `1/p = (1-θ)/r`: pointwise,
 `T^{1/p} f*(T) ≤ T^{-θ/r} (∫₀ᵀ f*ʳ)^{1/r} ≲ t^{-θ} K(t, a)` at `T = tʳ`. -/
 theorem lorentzNorm_le_realInterpolationENorm (hr : r ≠ ⊤) (θ : ℝ) (q : ℝ≥0∞)
-    [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (p : ℝ≥0∞)
+    [Fact (θ < 1)] [Fact (0 < q)] (p : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * r⁻¹) :
     ∃ A : ℝ≥0, ∀ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀
         (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,

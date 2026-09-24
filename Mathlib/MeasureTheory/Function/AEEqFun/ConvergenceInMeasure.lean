@@ -121,7 +121,21 @@ theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s 
 equal. This is what makes `L0` Hausdorff. -/
 theorem eq_of_forall_kyFanEdist_eq_zero [SigmaFinite μ] {f g : α →ₘ[μ] E}
     (h : ∀ s, MeasurableSet s → μ s ≠ ⊤ → kyFanEdist μ s f g = 0) : f = g := by
-  sorry
+  have hmeas : AEMeasurable (fun x => min 1 (edist (f x) (g x))) μ :=
+    aemeasurable_const.min (continuous_edist.comp_aestronglyMeasurable₂
+      f.aestronglyMeasurable g.aestronglyMeasurable).aemeasurable
+  have hae (n : ℕ) : ∀ᵐ x ∂μ, x ∈ spanningSets μ n → f x = g x := by
+    have hn := h _ (measurableSet_spanningSets μ n) (measure_spanningSets_lt_top μ n).ne
+    rw [kyFanEdist, setLIntegral_eq_zero_iff' (measurableSet_spanningSets μ n)
+      hmeas.restrict] at hn
+    filter_upwards [hn] with x hx hxs
+    rcases le_total (edist (f x) (g x)) 1 with hle | hle
+    · exact edist_eq_zero.mp (min_eq_right hle ▸ hx hxs)
+    · exact absurd (min_eq_left hle ▸ hx hxs) one_ne_zero
+  refine ext ?_
+  filter_upwards [ae_all_iff.mpr hae] with x hx
+  obtain ⟨n, hn⟩ := mem_iUnion.mp (iUnion_spanningSets μ ▸ mem_univ x)
+  exact hx n hn
 
 end AEEqFun
 

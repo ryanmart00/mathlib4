@@ -23,26 +23,6 @@ open CategoryTheory
 
 variable {𝕜 : Type u} [NontriviallyNormedField 𝕜]
 
-namespace InterpolationCat.Hom
-
-@[simp]
-theorem sumMap_id (C : InterpolationCat.{v, u} 𝕜) :
-    (𝟙 C : Hom C C).sumMap = ContinuousLinearMap.id 𝕜 (InterpolationCouple.sum C.ι₀ C.ι₁) := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ a => obtain ⟨a₀, a₁⟩ := a; simp [Hom.sumMap_mk]; rfl
-
-@[simp]
-theorem sumMap_comp {C D E : InterpolationCat.{v, u} 𝕜} (φ : C ⟶ D) (ψ : D ⟶ E) :
-    (φ ≫ ψ).sumMap = ψ.sumMap.comp φ.sumMap := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ a =>
-    obtain ⟨a₀, a₁⟩ := a
-    simp [Hom.sumMap_mk, ContinuousLinearMap.comp_apply]; rfl
-
-end InterpolationCat.Hom
-
 /-- Triebel §1.2.3: `A₀ + A₁` is (trivially) an interpolation functor. -/
 noncomputable def sumInterpolationFunctor : InterpolationFunctor.{v, u} 𝕜 where
   obj C := QuasiBanachCat.of 𝕜 (InterpolationCouple.sum C.ι₀ C.ι₁)

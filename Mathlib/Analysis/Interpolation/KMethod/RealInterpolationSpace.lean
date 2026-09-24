@@ -518,7 +518,10 @@ theorem toSum_comp_realInterpolationMap (T : C ⟶ D) :
 
 theorem realInterpolationMap_id (C : InterpolationCat 𝕜) :
     (𝟙 C : C ⟶ C).realInterpolationMap θ q = ContinuousLinearMap.id 𝕜 _ := by
-  sorry
+  refine ContinuousLinearMap.ext fun a => Subtype.ext ?_
+  change (𝟙 C : C ⟶ C).sumMap (a : sum C.ι₀ C.ι₁) = a
+  rw [Hom.sumMap_id]
+  rfl
 
 theorem realInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
     (φ ≫ ψ).realInterpolationMap θ q =

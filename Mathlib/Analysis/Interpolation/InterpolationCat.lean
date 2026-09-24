@@ -147,4 +147,20 @@ theorem Hom.meetMap_apply {C D : InterpolationCat.{v, u} 𝕜} (T : Hom C D) (a�
         rw [InterpolationCouple.mem_meet_iff] at ha ⊢
         exact T.compatible a₀ a₁ ha⟩ := rfl
 
+@[simp]
+theorem Hom.sumMap_id (C : InterpolationCat.{v, u} 𝕜) :
+    (𝟙 C : Hom C C).sumMap = ContinuousLinearMap.id 𝕜 (InterpolationCouple.sum C.ι₀ C.ι₁) := by
+  ext x
+  induction x using Submodule.Quotient.induction_on with
+  | _ a => obtain ⟨a₀, a₁⟩ := a; simp [Hom.sumMap_mk]; rfl
+
+@[simp]
+theorem Hom.sumMap_comp {C D E : InterpolationCat.{v, u} 𝕜} (φ : C ⟶ D) (ψ : D ⟶ E) :
+    (φ ≫ ψ).sumMap = ψ.sumMap.comp φ.sumMap := by
+  ext x
+  induction x using Submodule.Quotient.induction_on with
+  | _ a =>
+    obtain ⟨a₀, a₁⟩ := a
+    simp [Hom.sumMap_mk, ContinuousLinearMap.comp_apply]; rfl
+
 end InterpolationCat

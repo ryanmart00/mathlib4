@@ -333,7 +333,13 @@ theorem norm_add_le [Fact (0 < q)] (a b : RealInterpolationSpace ι₀ ι₁ θ 
         rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
 
 theorem norm_neg (a : RealInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
-  sorry
+  rw [norm_def, norm_def]
+  congr 1
+  change realInterpolationENorm ι₀ ι₁ θ q (-(a : sum ι₀ ι₁)) = _
+  rcases eq_or_ne q 0 with rfl | hq
+  · simp [realInterpolationENorm]
+  rw [← neg_one_smul 𝕜 (a : sum ι₀ ι₁),
+    realInterpolationENorm_smul ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq), enorm_neg, enorm_one, one_mul]
 
 theorem norm_eq_zero_iff [Fact (0 < q)] (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖a‖ = 0 ↔ a = 0 := by

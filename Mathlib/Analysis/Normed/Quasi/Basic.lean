@@ -4,19 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Normed.Group.Constructions
-import Mathlib.Analysis.Normed.Module.Basic
 import Mathlib.Analysis.Normed.Group.Uniform
-import Mathlib.Analysis.Normed.Field.Basic
-import Mathlib.Topology.Algebra.Module.Equiv
 import Mathlib.Topology.Algebra.FilterBasis
 import Mathlib.Topology.Algebra.UniformFilterBasis
 import Mathlib.Algebra.Order.Archimedean.Basic
 
 /-!
-# Quasi-normed additive groups and quasi-norm equivalence
-
-DRAFT — under review, statement-design stage (Unit 0 of the quasi-Banach generalization of the
-interpolation-couple framework; see `PROGRESS-interpolation-theory.md`).
+# Quasi-normed additive groups
 
 ## Main definitions
 
@@ -29,10 +23,13 @@ interpolation-couple framework; see `PROGRESS-interpolation-theory.md`).
   (`NormedAddCommGroup.toQuasinormedAddCommGroup`), reusing its own topology verbatim, so the
   classical case is recovered exactly, not just up to equivalence.
 
-Equivalence of quasi-Banach spaces (quasinorms comparable up to constants in both directions) is
-not a separate notion: it is an isomorphism in `QuasiBanachCat` (`QuasiBanachCat.lean`), i.e. a
-continuous linear equivalence, since continuous linear maps between quasi-normed spaces are
-automatically bounded (`le_opQuasiNorm`).
+The module structure (`QuasiNormedSpace`) is in `Mathlib/Analysis/Normed/Quasi/NormedSpace.lean`
+and the operator quasi-norm in `Mathlib/Analysis/Normed/Quasi/Operator.lean`. Equivalence of
+quasi-Banach spaces (quasinorms comparable up to constants in both directions) is not a separate
+notion: it is an isomorphism in `QuasiBanachCat`
+(`Mathlib/Analysis/Normed/Quasi/QuasiBanachCat.lean`), i.e. a continuous linear equivalence, since
+continuous linear maps between quasi-normed spaces are automatically bounded
+(`QuasinormedAddCommGroup.le_opQuasiNorm`).
 
 ## Notation
 
@@ -344,275 +341,5 @@ theorem continuous_of_bound {F : Type*} [QuasinormedAddCommGroup F] (f : E →+ 
     _ ≤ (|C| + 1) * ‖x‖ := by nlinarith [le_abs_self C, norm_nonneg x]
     _ < (|C| + 1) * (ε / (|C| + 1)) := by gcongr
     _ = ε := by field_simp
-
-end QuasinormedAddCommGroup
-
-/-- A `QuasinormedAddCommGroup` that is also a module over `𝕜`, compatibly with the quasi-norm:
-`‖c • x‖ ≤ ‖c‖ * ‖x‖` — exactly the axiom `NormedSpace` uses (`NormedSpace.norm_smul_le`), from
-which equality follows as a theorem (`norm_smul` below), the same way `NormedSpace` derives it:
-apply the bound to both `c` and (for `c ≠ 0`) `c⁻¹ • (c • x)`.
-
-Mirrors `NormedSpace`, not `NormedAddCommGroup`, deliberately: `QuasinormedAddCommGroup` itself
-has no scalar field, exactly like `NormedAddCommGroup`. This axiom is what actually lets scalar
-multiplication be continuous (`QuasiNormedSpace.continuousSMul` below) — without it, `‖c • x‖`
-has no relationship at all to `‖c‖`/`‖x‖`, and there would be no way to derive continuity of `•`
-from the quasi-norm. Threading `[Module 𝕜 A] [ContinuousSMul 𝕜 A]` as two independent, unrelated
-hypotheses (as earlier versions of this project did) forces `ContinuousSMul` to be re-derived
-through generic, ambient-topology-dependent routes (e.g. `SMulMemClass.continuousSMul` for a
-submodule) every time a new quasi-normed type is built, which then has to coincide with this
-class's own *bundled* topology — a real diamond, caught when it silently failed for a submodule
-of an interpolation couple's legs. Deriving `ContinuousSMul` directly from `norm_smul_le` plus
-`nhds_zero_hasBasis` (both already tied to *this* class's own bundled topology) sidesteps that
-entirely, the same way `NormedSpace.toIsBoundedSMul`/`IsBoundedSMul.continuousSMul` sidestep it
-for genuine normed spaces (there, via `dist` instead of norm-balls, since a metric is available). -/
-class QuasiNormedSpace (𝕜 E : Type*) [NormedField 𝕜] [QuasinormedAddCommGroup E] extends
-    Module 𝕜 E where
-  norm_smul_le : ∀ (c : 𝕜) (x : E), ‖c • x‖ ≤ ‖c‖ * ‖x‖
-
-namespace QuasiNormedSpace
-
-variable {𝕜 E : Type*} [NormedField 𝕜] [QuasinormedAddCommGroup E] [QuasiNormedSpace 𝕜 E]
-
-/-- The quasi-norm homogeneity is actually exact, exactly as for `NormedSpace`: the reverse
-inequality follows by applying `norm_smul_le` to `c⁻¹ • (c • x)` and using that `𝕜` is a field
-(so `c ≠ 0` is invertible). -/
-theorem norm_smul (c : 𝕜) (x : E) : ‖c • x‖ = ‖c‖ * ‖x‖ := by
-  rcases eq_or_ne c 0 with rfl | hc
-  · simp
-  · refine le_antisymm (norm_smul_le c x) ?_
-    calc ‖c‖ * ‖x‖ = ‖c‖ * ‖c⁻¹ • c • x‖ := by rw [inv_smul_smul₀ hc]
-      _ ≤ ‖c‖ * (‖c⁻¹‖ * ‖c • x‖) := by gcongr; exact norm_smul_le c⁻¹ (c • x)
-      _ = ‖c • x‖ := by
-          rw [norm_inv, ← mul_assoc, mul_inv_cancel₀ (mt norm_eq_zero.1 hc), one_mul]
-
-/-- Scalar multiplication is continuous, derived directly from `norm_smul_le` and the bundled
-`nhds_zero_hasBasis` — no metric/`dist` needed (unlike `IsBoundedSMul.continuousSMul`, which
-this otherwise mirrors): continuity at an arbitrary `(c₀, x₀)` reduces, via the identity
-`c • x - c₀ • x₀ = c₀ • (x - x₀) + (c - c₀) • x₀ + (c - c₀) • (x - x₀)`, to a direct ε-δ bound
-using the quasi-triangle inequality (applied twice, for the three-term sum) and `norm_smul_le`
-(applied to each term). -/
-theorem continuousAt_smul (c₀ : 𝕜) (x₀ : E) :
-    ContinuousAt (fun p : 𝕜 × E => p.1 • p.2) (c₀, x₀) := by
-  rw [ContinuousAt, nhds_prod_eq]
-  have hb1 : (nhds c₀).HasBasis (0 < ·) (fun δ : ℝ => Metric.ball c₀ δ) := Metric.nhds_basis_ball
-  have hb2 : (nhds x₀).HasBasis (0 < ·) (fun δ : ℝ => {x : E | ‖x - x₀‖ < δ}) := by
-    have h1 := (QuasinormedAddCommGroup.nhds_zero_hasBasis (E := E)).map (x₀ + ·)
-    rw [map_add_left_nhds_zero x₀] at h1
-    have himg : ∀ δ : ℝ, (x₀ + ·) '' {y : E | ‖y‖ < δ} = {x : E | ‖x - x₀‖ < δ} := by
-      intro δ; ext x
-      constructor
-      · rintro ⟨y, hy, rfl⟩; simpa using hy
-      · intro hx; exact ⟨x - x₀, by simpa using hx, by abel_nf⟩
-    simpa only [himg] using h1
-  have htarget : (nhds (c₀ • x₀)).HasBasis (0 < ·) (fun ε : ℝ => {z : E | ‖z - c₀ • x₀‖ < ε}) := by
-    have h1 := (QuasinormedAddCommGroup.nhds_zero_hasBasis (E := E)).map (c₀ • x₀ + ·)
-    rw [map_add_left_nhds_zero (c₀ • x₀)] at h1
-    have himg : ∀ ε : ℝ, (c₀ • x₀ + ·) '' {y : E | ‖y‖ < ε} = {z : E | ‖z - c₀ • x₀‖ < ε} := by
-      intro ε; ext z
-      constructor
-      · rintro ⟨y, hy, rfl⟩; simpa using hy
-      · intro hz; exact ⟨z - c₀ • x₀, by simpa using hz, by abel_nf⟩
-    simpa only [himg] using h1
-  rw [(hb1.prod hb2).tendsto_iff htarget]
-  intro ε hε
-  have hK1 : 1 ≤ QuasinormedAddCommGroup.quasiTriangleConst (E := E) :=
-    QuasinormedAddCommGroup.one_le_quasiTriangleConst (E := E)
-  set K := QuasinormedAddCommGroup.quasiTriangleConst (E := E) with hKdef
-  have hKpos : 0 < K := by linarith
-  have hc0 : 0 ≤ ‖c₀‖ := norm_nonneg c₀
-  have hx0 : 0 ≤ ‖x₀‖ := QuasinormedAddCommGroup.norm_nonneg x₀
-  set M : ℝ := K ^ 2 * (‖c₀‖ + ‖x₀‖) + K + 1 with hMdef
-  have hMpos : 0 < M := by
-    have : 0 ≤ K ^ 2 * (‖c₀‖ + ‖x₀‖) := mul_nonneg (sq_nonneg K) (add_nonneg hc0 hx0)
-    rw [hMdef]; linarith
-  have hε2M : 0 < ε / (2 * M) := div_pos hε (by linarith)
-  refine ⟨(min 1 (ε / (2 * M)), min 1 (ε / (2 * M))),
-    ⟨lt_min one_pos hε2M, lt_min one_pos hε2M⟩, ?_⟩
-  rintro ⟨c, x⟩ ⟨hc, hx⟩
-  simp only [Metric.mem_ball, dist_eq_norm] at hc
-  simp only [Set.mem_ofPred_eq] at hx
-  change ‖c • x - c₀ • x₀‖ < ε
-  set δ := min 1 (ε / (2 * M)) with hδdef
-  set dc := c - c₀ with hdc
-  set dx := x - x₀ with hdx
-  have hcx : c • x - c₀ • x₀ = c₀ • dx + dc • x₀ + dc • dx := by
-    simp only [hdc, hdx, smul_sub, sub_smul]
-    abel_nf
-  rw [hcx]
-  have hδ1 : δ ≤ 1 := min_le_left _ _
-  have hδ2 : δ ≤ ε / (2 * M) := min_le_right _ _
-  have hδpos : 0 < δ := lt_min one_pos hε2M
-  have hdcpos : 0 ≤ ‖dc‖ := QuasinormedAddCommGroup.norm_nonneg _
-  have hdxpos : 0 ≤ ‖dx‖ := QuasinormedAddCommGroup.norm_nonneg _
-  have hltdc : ‖dc‖ < δ := hc
-  have hltdx : ‖dx‖ < δ := hx
-  have tb1 : ‖c₀ • dx‖ ≤ ‖c₀‖ * δ :=
-    (norm_smul_le c₀ dx).trans (mul_le_mul_of_nonneg_left hltdx.le hc0)
-  have tb2 : ‖dc • x₀‖ ≤ δ * ‖x₀‖ :=
-    (norm_smul_le dc x₀).trans (mul_le_mul_of_nonneg_right hltdc.le hx0)
-  have tb3 : ‖dc • dx‖ ≤ δ := by
-    have hb : ‖dc • dx‖ ≤ δ * δ :=
-      (norm_smul_le dc dx).trans (mul_le_mul hltdc.le hltdx.le hdxpos (by linarith))
-    calc ‖dc • dx‖ ≤ δ * δ := hb
-      _ ≤ δ * 1 := by gcongr
-      _ = δ := mul_one δ
-  have htri : ‖c₀ • dx + dc • x₀ + dc • dx‖ ≤
-      K * (K * (‖c₀ • dx‖ + ‖dc • x₀‖) + ‖dc • dx‖) := by
-    calc ‖c₀ • dx + dc • x₀ + dc • dx‖
-        ≤ K * (‖c₀ • dx + dc • x₀‖ + ‖dc • dx‖) := QuasinormedAddCommGroup.norm_add_le _ _
-      _ ≤ K * (K * (‖c₀ • dx‖ + ‖dc • x₀‖) + ‖dc • dx‖) := by
-          gcongr
-          exact QuasinormedAddCommGroup.norm_add_le _ _
-  have hfinal : K * (K * (‖c₀ • dx‖ + ‖dc • x₀‖) + ‖dc • dx‖) ≤ δ * M := by
-    have step1 : ‖c₀ • dx‖ + ‖dc • x₀‖ ≤ ‖c₀‖ * δ + δ * ‖x₀‖ := by linarith
-    have step2 : K * (‖c₀ • dx‖ + ‖dc • x₀‖) ≤ K * (‖c₀‖ * δ + δ * ‖x₀‖) :=
-      mul_le_mul_of_nonneg_left step1 hKpos.le
-    have step3 : K * (‖c₀‖ * δ + δ * ‖x₀‖) + ‖dc • dx‖ ≤ K * (‖c₀‖ * δ + δ * ‖x₀‖) + δ := by
-      linarith
-    have step4 : K * (K * (‖c₀ • dx‖ + ‖dc • x₀‖) + ‖dc • dx‖) ≤
-        K * (K * (‖c₀‖ * δ + δ * ‖x₀‖) + δ) := by
-      have : K * (‖c₀ • dx‖ + ‖dc • x₀‖) + ‖dc • dx‖ ≤ K * (‖c₀‖ * δ + δ * ‖x₀‖) + δ := by
-        linarith
-      exact mul_le_mul_of_nonneg_left this hKpos.le
-    have step5 : K * (K * (‖c₀‖ * δ + δ * ‖x₀‖) + δ) = δ * (M - 1) := by rw [hMdef]; ring
-    rw [step5] at step4
-    have step6 : δ * (M - 1) ≤ δ * M := by nlinarith
-    linarith
-  have hδM : δ * M ≤ ε / 2 := by
-    calc δ * M ≤ (ε / (2 * M)) * M := mul_le_mul_of_nonneg_right hδ2 hMpos.le
-      _ = ε / 2 := by field_simp
-  linarith
-
-instance (priority := 100) continuousSMul : ContinuousSMul 𝕜 E where
-  continuous_smul := continuous_iff_continuousAt.mpr fun p => continuousAt_smul p.1 p.2
-
-/-- Every `NormedSpace` is a `QuasiNormedSpace` (over the corresponding `NormedAddCommGroup`
-bridge instance), with the *same* `norm_smul_le` bound and `Module` structure reused verbatim. -/
-instance (priority := 100) _root_.NormedSpace.toQuasiNormedSpace
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F] : QuasiNormedSpace 𝕜 F :=
-  { ‹NormedSpace 𝕜 F› with norm_smul_le := NormedSpace.norm_smul_le }
-
-/-- The product of two `QuasiNormedSpace`s, via the (already-existing) `Prod` module structure
-and max quasi-norm. -/
-instance instProd {F : Type*} [QuasinormedAddCommGroup F] [QuasiNormedSpace 𝕜 F] :
-    QuasiNormedSpace 𝕜 (E × F) where
-  norm_smul_le c p := by
-    rw [Prod.norm_def, Prod.norm_def]
-    simp only [Prod.smul_fst, Prod.smul_snd]
-    rw [norm_smul c p.1, norm_smul c p.2]
-    exact (mul_max_of_nonneg _ _ (norm_nonneg c)).ge
-
-end QuasiNormedSpace
-
-namespace QuasinormedAddCommGroup
-
-variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
-  [QuasinormedAddCommGroup E] [QuasiNormedSpace 𝕜 E]
-  [QuasinormedAddCommGroup F] [QuasiNormedSpace 𝕜 F]
-
-/-- Rescale `x` by a power of `c` (any element of norm `> 1`) to land in the "shell"
-`[ε/‖c‖, ε)`, tracking the exact scalar used — the zpow-indexed form `rescale_to_shell` is stated
-against. Ports `Seminorm.rescale_to_shell_zpow` (`Analysis/Normed/Module/Seminorm/Basic.lean`)
-verbatim: that lemma's proof only ever uses the *exact* homogeneity `p (c • x) = ‖c‖ * p x`, never
-the triangle inequality, so it transfers unchanged to our quasi-norm via
-`QuasiNormedSpace.norm_smul` (also exact, proved from the `≤` axiom). -/
-theorem rescale_to_shell_zpow {c : 𝕜} (hc : 1 < ‖c‖) {ε : ℝ}
-    (εpos : 0 < ε) {x : E} (hx : ‖x‖ ≠ 0) : ∃ n : ℤ, c ^ n ≠ 0 ∧
-    ‖c ^ n • x‖ < ε ∧ (ε / ‖c‖ ≤ ‖c ^ n • x‖) ∧ (‖c ^ n‖⁻¹ ≤ ε⁻¹ * ‖c‖ * ‖x‖) := by
-  have hxpos : 0 < ‖x‖ := lt_of_le_of_ne (QuasinormedAddCommGroup.norm_nonneg x) (Ne.symm hx)
-  have xεpos : 0 < ‖x‖ / ε := by positivity
-  rcases exists_mem_Ico_zpow xεpos hc with ⟨n, hn⟩
-  have cpos : 0 < ‖c‖ := by positivity
-  have cnpos : 0 < ‖c ^ (n + 1)‖ := by rw [norm_zpow]; exact xεpos.trans hn.2
-  refine ⟨-(n + 1), ?_, ?_, ?_, ?_⟩
-  · exact zpow_ne_zero _ (norm_pos_iff.1 cpos)
-  · show ‖(c ^ (-(n + 1))) • x‖ < ε
-    rw [QuasiNormedSpace.norm_smul, zpow_neg, norm_inv, ← div_eq_inv_mul, div_lt_iff₀ cnpos,
-      mul_comm, norm_zpow]
-    exact (div_lt_iff₀ εpos).1 hn.2
-  · show ε / ‖c‖ ≤ ‖(c ^ (-(n + 1))) • x‖
-    rw [zpow_neg, div_le_iff₀ cpos, QuasiNormedSpace.norm_smul, norm_inv, norm_zpow,
-      zpow_add₀ (ne_of_gt cpos), zpow_one, mul_inv_rev, mul_comm, ← mul_assoc, ← mul_assoc,
-      mul_inv_cancel₀ (ne_of_gt cpos), one_mul, ← div_eq_inv_mul, le_div_iff₀ (zpow_pos cpos _),
-      mul_comm]
-    exact (le_div_iff₀ εpos).1 hn.1
-  · show ‖(c ^ (-(n + 1)))‖⁻¹ ≤ ε⁻¹ * ‖c‖ * ‖x‖
-    have hre : ε⁻¹ * ‖c‖ * ‖x‖ = ε⁻¹ * ‖x‖ * ‖c‖ := by ring
-    rw [zpow_neg, norm_inv, inv_inv, norm_zpow, zpow_add₀ (ne_of_gt cpos), zpow_one, hre,
-      ← div_eq_inv_mul]
-    gcongr
-    exact hn.1
-
-theorem rescale_to_shell {c : 𝕜} (hc : 1 < ‖c‖) {ε : ℝ} (εpos : 0 < ε) {x : E} (hx : ‖x‖ ≠ 0) :
-    ∃ d : 𝕜, d ≠ 0 ∧ ‖d • x‖ < ε ∧ (ε / ‖c‖ ≤ ‖d • x‖) ∧ (‖d‖⁻¹ ≤ ε⁻¹ * ‖c‖ * ‖x‖) :=
-  let ⟨_, hn⟩ := rescale_to_shell_zpow hc εpos hx; ⟨_, hn⟩
-
-/-- A continuous `𝕜`-linear map between quasi-normed spaces is operator-bounded — the fact that
-makes `opQuasiNorm` below a genuine bound rather than a possibly-vacuous infimum. Ports
-`SemilinearMapClass.bound_of_continuous`'s shell argument: continuity at `0` gives a ball on which
-`f` is bounded by `1`, then `rescale_to_shell` moves an arbitrary `x` into that ball and rescales
-the bound back. -/
-theorem exists_forall_norm_map_le_mul_norm (f : E →L[𝕜] F) :
-    ∃ C, 0 < C ∧ ∀ x : E, ‖f x‖ ≤ C * ‖x‖ := by
-  have hf0 : Filter.Tendsto f (nhds 0) (nhds 0) := map_zero f ▸ f.continuous.tendsto 0
-  obtain ⟨ε, εpos, hε⟩ := (QuasinormedAddCommGroup.nhds_zero_hasBasis (E := E)).mem_iff.mp
-    (hf0 ((QuasinormedAddCommGroup.nhds_zero_hasBasis (E := F)).mem_iff.mpr
-      ⟨1, one_pos, subset_rfl⟩))
-  obtain ⟨c, hc⟩ := NormedField.exists_one_lt_norm 𝕜
-  have hcpos : 0 < ‖c‖ := by positivity
-  refine ⟨‖c‖ / ε, by positivity, fun x => ?_⟩
-  by_cases hx : ‖x‖ = 0
-  · have hx0 : x = 0 := (QuasinormedAddCommGroup.norm_eq_zero_iff x).mp hx
-    simp [hx0]
-  · obtain ⟨d, hd, hdx1, -, hdinv⟩ := rescale_to_shell hc εpos hx
-    have hfd : ‖f (d • x)‖ < 1 := hε hdx1
-    rw [map_smul, QuasiNormedSpace.norm_smul] at hfd
-    have hdpos : 0 < ‖d‖ := norm_pos_iff.2 hd
-    have hlt : ‖f x‖ < ‖d‖⁻¹ := by
-      rw [← one_div, lt_div_iff₀ hdpos]
-      rwa [mul_comm] at hfd
-    have hthis := hlt.le.trans hdinv
-    have heq : ε⁻¹ * ‖c‖ * ‖x‖ = ‖c‖ / ε * ‖x‖ := by ring
-    rwa [heq] at hthis
-
-/-- The operator quasi-norm of a continuous linear map between quasi-normed spaces —
-`sInf {C ≥ 0 | ∀ x, ‖f x‖ ≤ C * ‖x‖}`, the natural substitute for Mathlib's own operator norm
-(`ContinuousLinearMap.opNorm`), which needs genuine `SeminormedAddCommGroup` on both ends and so
-isn't available once a leg is only `QuasinormedAddCommGroup`. -/
-noncomputable def opQuasiNorm (f : E →L[𝕜] F) : ℝ :=
-  sInf {C : ℝ | 0 ≤ C ∧ ∀ x, ‖f x‖ ≤ C * ‖x‖}
-
-theorem opQuasiNorm_nonempty (f : E →L[𝕜] F) :
-    {C : ℝ | 0 ≤ C ∧ ∀ x, ‖f x‖ ≤ C * ‖x‖}.Nonempty :=
-  let ⟨C, hC, hCf⟩ := exists_forall_norm_map_le_mul_norm f; ⟨C, hC.le, hCf⟩
-
-theorem opQuasiNorm_nonneg (f : E →L[𝕜] F) : 0 ≤ opQuasiNorm f :=
-  le_csInf (opQuasiNorm_nonempty f) (fun _ hC => hC.1)
-
-/-- The defining property of `opQuasiNorm`: it is an actual upper bound, not just an infimum of
-candidate bounds. Proved via the standard ε-approximation of an infimum
-(`Real.lt_sInf_add_pos`), using `ε / (‖x‖ + 1)` (rather than `ε / ‖x‖`) as the slack so the same
-argument covers `x = 0` without a separate case split on `‖x‖`. -/
-theorem le_opQuasiNorm (f : E →L[𝕜] F) (x : E) : ‖f x‖ ≤ opQuasiNorm f * ‖x‖ := by
-  apply le_of_forall_pos_le_add
-  intro ε hε
-  have hxpos : (0 : ℝ) < ‖x‖ + 1 := by
-    have := QuasinormedAddCommGroup.norm_nonneg x; linarith
-  obtain ⟨C, hCmem, hClt⟩ := Real.lt_sInf_add_pos (opQuasiNorm_nonempty f) (div_pos hε hxpos)
-  have hbound : ‖f x‖ ≤ C * ‖x‖ := hCmem.2 x
-  have hCx : C * ‖x‖ < (opQuasiNorm f + ε / (‖x‖ + 1)) * ‖x‖ ∨ ‖x‖ = 0 := by
-    rcases eq_or_lt_of_le (QuasinormedAddCommGroup.norm_nonneg x) with h | h
-    · right; exact h.symm
-    · left; exact mul_lt_mul_of_pos_right hClt h
-  rcases hCx with hCx | hx0
-  · have hεx : (opQuasiNorm f + ε / (‖x‖ + 1)) * ‖x‖ ≤ opQuasiNorm f * ‖x‖ + ε := by
-      have : ε / (‖x‖ + 1) * ‖x‖ ≤ ε := by
-        rw [div_mul_eq_mul_div, div_le_iff₀ hxpos]
-        nlinarith [QuasinormedAddCommGroup.norm_nonneg x]
-      nlinarith
-    linarith [hbound, hCx]
-  · rw [hx0] at hbound ⊢
-    simp only [mul_zero] at hbound ⊢
-    linarith
 
 end QuasinormedAddCommGroup

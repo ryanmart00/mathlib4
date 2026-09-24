@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.MeasureTheory.Function.LorentzSpace.Basic
-import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
+import Mathlib.Analysis.Normed.Quasi.Completeness
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Order.Filter.ENNReal
 import Mathlib.Probability.BorelCantelli
@@ -23,7 +23,7 @@ subsequence, and finally upgrades that back to full-sequence `lorentzNorm` conve
 quasi-triangle inequality (`lorentzNorm_add_le`).
 
 Combined with `QuasinormedAddCommGroup.completeSpace_of_cauchy_complete`
-(`Analysis/Interpolation/QuasiNormCompleteness.lean`), which reduces `CompleteSpace` to handling
+(`Analysis/Normed/Quasi/Completeness.lean`), which reduces `CompleteSpace` to handling
 an arbitrary `B`-controlled Cauchy sequence for arbitrary summable `B` (not just geometric) — this
 is *why* a subsequence-extraction step is needed here even though the underlying Chebyshev bound
 itself is geometric-scale-driven.

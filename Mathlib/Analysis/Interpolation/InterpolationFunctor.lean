@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.QuasiBanachCat
+import Mathlib.Analysis.Normed.Quasi.QuasiBanachCat
 import Mathlib.Analysis.Interpolation.InterpolationCat
 import Mathlib.CategoryTheory.Functor.Basic
 
@@ -18,7 +18,7 @@ morphism `T`, `F(T)` is the restriction of `T` to `F({A₀,A₁})`. Triebel's ow
 in genuine Banach spaces; we land in quasi-Banach spaces instead, since `A₀ ∩ A₁`/`A₀ + A₁`
 themselves (`Couple.lean`) are only guaranteed quasi-Banach for quasi-normed legs — every
 genuinely-Banach case is still covered, via `NormedAddCommGroup.toQuasinormedAddCommGroup`
-(`QuasiNorm.lean`).
+(`Analysis/Normed/Quasi/Basic.lean`).
 
 We realize the sandwich condition as two continuous linear maps `fromMeet C : C.meet →L[𝕜] F(C)`
 and `toSum C : F(C) →L[𝕜] C.sum`, agreeing with the canonical `meet →L[𝕜] sum` map on composition,

@@ -300,7 +300,7 @@ letting the caller pick `M₀ > 0` freely (e.g. `M₀ := 1` when `T.f₀ = 0`). 
 
 Uses `QuasinormedAddCommGroup.opQuasiNorm` rather than Mathlib's own operator norm, which needs
 genuine `SeminormedAddCommGroup` on both ends and so isn't available for merely-quasi-normed legs
-(`QuasiNorm.lean`). -/
+(`Analysis/Normed/Quasi/Operator.lean`). -/
 theorem InterpolationCat.Hom.kFunctional_sumMap_le {C D : InterpolationCat 𝕜}
     (T : InterpolationCat.Hom C D) (t : ℝ) (ht : 0 ≤ t)
     (M₀ M₁ : ℝ) (hM₀ : 0 < M₀)

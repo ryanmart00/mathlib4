@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.CategoryTheory.ConcreteCategory.Basic
-import Mathlib.Analysis.Interpolation.QuasiNorm
+import Mathlib.Analysis.Normed.Quasi.Operator
 
 /-!
 # The category of quasi-Banach spaces
@@ -18,7 +18,7 @@ contractions). Supersedes an earlier `BanachCat`, whose objects were required to
 `NormedAddCommGroup`.
 
 Deliberately just *one* category here, not two: every genuine Banach space is already a
-quasi-Banach space, via `NormedAddCommGroup.toQuasinormedAddCommGroup` (`QuasiNorm.lean`, no
+quasi-Banach space, via `NormedAddCommGroup.toQuasinormedAddCommGroup` (`Basic.lean`, no
 diamond, reuses the genuine norm's own topology verbatim) — so `QuasiBanachCat.of` already
 accepts a genuinely-normed space directly, and a second, parallel `BanachCat` category would
 just duplicate every declaration below for no payoff. Wherever a construction genuinely needs

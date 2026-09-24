@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.QuasiNorm
+import Mathlib.Analysis.Normed.Quasi.Basic
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.Topology.UniformSpace.Cauchy
 
@@ -19,7 +19,7 @@ complete_of_cauchySeq_tendsto`, which needs an actual `dist`; a `QuasinormedAddC
 a *quasi*-triangle inequality, so no genuine metric is available in general. The fix: go through
 the more primitive `UniformSpace.complete_of_convergent_controlled_sequences` instead, which needs
 only a countably-generated uniformity filter — already available for any `QuasinormedAddCommGroup`
-via its bundled `IsUniformAddGroup` (`QuasiNorm.lean`'s `instFirstCountableTopology`
+via its bundled `IsUniformAddGroup` (`Basic.lean`'s `instFirstCountableTopology`
 combines the exact same two facts to get the same instance for a different purpose).
 
 ## Main results

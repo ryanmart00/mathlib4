@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.RealInterpolation.KMethod.KInterpolation
-import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
+import Mathlib.Analysis.Normed.Quasi.Completeness
 
 /-!
 # The real interpolation space `(A₀, A₁)_{θ,q}` as a quasi-Banach space

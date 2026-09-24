@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.QuasiNorm
+import Mathlib.Analysis.Normed.Quasi.Basic
 import Mathlib.Topology.Algebra.IsUniformGroup.Basic
 
 /-!
@@ -27,7 +27,7 @@ file, both consequences of the quasi-triangle inequality only being exact up to 
 * **Norm-separation of the quotient** (`‖x‖ = 0 → x = 0`) needs the subgroup quotiented by to be
   "closed" in *some* sense. Mathlib gets this for free from topological closedness, because its
   norm generates its topology — and now that `QuasinormedAddCommGroup` bundles its own topology
-  too (`QuasiNorm.lean`), so do we: `AddSubgroup.isNormClosed_of_isClosed` bridges ordinary
+  too (`Basic.lean`), so do we: `AddSubgroup.isNormClosed_of_isClosed` bridges ordinary
   topological closedness (which is all `Couple.lean` ever proves, via `T2Space` + continuity) to
   the purely algebraic `AddSubgroup.IsNormClosed` below, using the norm/topology compatibility
   `QuasinormedAddCommGroup.nhds_zero_hasBasis` already bundles.
@@ -178,7 +178,7 @@ already-automatic ambient topology (`QuotientAddGroup.instTopologicalSpace`/
 `IsTopologicalAddGroup.rightUniformSpace`, rather than building a *fresh* topology from the
 quotient norm's own `AddGroupFilterBasis` — the same "reuse ambient, don't recompute" principle
 already used for `QuasinormedAddCommGroup.instProd`/the `NormedAddCommGroup` bridge instance in
-`QuasiNorm.lean`. This matters beyond mere elegance: `quotientNorm_completeSpace` below is
+`Basic.lean`. This matters beyond mere elegance: `quotientNorm_completeSpace` below is
 `@`-pinned to exactly `IsTopologicalAddGroup.rightUniformSpace (E ⧸ N)`, and `Couple.lean`'s own
 `InterpolationCouple.sum`-related instances rely on the SAME uniform space being found by ordinary
 instance search — building a second, only-propositionally-equal one here (as an earlier version

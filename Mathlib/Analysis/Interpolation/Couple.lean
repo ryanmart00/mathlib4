@@ -3,7 +3,8 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.QuasiNormQuotient
+import Mathlib.Analysis.Normed.Quasi.Quotient
+import Mathlib.Analysis.Normed.Quasi.NormedSpace
 import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Quotient
 import Mathlib.Tactic.FastInstance
 
@@ -19,14 +20,15 @@ Banach spaces in their own right.
 
 **Unit 2 (2026-09-17): generalized from `NormedAddCommGroup` legs to `QuasinormedAddCommGroup`**
 (quasi-norm, with its topology/uniform structure bundled in exactly like `NormedAddCommGroup`,
-see `QuasiNorm.lean`), with completeness kept as a separate `[CompleteSpace _]` bracket, matching
-`NormedAddCommGroup`'s own pattern (there is no separate "quasi-Banach" class). Every genuine
+see `Analysis/Normed/Quasi/Basic.lean`), with completeness kept as a separate `[CompleteSpace _]`
+bracket, matching `NormedAddCommGroup`'s own pattern (there is no separate "quasi-Banach" class). Every genuine
 `NormedAddCommGroup` still satisfies `QuasinormedAddCommGroup` via the bridge instance there, so
 nothing here is a behavior change for existing normed-leg callers. The parts that never touched
 a norm at all (`diff`, `plus`, both kernels' closedness,
 `meet`, `mem_meet_iff`, `meet.completeSpace`, `sum` as a bare type, `mem_ker_plus_iff`) generalized
 with **no proof changes whatsoever** — pure topology/module-map facts. `A₀+A₁`'s norm and
-completeness needed real new content, from `QuasiNormQuotient.lean` (Unit 1): its quasi-norm via
+completeness needed real new content, from `Analysis/Normed/Quasi/Quotient.lean` (Unit 1): its
+quasi-norm via
 `QuasinormedAddCommGroup.quotientQuasinormedAddCommGroup` (needing the kernel closed in the
 *norm* sense, obtained from the already-proved *topological* closedness via
 `AddSubgroup.isNormClosed_of_isClosed`), and its completeness via
@@ -36,7 +38,8 @@ Mathlib instances for `Submodule.Quotient` (`Submodule.isTopologicalAddGroup_quo
 `Submodule.continuousSMul_quotient`, `QuotientModule.Quotient.topologicalSpace`) — no new proof
 needed for any of those either. `FirstCountableTopology` needed no bridging at all once
 `QuasinormedAddCommGroup` grew its own generic `instFirstCountableTopology`
-(`QuasiNorm.lean`) — free for *any* quasi-normed leg from the quasi-norm's own neighborhood
+(`Analysis/Normed/Quasi/Basic.lean`) — free for *any* quasi-normed leg from the quasi-norm's own
+neighborhood
 basis, no Aoki–Rolewicz needed, so `A₀+A₁` picks it up automatically the same way `A₀`, `A₁`
 themselves do. Only the quasi-norm and completeness needed real work; everything else was
 already there.
@@ -47,7 +50,8 @@ from both legs. `A₀ + A₁` (the "sum") is the quotient of `A₀ × A₁` by t
 map `plus (a₀,a₁) = ι₀ a₀ + ι₁ a₁` — matching Triebel's `A₀+A₁` as the image of `plus` via the
 first isomorphism theorem (`(A₀×A₁)/ker(plus) ≅ image(plus)`). Both kernels are closed (the maps
 are continuous into a `T2Space`), so both quotient/submodule constructions are Banach (resp.
-quasi-Banach) spaces via existing Mathlib instances plus `QuasiNormQuotient.lean`, with no
+quasi-Banach) spaces via existing Mathlib instances plus `Analysis/Normed/Quasi/Quotient.lean`,
+with no
 from-scratch Cauchy-sequence argument needed.
 
 Both `diff`'s kernel and `plus`'s kernel are needed — they are genuinely different submodules
@@ -115,7 +119,7 @@ is definitionally `meet ι₀ ι₁`'s own, so this gives the *same* ambient uni
 second one). Same "reuse ambient, don't recompute" principle as `sum.quasinormedAddCommGroup`'s
 topology fields, for the same reason: a second, only-propositionally-equal instance here would
 create the same kind of diamond that surfaced for `A₀+A₁` (see `QuotientQuasinormedAddCommGroup`'s
-docstring in `QuasiNormQuotient.lean`). -/
+docstring in `Analysis/Normed/Quasi/Quotient.lean`). -/
 @[instance_reducible]
 noncomputable instance InterpolationCouple.meet.quasinormedAddCommGroup
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
@@ -143,7 +147,7 @@ instances (`meet.module`, `meet.continuousSMul`, via the generic `Submodule.modu
 diamond as `sum.uniformSpace` once did, since `ContinuousSMul` traces back to needing
 `meet.quasinormedAddCommGroup`'s *own* bundled topology to match the generic ambient one, and
 that match is not obvious to instance search. Deriving `ContinuousSMul` directly from the
-quasi-norm bound (`QuasiNormedSpace.continuousSMul`, `QuasiNorm.lean`) sidesteps the ambient
+quasi-norm bound (`QuasiNormedSpace.continuousSMul`) sidesteps the ambient
 topology entirely, the same way it does for `sum` below. -/
 noncomputable instance InterpolationCouple.meet.quasiNormedSpace
     (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
@@ -169,7 +173,8 @@ theorem InterpolationCouple.mem_ker_plus_iff
     (a₀, a₁) ∈ (InterpolationCouple.plus ι₀ ι₁).ker ↔ ι₀ a₀ = -ι₁ a₁ := by
   simp [InterpolationCouple.plus, LinearMap.mem_ker, eq_neg_iff_add_eq_zero]
 
-/-- `A₀+A₁`'s quasi-norm, from `QuasiNormQuotient.lean`'s quotient construction — the kernel's
+/-- `A₀+A₁`'s quasi-norm, from the quotient construction of `Analysis/Normed/Quasi/Quotient.lean`;
+the kernel's
 already-proved *topological* closedness (`isClosed_ker_plus`) bridges to the *norm* closedness
 this needs via `AddSubgroup.isNormClosed_of_isClosed`. -/
 noncomputable instance InterpolationCouple.sum.quasinormedAddCommGroup

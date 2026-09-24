@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.MeasureTheory.Function.LorentzSpace.TriangleInequality
-import Mathlib.Analysis.Interpolation.QuasiNorm
+import Mathlib.Analysis.Normed.Quasi.NormedSpace
 
 /-!
 # Lorentz spaces: the bundled type
@@ -18,7 +18,7 @@ Per Ryan (2026-09-20): unlike `Lp`, which is genuinely normed for `1 ≤ p`, `Lo
 only a `QuasinormedAddCommGroup` instance here, for **all** `p, q` — the literal `f*`-based Lorentz
 quasinorm is not a genuine norm even for `p > 1` (Hunt's maximal-function `f**` trick is needed for
 that, and is *not* attempted here). This is exactly the case the quasi-Banach generalization
-(`Analysis/Interpolation/QuasiNorm.lean` etc.) was built to accommodate. The fact that `L_{p,p}`
+(`Analysis/Normed/Quasi/` etc.) was built to accommodate. The fact that `L_{p,p}`
 recovers the genuine `Lᵖ` space (as literal equality of subgroups) is `LorentzSpace.eq_Lp`
 (`LorentzSpace/Diag.lean`).
 
@@ -226,7 +226,7 @@ spirit —
 `LorentzSpace` itself stays defined for every `p, q` regardless.
 
 The four bundled topology fields are given explicitly (mirroring `AddGroupFilterBasis.ofQuasiNorm`'s
-own docstring pattern, `QuasiNorm.lean`) via the local `hB` computed once below, rather than relying
+own docstring pattern, `Normed/Quasi/Basic.lean`) via the local `hB` computed once below, rather than relying
 on the class's own default mechanism (which hit an unrelated elaboration issue — an "unknown
 identifier" error referencing earlier fields — not investigated further since this direct route
 works). See the module docstring's "elaboration-performance lesson" for why `hB` needs an explicit

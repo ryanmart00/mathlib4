@@ -178,3 +178,63 @@ theorem AEEqFun.measureEdist_add_add (f g h : α →ₘ[μ] E) :
   simp only [Pi.add_apply]
   rw [edist_eq_enorm_sub, edist_eq_enorm_sub,
     show f x + h x - (g x + h x) = f x - g x by abel]
+
+/-- Negation invariance of `measureEdist`, needed (with `measureEdist_add_add`) for `L0` to be a
+topological additive group. -/
+theorem AEEqFun.measureEdist_neg_neg (f g : α →ₘ[μ] E) :
+    AEEqFun.measureEdist μ (-f) (-g) = AEEqFun.measureEdist μ f g := by
+  sorry
+
+/-! ## `L⁰`: the type synonym carrying the topology of convergence in measure -/
+
+namespace MeasureTheory
+
+/-- `L⁰(α, E; μ)`: a.e.-equality classes of a.e.-strongly measurable functions `α → E`, as a type
+synonym for `α →ₘ[μ] E` carrying the topology of convergence in measure on finite-measure sets
+(induced by `AEEqFun.measureEdist`).
+
+This is a synonym rather than an instance on `α →ₘ[μ] E` itself because `Lp E p μ` (and
+`LorentzSpace E p q μ`) are `AddSubgroup`s of `α →ₘ[μ] E` carrying their own norm topologies; a
+topology on `α →ₘ[μ] E` would give them a second, non-defeq subtype topology. -/
+def L0 (α E : Type*) [MeasurableSpace α] [TopologicalSpace E] (μ : Measure α) : Type _ :=
+  α →ₘ[μ] E
+
+namespace L0
+
+instance : AddCommGroup (L0 α E μ) := inferInstanceAs (AddCommGroup (α →ₘ[μ] E))
+
+/-- Elements of `L0` coerce to (a representative) function, as for `α →ₘ[μ] E`. -/
+noncomputable instance : CoeFun (L0 α E μ) fun _ => α → E := ⟨fun f : α →ₘ[μ] E => ⇑f⟩
+
+variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
+
+instance : Module 𝕜 (L0 α E μ) := inferInstanceAs (Module 𝕜 (α →ₘ[μ] E))
+
+variable (𝕜) in
+/-- The identity map from `α →ₘ[μ] E` to its synonym `L0 α E μ`, as a linear equivalence. -/
+def toL0 : (α →ₘ[μ] E) ≃ₗ[𝕜] L0 α E μ := LinearEquiv.refl 𝕜 _
+
+noncomputable instance : EMetricSpace (L0 α E μ) where
+  edist f g := AEEqFun.measureEdist μ f g
+  edist_self := AEEqFun.measureEdist_self μ
+  edist_comm := AEEqFun.measureEdist_comm μ
+  edist_triangle := AEEqFun.measureEdist_triangle μ
+  eq_of_edist_eq_zero := AEEqFun.eq_of_measureEdist_eq_zero μ
+
+instance : IsTopologicalAddGroup (L0 α E μ) := by
+  sorry
+
+instance : ContinuousSMul 𝕜 (L0 α E μ) := by
+  sorry
+
+/-- The topology on `L0` is convergence in measure on every finite-measure set. Not needed
+downstream; this is the sanity check that `measureEdist` induces the intended topology. -/
+theorem tendsto_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} (f : ι → L0 α E μ)
+    (g : L0 α E μ) :
+    Filter.Tendsto f l (nhds g) ↔ ∀ s, MeasurableSet s → μ s ≠ ⊤ →
+      TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
+  sorry
+
+end L0
+
+end MeasureTheory

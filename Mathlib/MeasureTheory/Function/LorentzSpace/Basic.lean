@@ -54,6 +54,11 @@ which is what fixes the performance problem specifically.
 open MeasureTheory Set
 open scoped ENNReal NNReal
 
+/-- `0 < ∞` as a `Fact`, so that `LorentzSpace E p ⊤ μ` (e.g. `L^∞ = L_{∞,∞}`) gets its
+`[Fact (0 < q)]`-gated instances automatically. Mirrors `fact_one_le_top_ennreal`. -/
+instance _root_.fact_zero_lt_top_ennreal : Fact ((0 : ℝ≥0∞) < ∞) :=
+  ⟨ENNReal.zero_lt_top⟩
+
 variable {α : Type*} [MeasurableSpace α] (μ : Measure α)
 variable {E : Type*} [NormedAddCommGroup E]
 variable (p q : ℝ≥0∞)

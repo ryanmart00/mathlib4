@@ -56,4 +56,17 @@ theorem lorentz_ι₀ : (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₀ = LorentzS
 @[simp]
 theorem lorentz_ι₁ : (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₁ = LorentzSpace.toL0 μ E 𝕜 p₁ q₁ := rfl
 
+/-- The canonical map `L_{p₀,q₀} + L_{p₁,q₁} →L[𝕜] L⁰(μ)`: `InterpolationCouple.sumToAmbient`,
+typed with codomain `L0 α E μ` (rather than the defeq `(lorentz …).𝒜`), so that its values coerce
+to functions `α → E`. -/
+noncomputable def lorentzSumToL0 :
+    InterpolationCouple.sum (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₀ (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₁ →L[𝕜]
+      L0 α E μ :=
+  InterpolationCouple.sumToAmbient _ _
+
+theorem lorentzSumToL0_eq :
+    lorentzSumToL0 𝕜 μ E p₀ q₀ p₁ q₁ =
+      InterpolationCouple.sumToAmbient (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₀
+        (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₁ := rfl
+
 end InterpolationCat

@@ -258,7 +258,11 @@ theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 
 noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submodule 𝕜 (sum ι₀ ι₁) where
   carrier := {a | realInterpolationENorm ι₀ ι₁ θ q a < ⊤}
   zero_mem' := by
-    sorry
+    show realInterpolationENorm ι₀ ι₁ θ q 0 < ⊤
+    rcases eq_or_ne q 0 with rfl | hq
+    · simp [realInterpolationENorm]
+    · rw [realInterpolationENorm_zero ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)]
+      exact ENNReal.zero_lt_top
   add_mem' := by
     sorry
   smul_mem' := by

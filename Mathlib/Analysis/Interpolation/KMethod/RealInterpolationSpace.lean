@@ -116,11 +116,41 @@ theorem exists_realInterpolationENorm_add_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0
           (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b) := by
   sorry
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The "`⊂ A₀ + A₁`" half of the sandwich, quantitatively: `c_{θ,q} ‖a‖_{A₀+A₁} ≤ ‖a‖_{θ,q}`. -/
 theorem ofReal_norm_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
     (a : sum ι₀ ι₁) :
     ENNReal.ofReal ‖a‖ * realInterpolationConst θ q ≤ realInterpolationENorm ι₀ ι₁ θ q a := by
-  sorry
+  have hpt : ∀ t : ℝ, 0 < t → ENNReal.ofReal ‖a‖ * ENNReal.ofReal (t ^ (-θ) * min 1 t) ≤
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) := by
+    intro t ht
+    rw [← ENNReal.ofReal_mul (QuasinormedAddCommGroup.norm_nonneg a)]
+    apply ENNReal.ofReal_le_ofReal
+    have hK := min_mul_norm_le_kFunctional ι₀ ι₁ t ht.le a
+    have h0 : 0 ≤ t ^ (-θ) := Real.rpow_nonneg ht.le _
+    nlinarith
+  unfold realInterpolationENorm realInterpolationConst
+  split_ifs with htop
+  · rw [ENNReal.mul_iSup]
+    exact iSup_mono fun t => hpt t t.2
+  · have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    have hr' : 0 ≤ q⁻¹.toReal := ENNReal.toReal_nonneg
+    calc ENNReal.ofReal ‖a‖ * (∫⁻ t in Ioi (0 : ℝ),
+            ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal
+        = (ENNReal.ofReal ‖a‖ ^ q.toReal * ∫⁻ t in Ioi (0 : ℝ),
+            ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹)
+              ^ q⁻¹.toReal := by
+          rw [ENNReal.mul_rpow_of_nonneg _ _ hr', ← ENNReal.rpow_mul, ENNReal.toReal_inv,
+            mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
+      _ ≤ (∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) ^ q.toReal *
+            ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal := by
+          refine ENNReal.rpow_le_rpow ?_ hr'
+          rw [← lintegral_const_mul' _ _
+            (ENNReal.rpow_ne_top_of_nonneg hr.le ENNReal.ofReal_ne_top)]
+          refine setLIntegral_mono' measurableSet_Ioi fun t ht => ?_
+          rw [← mul_assoc, ← ENNReal.mul_rpow_of_nonneg _ _ hr.le]
+          gcongr
+          exact hpt t ht
 
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich, quantitatively: `‖a‖_{θ,q} ≤ c_{θ,q} ‖a‖_{A₀∩A₁}`
 (strengthens `realInterpolationENorm_meetToSum_lt_top`). -/

@@ -277,7 +277,10 @@ noncomputable instance instModule : Module 𝕜 (LorentzSpace E p q μ) :=
 
 theorem norm_const_smul [Fact (0 < q)] (c : 𝕜) (f : LorentzSpace E p q μ) :
     ‖c • f‖ = ‖c‖ * ‖f‖ := by
-  sorry
+  have hq : q ≠ 0 := (Fact.out : 0 < q).ne'
+  change (lorentzNorm μ p q ⇑(c • (f : α →ₘ[μ] E))).toReal = ‖c‖ * (lorentzNorm μ p q ⇑f).toReal
+  rw [lorentzNorm_congr_ae p q (AEEqFun.coeFn_smul c (f : α →ₘ[μ] E)),
+    lorentzNorm_const_smul μ p q hq, ENNReal.toReal_mul, toReal_enorm]
 
 /-- Mirrors `MeasureTheory.Lp.instNormedSpace`. -/
 noncomputable instance instQuasiNormedSpace [Fact (0 < q)] :

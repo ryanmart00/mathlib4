@@ -117,10 +117,6 @@ theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c 
       ENNReal.mul_rpow_of_nonneg _ _ (by positivity), ← ENNReal.rpow_mul, ENNReal.toReal_inv,
       mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
 
-theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (a : sum ι₀ ι₁) :
-    realInterpolationENorm ι₀ ι₁ θ q a = 0 ↔ a = 0 := by
-  sorry
-
 /-- The quasi-triangle inequality for `realInterpolationENorm` with a *finite, real* constant
 `≥ 1`, as needed for `QuasinormedAddCommGroup.quasiTriangleConst` (strengthens
 `realInterpolationENorm_add_le`, whose constant is only known to be positive). -/
@@ -166,6 +162,18 @@ theorem ofReal_norm_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞} (h
           rw [← mul_assoc, ← ENNReal.mul_rpow_of_nonneg _ _ hr.le]
           gcongr
           exact hpt t ht
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (a : sum ι₀ ι₁) :
+    realInterpolationENorm ι₀ ι₁ θ q a = 0 ↔ a = 0 := by
+  refine ⟨fun h => ?_, fun h => h ▸ realInterpolationENorm_zero ι₀ ι₁ θ hq⟩
+  have hle := ofReal_norm_mul_realInterpolationConst_le ι₀ ι₁ θ hq a
+  rw [h, nonpos_iff_eq_zero, mul_eq_zero] at hle
+  rcases hle with h0 | h0
+  · rw [ENNReal.ofReal_eq_zero] at h0
+    exact (QuasinormedAddCommGroup.norm_eq_zero_iff a).mp
+      (le_antisymm h0 (QuasinormedAddCommGroup.norm_nonneg a))
+  · exact absurd h0 (realInterpolationConst_pos θ q).ne'
 
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich, quantitatively: `‖a‖_{θ,q} ≤ c_{θ,q} ‖a‖_{A₀∩A₁}`
 (strengthens `realInterpolationENorm_meetToSum_lt_top`). -/

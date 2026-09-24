@@ -364,7 +364,7 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace
       toIsTopologicalAddGroup := hB.isTopologicalAddGroup
-      toIsUniformAddGroup := sorry
+      toIsUniformAddGroup := hB.isUniformAddGroup
       nhds_zero_hasBasis := sorry }
 
 theorem norm_smul [Fact (0 < q)] (c : 𝕜) (a : RealInterpolationSpace ι₀ ι₁ θ q) :

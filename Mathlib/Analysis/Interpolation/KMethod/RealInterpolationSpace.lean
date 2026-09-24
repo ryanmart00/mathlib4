@@ -377,7 +377,9 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
 
 theorem norm_smul [Fact (0 < q)] (c : 𝕜) (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖c • a‖ = ‖c‖ * ‖a‖ := by
-  sorry
+  rw [norm_def, norm_def]
+  change (realInterpolationENorm ι₀ ι₁ θ q (c • (a : sum ι₀ ι₁))).toReal = _
+  rw [realInterpolationENorm_smul ι₀ ι₁ θ Fact.out, ENNReal.toReal_mul, toReal_enorm]
 
 noncomputable instance instQuasiNormedSpace [Fact (0 < q)] :
     QuasiNormedSpace 𝕜 (RealInterpolationSpace ι₀ ι₁ θ q) where

@@ -358,8 +358,8 @@ omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `A₀ + A₁ → 𝒜` is injective, with no hypothesis on `ι₀, ι₁`: the quotient defining the sum is
 by exactly the kernel of `plus`. -/
 theorem InterpolationCouple.sumToAmbient_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
-    Function.Injective (InterpolationCouple.sumToAmbient ι₀ ι₁) := by
-  sorry
+    Function.Injective (InterpolationCouple.sumToAmbient ι₀ ι₁) :=
+  LinearMap.ker_eq_bot.mp (Submodule.ker_liftQ_eq_bot _ _ _ le_rfl)
 
 /-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
 `InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs

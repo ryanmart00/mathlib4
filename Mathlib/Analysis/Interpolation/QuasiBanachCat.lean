@@ -146,6 +146,7 @@ theorem norm_hom_le {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
 
 theorem norm_le_hom {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
     ‖x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.inv.hom * ‖e.hom x‖ := by
-  sorry
+  have h := QuasinormedAddCommGroup.le_opQuasiNorm e.inv.hom (e.hom x)
+  rwa [show e.inv.hom (e.hom x) = x from ConcreteCategory.congr_hom e.hom_inv_id x] at h
 
 end QuasiBanachCat

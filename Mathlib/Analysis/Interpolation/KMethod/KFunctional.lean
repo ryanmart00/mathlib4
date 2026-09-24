@@ -248,7 +248,26 @@ theorem InterpolationCouple.kFunctional_meetToSum_le (t : ℝ) (ht : 0 ≤ t)
     (b : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.KFunctional ι₀ ι₁ t (InterpolationCouple.meetToSum ι₀ ι₁ b) ≤
       min 1 t * ‖b‖ := by
-  sorry
+  obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+  have hι := (InterpolationCouple.mem_meet_iff ι₀ ι₁ a₀ a₁).mp hb
+  change InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤
+    min 1 t * max ‖a₀‖ ‖a₁‖
+  have hbdd := InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+    (Submodule.Quotient.mk (a₀, 0))
+  have h0 : InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤ ‖a₀‖ :=
+    csInf_le hbdd ⟨a₀, 0, rfl, by simp⟩
+  have h1 : InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤
+      t * ‖a₁‖ := by
+    refine csInf_le hbdd ⟨0, a₁, (Submodule.Quotient.eq _).mpr ?_, by simp⟩
+    simp [InterpolationCouple.plus, hι]
+  calc InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0))
+      ≤ min ‖a₀‖ (t * ‖a₁‖) := le_min h0 h1
+    _ ≤ min 1 t * max ‖a₀‖ ‖a₁‖ := by
+        rcases le_total 1 t with h | h
+        · rw [min_eq_left h, one_mul]
+          exact (min_le_left _ _).trans (le_max_left _ _)
+        · rw [min_eq_right h]
+          exact (min_le_right _ _).trans (mul_le_mul_of_nonneg_left (le_max_right _ _) ht)
 
 /-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
 proof deferred. -/

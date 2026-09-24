@@ -38,8 +38,8 @@ variable (𝕜 : Type u) [NontriviallyNormedField 𝕜]
 /-- The real interpolation functor `(A₀, A₁) ↦ (A₀, A₁)_{θ,q}`, for `0 < θ < 1`, `0 < q ≤ ∞`.
 Irreducible: use `realInterpolationFunctorEquivK` (or an equivalence with another construction) to
 compute with it. -/
-noncomputable irreducible_def realInterpolationFunctor (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)]
-    [Fact (0 < q)] : InterpolationFunctor.{v, u} 𝕜 :=
+noncomputable irreducible_def realInterpolationFunctor (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)]
+    [Fact (θ < 1)] [Fact (0 < q)] : InterpolationFunctor.{v, u} 𝕜 :=
   kInterpolationFunctor 𝕜 θ q
 
 variable {𝕜} (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]

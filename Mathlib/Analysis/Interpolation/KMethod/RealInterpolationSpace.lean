@@ -433,7 +433,20 @@ noncomputable def fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
   toLinearMap := (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict _ fun b =>
     realInterpolationENorm_meetToSum_lt_top ι₀ ι₁ θ Fact.out Fact.out q Fact.out b
   cont := by
-    sorry
+    refine QuasinormedAddCommGroup.continuous_of_bound (E := meet ι₀ ι₁)
+      (F := RealInterpolationSpace ι₀ ι₁ θ q)
+      (LinearMap.toAddMonoidHom <| (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict
+        (realInterpolationSubmodule ι₀ ι₁ θ q) fun b =>
+          realInterpolationENorm_meetToSum_lt_top ι₀ ι₁ θ Fact.out Fact.out q Fact.out b)
+      (realInterpolationConst θ q).toReal fun b => ?_
+    have h := realInterpolationENorm_meetToSum_le ι₀ ι₁ θ (Fact.out : 0 < q) b
+    have hct := realInterpolationConst_lt_top (Fact.out : 0 < θ) (Fact.out : θ < 1) q
+    change (realInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b)).toReal ≤ _
+    calc (realInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b)).toReal
+        ≤ (realInterpolationConst θ q * ENNReal.ofReal ‖b‖).toReal :=
+          ENNReal.toReal_mono (ENNReal.mul_ne_top hct.ne ENNReal.ofReal_ne_top) h
+      _ = (realInterpolationConst θ q).toReal * ‖b‖ := by
+          rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (QuasinormedAddCommGroup.norm_nonneg b)]
 
 theorem toSum_comp_fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     (toSum ι₀ ι₁ θ q).comp (fromMeet ι₀ ι₁ θ q) = meetToSum ι₀ ι₁ := by

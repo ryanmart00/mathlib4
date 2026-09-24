@@ -513,8 +513,8 @@ noncomputable def realInterpolationMap (T : C ⟶ D) :
 
 theorem toSum_comp_realInterpolationMap (T : C ⟶ D) :
     (RealInterpolationSpace.toSum D.ι₀ D.ι₁ θ q).comp (T.realInterpolationMap θ q) =
-      T.sumMap.comp (RealInterpolationSpace.toSum C.ι₀ C.ι₁ θ q) := by
-  sorry
+      T.sumMap.comp (RealInterpolationSpace.toSum C.ι₀ C.ι₁ θ q) :=
+  ContinuousLinearMap.ext fun _ => rfl
 
 theorem realInterpolationMap_id (C : InterpolationCat 𝕜) :
     (𝟙 C : C ⟶ C).realInterpolationMap θ q = ContinuousLinearMap.id 𝕜 _ := by

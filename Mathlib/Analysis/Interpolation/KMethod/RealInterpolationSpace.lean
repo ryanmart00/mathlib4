@@ -162,16 +162,6 @@ theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c 
       ENNReal.mul_rpow_of_nonneg _ _ (by positivity), ← ENNReal.rpow_mul, ENNReal.toReal_inv,
       mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
 
-/-- The quasi-triangle inequality for `realInterpolationENorm` with a *finite, real* constant
-`≥ 1`, as needed for `QuasinormedAddCommGroup.quasiTriangleConst` (strengthens
-`realInterpolationENorm_add_le`, whose constant is only known to be positive). -/
-theorem exists_realInterpolationENorm_add_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :
-    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : sum ι₀ ι₁,
-      realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
-        ENNReal.ofReal C *
-          (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b) := by
-  sorry
-
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The "`⊂ A₀ + A₁`" half of the sandwich, quantitatively: `c_{θ,q} ‖a‖_{A₀+A₁} ≤ ‖a‖_{θ,q}`. -/
 theorem ofReal_norm_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)

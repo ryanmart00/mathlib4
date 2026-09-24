@@ -338,12 +338,14 @@ machinery — valid for every `p`, not just `p ≥ 1`, which is exactly what mak
 tractable here without splitting into `q ≥ 1`/`q < 1` sub-cases) to fold the `Ck`-bound and the
 sum into a single constant times `(t^{-θ}K(t,a))^q+(t^{-θ}K(t,a))^q`; integrate `dt/t`; apply the
 same `rpow_add_le_mul_rpow_add_rpow'` fact a *second* time (now at the reciprocal exponent
-`q⁻¹.toReal`) to pull the `1/q`-th root of a sum apart into a sum of `1/q`-th roots. -/
-theorem InterpolationCouple.realInterpolationENorm_add_le
-    (θ : ℝ) (_hθ0 : 0 < θ) (_hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q) :
-    ∃ C : ℝ≥0∞, 0 < C ∧ ∀ a b : InterpolationCouple.sum ι₀ ι₁,
+`q⁻¹.toReal`) to pull the `1/q`-th root of a sum apart into a sum of `1/q`-th roots.
+
+The constant is real and `≥ 1`, as needed for `QuasinormedAddCommGroup.quasiTriangleConst`. -/
+theorem InterpolationCouple.exists_realInterpolationENorm_add_le (θ : ℝ) {q : ℝ≥0∞}
+    (hq : 0 < q) :
+    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : InterpolationCouple.sum ι₀ ι₁,
       InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
-        C * (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
+        ENNReal.ofReal C * (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
           InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) := by
   set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
     (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) with hCkdef
@@ -383,7 +385,8 @@ theorem InterpolationCouple.realInterpolationENorm_add_le
           rw [ENNReal.ofReal_add hnnKa hnnKb]
   by_cases hqtop : q = ⊤
   · subst hqtop
-    refine ⟨ENNReal.ofReal Ck, ENNReal.ofReal_pos.mpr hCk_pos, fun a b => ?_⟩
+    refine ⟨Ck, le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst,
+      fun a b => ?_⟩
     unfold InterpolationCouple.realInterpolationENorm
     simp only [ite_true]
     apply iSup_le
@@ -428,7 +431,13 @@ theorem InterpolationCouple.realInterpolationENorm_add_le
       apply ENNReal.mul_pos
       · exact (ENNReal.rpow_pos hK1_pos hK1_lt_top.ne).ne'
       · exact hL2_pos.ne'
-    refine ⟨C, hC_pos, fun a b => ?_⟩
+    have hC_lt_top : C < ⊤ := ENNReal.mul_lt_top
+      (ENNReal.rpow_lt_top_of_nonneg ENNReal.toReal_nonneg hK1_lt_top.ne) hL2_lt_top
+    have hCle : C ≤ ENNReal.ofReal (max 1 C.toReal) :=
+      calc C = ENNReal.ofReal C.toReal := (ENNReal.ofReal_toReal hC_lt_top.ne).symm
+        _ ≤ ENNReal.ofReal (max 1 C.toReal) := ENNReal.ofReal_le_ofReal (le_max_right _ _)
+    refine ⟨max 1 C.toReal, le_max_left _ _,
+      fun a b => le_trans ?_ (mul_le_mul_of_nonneg_right hCle zero_le)⟩
     set Ha : ℝ → ℝ≥0∞ := fun s => ENNReal.ofReal (s ^ (-θ) *
       InterpolationCouple.KFunctional ι₀ ι₁ (max s 0) a) ^ q' with hHadef
     set Hb : ℝ → ℝ≥0∞ := fun s => ENNReal.ofReal (s ^ (-θ) *
@@ -523,6 +532,18 @@ theorem InterpolationCouple.realInterpolationENorm_add_le
           exact ENNReal.rpow_add_le_mul_rpow_add_rpow' _ _ hqinv'.le
       _ = C * (Ia ^ q⁻¹.toReal + Ib ^ q⁻¹.toReal) := by
           rw [hCdef]; ring
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The quasi-triangle inequality for `realInterpolationENorm`, with a positive `ℝ≥0∞` constant;
+see `exists_realInterpolationENorm_add_le` for the (stronger) real-constant form. -/
+theorem InterpolationCouple.realInterpolationENorm_add_le
+    (θ : ℝ) (_hθ0 : 0 < θ) (_hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q) :
+    ∃ C : ℝ≥0∞, 0 < C ∧ ∀ a b : InterpolationCouple.sum ι₀ ι₁,
+      InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+        C * (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
+          InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) := by
+  obtain ⟨C, hC, h⟩ := InterpolationCouple.exists_realInterpolationENorm_add_le ι₀ ι₁ θ hq
+  exact ⟨ENNReal.ofReal C, ENNReal.ofReal_pos.mpr (by linarith), h⟩
 
 /-- Rescale `x` by a power of `c` (any element of norm `> 1`) to land in the "shell"
 `[ε/‖c‖, ε)`. Pure real-number `rpow` algebra: the identity that lets `kFunctional_sumMap_le`'s

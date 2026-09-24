@@ -316,7 +316,21 @@ theorem one_le_quasiTriangleConst [Fact (0 < q)] : 1 ≤ quasiTriangleConst ι�
 
 theorem norm_add_le [Fact (0 < q)] (a b : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖a + b‖ ≤ quasiTriangleConst ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by
-  sorry
+  have hC := (Classical.choose_spec
+    (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))).2 a b
+  have ha : realInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+  have hb : realInterpolationENorm ι₀ ι₁ θ q (b : sum ι₀ ι₁) < ⊤ := b.2
+  have h1 : 0 ≤ quasiTriangleConst ι₀ ι₁ θ q := zero_le_one.trans (one_le_quasiTriangleConst ι₀ ι₁)
+  rw [norm_def, norm_def, norm_def]
+  calc (realInterpolationENorm ι₀ ι₁ θ q ((a + b : RealInterpolationSpace ι₀ ι₁ θ q) :
+          sum ι₀ ι₁)).toReal
+      ≤ (ENNReal.ofReal (quasiTriangleConst ι₀ ι₁ θ q) *
+          (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
+          (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) hC
+    _ = quasiTriangleConst ι₀ ι₁ θ q * ((realInterpolationENorm ι₀ ι₁ θ q a).toReal +
+          (realInterpolationENorm ι₀ ι₁ θ q b).toReal) := by
+        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
 
 theorem norm_neg (a : RealInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
   sorry

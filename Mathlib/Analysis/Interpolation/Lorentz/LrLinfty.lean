@@ -123,6 +123,71 @@ theorem lintegral_indicator_lt_decreasingRearrangement_le {r : ℝ} (hr : 0 < r)
     _ = ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r := by
         rw [setLIntegral_indicator measurableSet_Ioc, inter_eq_left.mpr Ioc_subset_Ioi_self]
 
+/-- The level-`f*(T)` split: if `(∫₀ᵀ f*ʳ)^{1/r} < ∞`, then `f = a₀ + a₁` with `a₀ ∈ Lʳ`,
+`a₁ ∈ L^∞`, `‖a₀‖_r ≤ (∫₀ᵀ f*ʳ)^{1/r}` and `T^{1/r} ‖a₁‖_∞ ≤ (∫₀ᵀ f*ʳ)^{1/r}`. Here
+`a₀ = f · 1_{‖f‖ > f*(T)}` and `a₁ = f · 1_{‖f‖ ≤ f*(T)}`. -/
+theorem LorentzSpace.exists_Lr_add_Linfty {r : ℝ≥0∞} (hr0 : 0 < r) (hr : r ≠ ⊤)
+    (f : α →ₘ[μ] E) {T : ℝ} (hT : 0 < T)
+    (hI : (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal) ^
+      r.toReal⁻¹ ≠ ⊤) :
+    ∃ a₀ : LorentzSpace E r r μ, ∃ a₁ : LorentzSpace E ⊤ ⊤ μ,
+      (a₀ : α →ₘ[μ] E) + a₁ = f ∧
+      lorentzNorm μ r r a₀ ≤ (∫⁻ s in Ioc 0 T,
+        decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal) ^ r.toReal⁻¹ ∧
+      ENNReal.ofReal T ^ r.toReal⁻¹ * lorentzNorm μ ⊤ ⊤ a₁ ≤ (∫⁻ s in Ioc 0 T,
+        decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal) ^ r.toReal⁻¹ := by
+  have hrr : 0 < r.toReal := ENNReal.toReal_pos hr0.ne' hr
+  set g : α → E := ⇑f with hgdef
+  have hg : StronglyMeasurable g := AEEqFun.stronglyMeasurable f
+  set I := (∫⁻ s in Ioc 0 T, decreasingRearrangement μ g (ENNReal.ofReal s) ^ r.toReal) ^
+    r.toReal⁻¹ with hIdef
+  set lev := decreasingRearrangement μ g (ENNReal.ofReal T) with hlevdef
+  have hlevI : ENNReal.ofReal T ^ r.toReal⁻¹ * lev ≤ I :=
+    rpow_mul_decreasingRearrangement_le hrr g T
+  have hlev : lev ≠ ⊤ := by
+    intro h
+    rw [h, ENNReal.mul_top (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr hT)
+      ENNReal.ofReal_ne_top).ne'] at hlevI
+    exact hI (top_le_iff.mp hlevI)
+  set S := {x | lev < ‖g x‖ₑ} with hSdef
+  have hS : MeasurableSet S := measurableSet_lt measurable_const hg.enorm
+  have hm₀ : AEStronglyMeasurable (S.indicator g) μ := (hg.indicator hS).aestronglyMeasurable
+  have hm₁ : AEStronglyMeasurable (Sᶜ.indicator g) μ :=
+    (hg.indicator hS.compl).aestronglyMeasurable
+  have h₀ : lorentzNorm μ r r (S.indicator g) ≤ I := by
+    rw [lorentzNorm_diag μ hr0 hm₀, eLpNorm_eq_lintegral_rpow_enorm_toReal hr0.ne' hr hm₀,
+      one_div, hIdef]
+    exact ENNReal.rpow_le_rpow (lintegral_indicator_lt_decreasingRearrangement_le hrr hg T hlev)
+      (inv_nonneg.mpr hrr.le)
+  have h₁ : lorentzNorm μ ⊤ ⊤ (Sᶜ.indicator g) ≤ lev := by
+    rw [lorentzNorm_top_top]
+    refine sInf_le (le_of_eq ?_ : distributionFunction μ (Sᶜ.indicator g) lev ≤ 0)
+    change μ {x | lev < ‖Sᶜ.indicator g x‖ₑ} = 0
+    convert measure_empty (μ := μ)
+    ext x
+    by_cases hx : x ∈ S
+    · simp [hx]
+    · have hx' : ¬ lev < ‖g x‖ₑ := hx
+      simpa [hx] using not_lt.mp hx'
+  refine ⟨⟨AEEqFun.mk _ hm₀, ?_⟩, ⟨AEEqFun.mk _ hm₁, ?_⟩, ?_, ?_, ?_⟩
+  · change lorentzNorm μ r r (AEEqFun.mk _ hm₀) < ⊤
+    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₀)]
+    exact h₀.trans_lt (lt_top_iff_ne_top.mpr hI)
+  · change lorentzNorm μ ⊤ ⊤ (AEEqFun.mk _ hm₁) < ⊤
+    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₁)]
+    exact h₁.trans_lt (lt_top_iff_ne_top.mpr hlev)
+  · change AEEqFun.mk _ hm₀ + AEEqFun.mk _ hm₁ = f
+    rw [AEEqFun.mk_add_mk]
+    conv_rhs => rw [← AEEqFun.mk_coeFn f]
+    congr 1
+    exact indicator_self_add_compl S g
+  · change lorentzNorm μ r r (AEEqFun.mk _ hm₀) ≤ I
+    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₀)]
+    exact h₀
+  · change ENNReal.ofReal T ^ r.toReal⁻¹ * lorentzNorm μ ⊤ ⊤ (AEEqFun.mk _ hm₁) ≤ I
+    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₁)]
+    exact (by gcongr : _ ≤ ENNReal.ofReal T ^ r.toReal⁻¹ * lev).trans hlevI
+
 end Rearrangement
 
 variable (𝕜 : Type*) [NontriviallyNormedField 𝕜]
@@ -144,84 +209,36 @@ theorem lorentz_kFunctional_le (hr : r ≠ ⊤) :
   have hrpos : 0 < r := Fact.out
   have hr0 : 0 < r.toReal := ENNReal.toReal_pos hrpos.ne' hr
   set F : α →ₘ[μ] E := lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a with hFdef
-  set f : α → E := ⇑F with hfdef
-  have hf : StronglyMeasurable f := AEEqFun.stronglyMeasurable F
   set T := t ^ r.toReal with hTdef
   have hT : 0 < T := Real.rpow_pos_of_pos ht _
-  set I := (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal) ^
+  set I := (∫⁻ s in Ioc 0 T, decreasingRearrangement μ F (ENNReal.ofReal s) ^ r.toReal) ^
     r.toReal⁻¹ with hIdef
   change ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a) ≤ ((2 : ℝ≥0) : ℝ≥0∞) * I
   by_cases hI : I = ⊤
   · rw [hI, ENNReal.mul_top (by norm_num)]
     exact le_top
   -- split `f` at the level `f*(T)`
-  set lev := decreasingRearrangement μ f (ENNReal.ofReal T) with hlevdef
+  obtain ⟨a₀, a₁, hsum, h₀, h₁⟩ := LorentzSpace.exists_Lr_add_Linfty hrpos hr F hT hI
   have hofT : ENNReal.ofReal T ^ r.toReal⁻¹ = ENNReal.ofReal t := by
     rw [ENNReal.ofReal_rpow_of_nonneg hT.le (inv_nonneg.mpr hr0.le),
       Real.rpow_rpow_inv ht.le hr0.ne']
-  have hlevI : ENNReal.ofReal t * lev ≤ I := hofT ▸ rpow_mul_decreasingRearrangement_le hr0 f T
-  have hlev : lev ≠ ⊤ := by
-    intro h
-    rw [h, ENNReal.mul_top (ENNReal.ofReal_pos.mpr ht).ne'] at hlevI
-    exact hI (top_le_iff.mp hlevI)
-  set S := {x | lev < ‖f x‖ₑ} with hSdef
-  have hS : MeasurableSet S := measurableSet_lt measurable_const hf.enorm
-  have hm₀ : AEStronglyMeasurable (S.indicator f) μ := (hf.indicator hS).aestronglyMeasurable
-  have hm₁ : AEStronglyMeasurable (Sᶜ.indicator f) μ :=
-    (hf.indicator hS.compl).aestronglyMeasurable
-  have h₀ : lorentzNorm μ r r (S.indicator f) ≤ I := by
-    rw [lorentzNorm_diag μ hrpos hm₀, eLpNorm_eq_lintegral_rpow_enorm_toReal hrpos.ne' hr hm₀,
-      one_div, hIdef]
-    exact ENNReal.rpow_le_rpow (lintegral_indicator_lt_decreasingRearrangement_le hr0 hf T hlev)
-      (inv_nonneg.mpr hr0.le)
-  have h₁ : lorentzNorm μ ⊤ ⊤ (Sᶜ.indicator f) ≤ lev := by
-    rw [lorentzNorm_top_top]
-    refine sInf_le (le_of_eq ?_ : distributionFunction μ (Sᶜ.indicator f) lev ≤ 0)
-    change μ {x | lev < ‖Sᶜ.indicator f x‖ₑ} = 0
-    convert measure_empty (μ := μ)
-    ext x
-    by_cases hx : x ∈ S
-    · simp [hx]
-    · have hx' : ¬ lev < ‖f x‖ₑ := hx
-      simpa [hx] using not_lt.mp hx'
-  let a₀ : LorentzSpace E r r μ := ⟨AEEqFun.mk _ hm₀, by
-    change lorentzNorm μ r r (AEEqFun.mk _ hm₀) < ⊤
-    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₀)]
-    exact h₀.trans_lt (lt_top_iff_ne_top.mpr hI)⟩
-  let a₁ : LorentzSpace E ⊤ ⊤ μ := ⟨AEEqFun.mk _ hm₁, by
-    change lorentzNorm μ ⊤ ⊤ (AEEqFun.mk _ hm₁) < ⊤
-    rw [lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₁)]
-    exact h₁.trans_lt (lt_top_iff_ne_top.mpr hlev)⟩
+  rw [hofT] at h₁
   have ha : (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
       (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a := by
     apply InterpolationCouple.sumToAmbient_injective
     change lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ (Submodule.Quotient.mk (a₀, a₁)) = F
     rw [lorentzSumToL0_mk]
-    change (AEEqFun.mk _ hm₀ + AEEqFun.mk _ hm₁ : α →ₘ[μ] E) = F
-    rw [AEEqFun.mk_add_mk]
-    conv_rhs => rw [← AEEqFun.mk_coeFn F]
-    congr 1
-    exact indicator_self_add_compl S f
+    exact hsum
   have hK : InterpolationCouple.KFunctional _ _ t a ≤ ‖a₀‖ + t * ‖a₁‖ :=
     csInf_le (InterpolationCouple.kFunctional_set_boundedBelow _ _ t ht.le a) ⟨a₀, a₁, ha, rfl⟩
-  have hn₀ : ENNReal.ofReal ‖a₀‖ = lorentzNorm μ r r (S.indicator f) := by
-    change ENNReal.ofReal (lorentzNorm μ r r a₀).toReal = _
-    rw [ENNReal.ofReal_toReal a₀.2.ne]
-    exact lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₀)
-  have hn₁ : ENNReal.ofReal ‖a₁‖ = lorentzNorm μ ⊤ ⊤ (Sᶜ.indicator f) := by
-    change ENNReal.ofReal (lorentzNorm μ ⊤ ⊤ a₁).toReal = _
-    rw [ENNReal.ofReal_toReal a₁.2.ne]
-    exact lorentzNorm_congr_ae _ _ (AEEqFun.coeFn_mk _ hm₁)
   calc ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a)
       ≤ ENNReal.ofReal (‖a₀‖ + t * ‖a₁‖) := ENNReal.ofReal_le_ofReal hK
-    _ = ENNReal.ofReal ‖a₀‖ + ENNReal.ofReal t * ENNReal.ofReal ‖a₁‖ := by
-        rw [ENNReal.ofReal_add, ENNReal.ofReal_mul ht.le]
-        · exact ENNReal.toReal_nonneg
-        · exact mul_nonneg ht.le ENNReal.toReal_nonneg
-    _ ≤ I + I := by
-        rw [hn₀, hn₁]
-        exact add_le_add h₀ ((by gcongr : ENNReal.ofReal t * lorentzNorm μ ⊤ ⊤ (Sᶜ.indicator f)
-          ≤ ENNReal.ofReal t * lev).trans hlevI)
+    _ = lorentzNorm μ r r a₀ + ENNReal.ofReal t * lorentzNorm μ ⊤ ⊤ a₁ := by
+        change ENNReal.ofReal ((lorentzNorm μ r r a₀).toReal +
+          t * (lorentzNorm μ ⊤ ⊤ a₁).toReal) = _
+        rw [ENNReal.ofReal_add ENNReal.toReal_nonneg (mul_nonneg ht.le ENNReal.toReal_nonneg),
+          ENNReal.ofReal_mul ht.le, ENNReal.ofReal_toReal a₀.2.ne, ENNReal.ofReal_toReal a₁.2.ne]
+    _ ≤ I + I := add_le_add h₀ h₁
     _ = ((2 : ℝ≥0) : ℝ≥0∞) * I := by rw [← two_mul]; norm_num
 
 /-- Lower bound for the K-functional of `(Lʳ, L^∞)`:

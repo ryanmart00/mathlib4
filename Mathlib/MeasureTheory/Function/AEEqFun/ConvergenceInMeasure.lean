@@ -209,8 +209,9 @@ theorem continuousSMul_uniformSpaceOn {s : Set α} (hμs : μ s ≠ ⊤) :
 noncomputable instance instUniformSpace : UniformSpace (L0 α E μ) :=
   ⨅ (s : Set α) (_ : MeasurableSet s) (_ : μ s ≠ ⊤), uniformSpaceOn μ s
 
-instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) := by
-  sorry
+instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) :=
+  isUniformAddGroup_iInf fun s => isUniformAddGroup_iInf fun _ => isUniformAddGroup_iInf fun _ =>
+    isUniformAddGroup_uniformSpaceOn μ s
 
 instance instContinuousSMul : ContinuousSMul 𝕜 (L0 α E μ) := by
   sorry

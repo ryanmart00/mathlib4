@@ -55,6 +55,29 @@ variable {α : Type*} [MeasurableSpace α] (μ : Measure α)
 variable {E : Type*} [NormedAddCommGroup E]
 variable (p q : ℝ≥0∞)
 
+section ConstSMul
+
+variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
+
+/-- Scaling `f` by `c ≠ 0` rescales the distribution function's level: `ϱ(c • f, σ) =
+ϱ(f, σ / ‖c‖)`. -/
+theorem distributionFunction_const_smul {c : 𝕜} (hc : c ≠ 0) (f : α → E) (σ : ℝ≥0∞) :
+    distributionFunction μ (c • f) σ = distributionFunction μ f (σ / ‖c‖ₑ) := by
+  sorry
+
+/-- The decreasing rearrangement is absolutely homogeneous: `(c • f)* = ‖c‖ • f*`. -/
+theorem decreasingRearrangement_const_smul (c : 𝕜) (f : α → E) (t : ℝ≥0∞) :
+    decreasingRearrangement μ (c • f) t = ‖c‖ₑ * decreasingRearrangement μ f t := by
+  sorry
+
+/-- The Lorentz quasinorm is absolutely homogeneous, for `q ≠ 0` (at `q = 0`, `lorentzNorm` is
+constantly `1`). -/
+theorem lorentzNorm_const_smul (hq : q ≠ 0) (c : 𝕜) (f : α → E) :
+    lorentzNorm μ p q (c • f) = ‖c‖ₑ * lorentzNorm μ p q f := by
+  sorry
+
+end ConstSMul
+
 /-- The Lorentz space `L_{p,q}(μ)`: elements of `α →ₘ[μ] E` such that `lorentzNorm p q μ f < ∞`.
 Mirrors `MeasureTheory.Lp` exactly (`Mathlib/MeasureTheory/Function/LpSpace/Basic.lean`), with
 `lorentzNorm` in place of `eLpNorm`. -/
@@ -197,5 +220,36 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
       exact ⟨ε, hε, subset_rfl⟩
     · rintro ε hε
       exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩
+
+section Module
+
+variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
+
+/-- `LorentzSpace E p q μ` is closed under scalar multiplication, for every `p, q` (at `q = 0` it
+is all of `α →ₘ[μ] E`). Mirrors `MeasureTheory.Lp.const_smul_mem_Lp`. -/
+theorem const_smul_mem (c : 𝕜) {f : α →ₘ[μ] E} (hf : f ∈ LorentzSpace E p q μ) :
+    c • f ∈ LorentzSpace E p q μ := by
+  sorry
+
+variable (E p q 𝕜) in
+/-- `LorentzSpace E p q μ` as a `𝕜`-submodule of `α →ₘ[μ] E`, with the same carrier. Mirrors
+`MeasureTheory.Lp.LpSubmodule`. -/
+noncomputable def lorentzSubmodule : Submodule 𝕜 (α →ₘ[μ] E) :=
+  { LorentzSpace E p q μ with smul_mem' := fun c _ hf => const_smul_mem μ c hf }
+
+/-- Mirrors `MeasureTheory.Lp.instModule`. -/
+noncomputable instance instModule : Module 𝕜 (LorentzSpace E p q μ) :=
+  { (lorentzSubmodule μ E p q 𝕜).module with }
+
+theorem norm_const_smul [Fact (0 < q)] (c : 𝕜) (f : LorentzSpace E p q μ) :
+    ‖c • f‖ = ‖c‖ * ‖f‖ := by
+  sorry
+
+/-- Mirrors `MeasureTheory.Lp.instNormedSpace`. -/
+noncomputable instance instQuasiNormedSpace [Fact (0 < q)] :
+    QuasiNormedSpace 𝕜 (LorentzSpace E p q μ) where
+  norm_smul_le c f := (norm_const_smul μ c f).le
+
+end Module
 
 end LorentzSpace

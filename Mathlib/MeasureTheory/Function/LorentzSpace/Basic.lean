@@ -63,7 +63,11 @@ variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
 ϱ(f, σ / ‖c‖)`. -/
 theorem distributionFunction_const_smul {c : 𝕜} (hc : c ≠ 0) (f : α → E) (σ : ℝ≥0∞) :
     distributionFunction μ (c • f) σ = distributionFunction μ f (σ / ‖c‖ₑ) := by
-  sorry
+  unfold distributionFunction
+  congr 1
+  ext x
+  rw [Set.mem_ofPred_eq, Set.mem_ofPred_eq, Pi.smul_apply, enorm_smul, mul_comm,
+    ENNReal.div_lt_iff (Or.inl (enorm_ne_zero.mpr hc)) (Or.inl enorm_ne_top)]
 
 /-- The decreasing rearrangement is absolutely homogeneous: `(c • f)* = ‖c‖ • f*`. -/
 theorem decreasingRearrangement_const_smul (c : 𝕜) (f : α → E) (t : ℝ≥0∞) :

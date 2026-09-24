@@ -59,6 +59,17 @@ measure `0` or `⊤` cannot be separated from `0`.
 open Filter Set
 open scoped ENNReal Topology
 
+/-- Truncation at `1` preserves the triangle inequality. -/
+theorem ENNReal.min_one_le_add_of_le {a b c : ℝ≥0∞} (h : a ≤ b + c) :
+    min 1 a ≤ min 1 b + min 1 c := by
+  refine (min_le_min le_rfl h).trans ?_
+  by_cases hb : (1 : ℝ≥0∞) ≤ b
+  · rw [min_eq_left hb]; exact (min_le_left _ _).trans le_self_add
+  by_cases hc : (1 : ℝ≥0∞) ≤ c
+  · rw [min_eq_left hc]; exact (min_le_left _ _).trans le_add_self
+  rw [min_eq_right (not_le.mp hb).le, min_eq_right (not_le.mp hc).le]
+  exact min_le_right _ _
+
 namespace MeasureTheory
 
 variable {α : Type*} [MeasurableSpace α] (μ : Measure α)
@@ -81,7 +92,11 @@ theorem kyFanEdist_comm (s : Set α) (f g : α →ₘ[μ] E) :
 
 theorem kyFanEdist_triangle (s : Set α) (f g h : α →ₘ[μ] E) :
     kyFanEdist μ s f h ≤ kyFanEdist μ s f g + kyFanEdist μ s g h := by
-  sorry
+  have hfg : AEMeasurable (fun x => min 1 (edist (f x) (g x))) (μ.restrict s) :=
+    (aemeasurable_const.min (continuous_edist.comp_aestronglyMeasurable₂
+      f.aestronglyMeasurable g.aestronglyMeasurable).aemeasurable).restrict
+  rw [kyFanEdist, kyFanEdist, kyFanEdist, ← lintegral_add_left' hfg]
+  exact MeasureTheory.lintegral_mono fun x => ENNReal.min_one_le_add_of_le (edist_triangle _ _ _)
 
 theorem kyFanEdist_add_add (s : Set α) (f g h : α →ₘ[μ] E) :
     kyFanEdist μ s (f + h) (g + h) = kyFanEdist μ s f g := by

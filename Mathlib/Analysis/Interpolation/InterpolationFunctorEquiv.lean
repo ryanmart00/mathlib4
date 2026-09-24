@@ -66,8 +66,8 @@ theorem toSum_comp_hom (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
   congrArg ConcreteCategory.hom (NatTrans.congr_app (Over.w e.hom) C)
 
 theorem toSum_comp_inv (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
-    (F.toSum C).comp (e.iso C).inv.hom = G.toSum C := by
-  sorry
+    (F.toSum C).comp (e.iso C).inv.hom = G.toSum C :=
+  congrArg ConcreteCategory.hom (NatTrans.congr_app (Over.w e.inv) C)
 
 /-- Componentwise isomorphisms compatible with the inclusions into the sum are automatically
 natural (because `toSum` is injective). -/

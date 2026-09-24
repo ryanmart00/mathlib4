@@ -69,4 +69,9 @@ theorem lorentzSumToL0_eq :
       InterpolationCouple.sumToAmbient (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₀
         (lorentz 𝕜 μ E p₀ q₀ p₁ q₁).ι₁ := rfl
 
+theorem lorentzSumToL0_mk (a₀ : LorentzSpace E p₀ q₀ μ) (a₁ : LorentzSpace E p₁ q₁ μ) :
+    lorentzSumToL0 𝕜 μ E p₀ q₀ p₁ q₁ (Submodule.Quotient.mk (a₀, a₁)) =
+      LorentzSpace.toL0 μ E 𝕜 p₀ q₀ a₀ + LorentzSpace.toL0 μ E 𝕜 p₁ q₁ a₁ :=
+  rfl
+
 end InterpolationCat

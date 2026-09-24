@@ -402,7 +402,19 @@ noncomputable def toSum [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     RealInterpolationSpace ι₀ ι₁ θ q →L[𝕜] sum ι₀ ι₁ where
   toLinearMap := (realInterpolationSubmodule ι₀ ι₁ θ q).subtype
   cont := by
-    sorry
+    have hcpos : 0 < (realInterpolationConst θ q).toReal :=
+      ENNReal.toReal_pos (realInterpolationConst_pos θ q).ne'
+        (realInterpolationConst_lt_top (Fact.out : 0 < θ) (Fact.out : θ < 1) q).ne
+    refine QuasinormedAddCommGroup.continuous_of_bound (E := RealInterpolationSpace ι₀ ι₁ θ q)
+      (F := sum ι₀ ι₁) (realInterpolationSubmodule ι₀ ι₁ θ q).subtype.toAddMonoidHom
+      (realInterpolationConst θ q).toReal⁻¹ fun a => ?_
+    have ha : realInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+    have h := ENNReal.toReal_mono ha.ne
+      (ofReal_norm_mul_realInterpolationConst_le ι₀ ι₁ θ (Fact.out : 0 < q) (a : sum ι₀ ι₁))
+    rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (QuasinormedAddCommGroup.norm_nonneg _)] at h
+    change ‖(a : sum ι₀ ι₁)‖ ≤ _ * (realInterpolationENorm ι₀ ι₁ θ q a).toReal
+    rw [inv_mul_eq_div, le_div_iff₀ hcpos]
+    exact h
 
 @[simp]
 theorem toSum_apply [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]

@@ -331,6 +331,20 @@ set_option quotPrecheck false in
 scoped notation:50 f " ∼ " g =>
   (∃ C : ℝ, ∀ x, ‖f x‖ ≤ C * ‖g x‖) ∧ (∃ C : ℝ, ∀ x, ‖g x‖ ≤ C * ‖f x‖)
 
+/-- A bounded additive map between quasi-normed groups is continuous. -/
+theorem continuous_of_bound {F : Type*} [QuasinormedAddCommGroup F] (f : E →+ F) (C : ℝ)
+    (h : ∀ x, ‖f x‖ ≤ C * ‖x‖) : Continuous f := by
+  refine continuous_of_tendsto_nhds_zero f ?_
+  rw [(nhds_zero_hasBasis (E := E)).tendsto_iff (nhds_zero_hasBasis (E := F))]
+  intro ε hε
+  have hC : 0 < |C| + 1 := by positivity
+  refine ⟨ε / (|C| + 1), div_pos hε hC, fun x (hx : ‖x‖ < ε / (|C| + 1)) => ?_⟩
+  show ‖f x‖ < ε
+  calc ‖f x‖ ≤ C * ‖x‖ := h x
+    _ ≤ (|C| + 1) * ‖x‖ := by nlinarith [le_abs_self C, norm_nonneg x]
+    _ < (|C| + 1) * (ε / (|C| + 1)) := by gcongr
+    _ = ε := by field_simp
+
 end QuasinormedAddCommGroup
 
 /-- A `QuasinormedAddCommGroup` that is also a module over `𝕜`, compatibly with the quasi-norm:

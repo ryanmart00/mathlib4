@@ -232,7 +232,110 @@ theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
       (∫⁻ s in Ioc 0 (t ^ r.toReal), decreasingRearrangement μ
           (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a) (ENNReal.ofReal s) ^ r.toReal) ^ r.toReal⁻¹ ≤
         c * ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a) := by
-  sorry
+  have hrpos : 0 < r := Fact.out
+  have hr0 : 0 < r.toReal := ENNReal.toReal_pos hrpos.ne' hr
+  have hri : 0 ≤ r.toReal⁻¹ := inv_nonneg.mpr hr0.le
+  set C : ℝ≥0∞ := 2 * 2 ^ r.toReal⁻¹ with hCdef
+  have hCtop : C ≠ ⊤ := ENNReal.mul_ne_top (by norm_num) (ENNReal.rpow_ne_top_of_nonneg hri
+    (by norm_num))
+  have hC0 : C ≠ 0 := mul_ne_zero (by norm_num) (ENNReal.rpow_pos (by norm_num) (by norm_num)).ne'
+  refine ⟨C.toNNReal, fun t ht a => ?_⟩
+  rw [ENNReal.coe_toNNReal hCtop]
+  set f : α → E := ⇑(lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a : α →ₘ[μ] E) with hfdef
+  set T := t ^ r.toReal with hTdef
+  have hT : 0 < T := Real.rpow_pos_of_pos ht _
+  have hofT : ENNReal.ofReal T = ENNReal.ofReal t ^ r.toReal := by
+    rw [hTdef, ENNReal.ofReal_rpow_of_nonneg ht.le hr0.le]
+  set I := (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal) ^
+    r.toReal⁻¹ with hIdef
+  change I ≤ C * _
+  -- the bound for a single decomposition `f = a₀ + a₁`
+  have hbound : ∀ a₀ : LorentzSpace E r r μ, ∀ a₁ : LorentzSpace E ⊤ ⊤ μ,
+      (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
+        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a →
+      I ≤ C * (lorentzNorm μ r r a₀ + ENNReal.ofReal t * lorentzNorm μ ⊤ ⊤ a₁) := by
+    intro a₀ a₁ ha
+    set A := lorentzNorm μ r r a₀ with hAdef
+    set M := lorentzNorm μ ⊤ ⊤ a₁ with hMdef
+    have hfae : f =ᵐ[μ] ⇑a₀ + ⇑a₁ := by
+      rw [hfdef, ← ha, lorentzSumToL0_mk]
+      exact AEEqFun.coeFn_add _ _
+    have hpt : ∀ s : ℝ, decreasingRearrangement μ f (ENNReal.ofReal s) ≤
+        decreasingRearrangement μ a₀ (ENNReal.ofReal s) + M := by
+      intro s
+      rw [decreasingRearrangement_congr_ae hfae, hMdef, lorentzNorm_top_top]
+      simpa using decreasingRearrangement_add_le (μ := μ) (⇑a₀) (⇑a₁) (ENNReal.ofReal s) 0
+    have hA : ∫⁻ s in Ioc 0 T, decreasingRearrangement μ a₀ (ENNReal.ofReal s) ^ r.toReal ≤
+        A ^ r.toReal := by
+      have hm : AEStronglyMeasurable (⇑a₀) μ := (a₀ : α →ₘ[μ] E).aestronglyMeasurable
+      calc _ ≤ ∫⁻ s in Ioi 0, decreasingRearrangement μ a₀ (ENNReal.ofReal s) ^ r.toReal :=
+            lintegral_mono_set Ioc_subset_Ioi_self
+        _ = ∫⁻ x, ‖a₀ x‖ₑ ^ r.toReal ∂μ := lintegral_decreasingRearrangement_rpow μ hm hr0
+        _ = A ^ r.toReal := by
+            rw [hAdef, lorentzNorm_diag μ hrpos hm,
+              eLpNorm_eq_lintegral_rpow_enorm_toReal hrpos.ne' hr hm, ← ENNReal.rpow_mul,
+              one_div_mul_cancel hr0.ne', ENNReal.rpow_one]
+    have hint : ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r.toReal ≤
+        2 ^ r.toReal * (A ^ r.toReal + (ENNReal.ofReal t * M) ^ r.toReal) := by
+      calc _ ≤ ∫⁻ s in Ioc 0 T, 2 ^ r.toReal *
+            (decreasingRearrangement μ a₀ (ENNReal.ofReal s) ^ r.toReal + M ^ r.toReal) := by
+            refine lintegral_mono fun s => ?_
+            exact (ENNReal.rpow_le_rpow (hpt s) hr0.le).trans
+              (ENNReal.add_rpow_le_two_rpow_mul _ _ _ hr0.le)
+        _ = 2 ^ r.toReal * ((∫⁻ s in Ioc 0 T,
+              decreasingRearrangement μ a₀ (ENNReal.ofReal s) ^ r.toReal) +
+              ENNReal.ofReal T * M ^ r.toReal) := by
+            rw [lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr0.le (by norm_num)),
+              lintegral_add_right _ measurable_const, setLIntegral_const, Real.volume_Ioc,
+              sub_zero, mul_comm (M ^ r.toReal)]
+        _ ≤ _ := by
+            rw [hofT, ENNReal.mul_rpow_of_nonneg _ _ hr0.le]
+            gcongr
+    have hAB : A ^ r.toReal + (ENNReal.ofReal t * M) ^ r.toReal ≤
+        2 * (A + ENNReal.ofReal t * M) ^ r.toReal := by
+      rw [two_mul]
+      gcongr
+      · exact le_self_add
+      · exact le_add_self
+    calc I ≤ (2 ^ r.toReal * (A ^ r.toReal + (ENNReal.ofReal t * M) ^ r.toReal)) ^
+          r.toReal⁻¹ := ENNReal.rpow_le_rpow hint hri
+      _ ≤ (2 ^ r.toReal * (2 * (A + ENNReal.ofReal t * M) ^ r.toReal)) ^ r.toReal⁻¹ := by
+          gcongr
+      _ = C * (A + ENNReal.ofReal t * M) := by
+          rw [ENNReal.mul_rpow_of_nonneg _ _ hri, ENNReal.mul_rpow_of_nonneg _ _ hri,
+            ← ENNReal.rpow_mul, ← ENNReal.rpow_mul, mul_inv_cancel₀ hr0.ne', ENNReal.rpow_one,
+            ENNReal.rpow_one, hCdef, mul_assoc]
+  -- pass to the infimum over decompositions
+  have hS : ∀ x ∈ {x : ℝ | ∃ a₀ : LorentzSpace E r r μ, ∃ a₁ : LorentzSpace E ⊤ ⊤ μ,
+      (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
+        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a ∧ ‖a₀‖ + t * ‖a₁‖ = x},
+      0 ≤ x ∧ I ≤ C * ENNReal.ofReal x := by
+    rintro x ⟨a₀, a₁, ha, rfl⟩
+    refine ⟨add_nonneg ENNReal.toReal_nonneg (mul_nonneg ht.le ENNReal.toReal_nonneg),
+      (hbound a₀ a₁ ha).trans_eq ?_⟩
+    change _ = C * ENNReal.ofReal ((lorentzNorm μ r r a₀).toReal +
+      t * (lorentzNorm μ ⊤ ⊤ a₁).toReal)
+    rw [ENNReal.ofReal_add ENNReal.toReal_nonneg (mul_nonneg ht.le ENNReal.toReal_nonneg),
+      ENNReal.ofReal_mul ht.le, ENNReal.ofReal_toReal a₀.2.ne, ENNReal.ofReal_toReal a₁.2.ne]
+  have hne := InterpolationCouple.kFunctional_set_nonempty _ _ t a
+  have hItop : I ≠ ⊤ := by
+    obtain ⟨x, hx⟩ := hne
+    exact ((hS x hx).2.trans_lt (ENNReal.mul_lt_top hCtop.lt_top ENNReal.ofReal_lt_top)).ne
+  have hc' : 0 < C.toReal := ENNReal.toReal_pos hC0 hCtop
+  have hle : I.toReal / C.toReal ≤ InterpolationCouple.KFunctional _ _ t a := by
+    refine le_csInf hne fun x hx => ?_
+    obtain ⟨hx0, hIx⟩ := hS x hx
+    have := ENNReal.toReal_mono (ENNReal.mul_ne_top hCtop ENNReal.ofReal_ne_top) hIx
+    rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hx0] at this
+    rw [div_le_iff₀ hc']
+    linarith
+  calc I = ENNReal.ofReal I.toReal := (ENNReal.ofReal_toReal hItop).symm
+    _ ≤ ENNReal.ofReal (C.toReal * InterpolationCouple.KFunctional _ _ t a) := by
+        refine ENNReal.ofReal_le_ofReal ?_
+        rw [div_le_iff₀ hc'] at hle
+        linarith
+    _ = C * ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a) := by
+        rw [ENNReal.ofReal_mul hc'.le, ENNReal.ofReal_toReal hCtop]
 
 /-- Triebel §1.18.6, Theorem 1 (quasi-Banach form): `(Lʳ, L^∞)_{θ,q} = L_{p,q}` for
 `1/p = (1-θ)/r` and `r ≤ q`, as an isomorphism of quasi-Banach spaces compatible with the

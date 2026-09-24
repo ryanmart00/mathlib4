@@ -165,7 +165,7 @@ end SMul
 
 /-- On a finite-measure set, the Ky Fan distance induces convergence in measure. -/
 theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s : Set α}
-    (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) (f : ι → α →ₘ[μ] E) (g : α →ₘ[μ] E) :
+    (hμs : μ s ≠ ⊤) (f : ι → α →ₘ[μ] E) (g : α →ₘ[μ] E) :
     Tendsto (fun i => kyFanEdist μ s (f i) g) l (𝓝 0) ↔
       TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
   have hmeas (i : ι) : AEMeasurable (fun x => edist (f i x) (g x)) (μ.restrict s) :=
@@ -180,8 +180,8 @@ theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s 
         kyFanEdist μ s (f i) g / min 1 ε := by
       rw [ENNReal.le_div_iff_mul_le (Or.inl hm0) (Or.inl hmt), mul_comm]
       calc min 1 ε * μ.restrict s {x | ε ≤ edist (f i x) (g x)}
-          ≤ min 1 ε * μ.restrict s {x | min 1 ε ≤ min 1 (edist (f i x) (g x))} := by
-            exact mul_le_mul' le_rfl (measure_mono fun x (hx : ε ≤ _) => min_le_min le_rfl hx)
+          ≤ min 1 ε * μ.restrict s {x | min 1 ε ≤ min 1 (edist (f i x) (g x))} :=
+            mul_le_mul' le_rfl (measure_mono fun x (hx : ε ≤ _) => min_le_min le_rfl hx)
         _ ≤ kyFanEdist μ s (f i) g :=
             mul_meas_ge_le_lintegral₀ (aemeasurable_const.min (hmeas i)) _
     have h2 : Tendsto (fun i => kyFanEdist μ s (f i) g / min 1 ε) l (𝓝 0) := by
@@ -350,15 +350,15 @@ theorem tendsto_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} (f : ι → L0
     (g : L0 α E μ) :
     Tendsto f l (𝓝 g) ↔ ∀ s, MeasurableSet s → μ s ≠ ⊤ →
       TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
-  have key (s : Set α) (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) :
+  have key (s : Set α) (hμs : μ s ≠ ⊤) :
       Tendsto f l (@nhds _ (uniformSpaceOn μ s).toTopologicalSpace g) ↔
         TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
     let _ := pseudoEMetricSpaceOn (E := E) μ s
     rw [tendsto_iff_edist_tendsto_0]
-    exact AEEqFun.tendsto_kyFanEdist_iff_tendstoInMeasure μ hs hμs f g
+    exact AEEqFun.tendsto_kyFanEdist_iff_tendstoInMeasure μ hμs f g
   simp +instances only [instUniformSpace, UniformSpace.toTopologicalSpace_iInf, nhds_iInf,
     tendsto_iInf]
-  exact forall_congr' fun s => forall_congr' fun hs => forall_congr' fun hμs => key s hs hμs
+  exact forall_congr' fun s => forall_congr' fun _ => forall_congr' fun hμs => key s hμs
 
 end L0
 

@@ -449,8 +449,8 @@ noncomputable def fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
           rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (QuasinormedAddCommGroup.norm_nonneg b)]
 
 theorem toSum_comp_fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
-    (toSum ι₀ ι₁ θ q).comp (fromMeet ι₀ ι₁ θ q) = meetToSum ι₀ ι₁ := by
-  sorry
+    (toSum ι₀ ι₁ θ q).comp (fromMeet ι₀ ι₁ θ q) = meetToSum ι₀ ι₁ :=
+  ContinuousLinearMap.ext fun _ => rfl
 
 end RealInterpolationSpace
 

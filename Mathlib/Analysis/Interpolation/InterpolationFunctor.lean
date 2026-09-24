@@ -49,3 +49,52 @@ structure InterpolationFunctor extends InterpolationCat.{v, u} 𝕜 ⥤ QuasiBan
   /-- `F(T)` is the restriction of `T`'s induced sum-space map to `F(C)`, landing in `F(D)`. -/
   map_toSum {C D : InterpolationCat.{v, u} 𝕜} (T : C ⟶ D) :
     (toSum D).comp (map T).hom = T.sumMap.comp (toSum C)
+
+namespace InterpolationFunctor
+
+variable {𝕜}
+
+/-- An equivalence of interpolation functors: a natural isomorphism of the underlying functors
+`InterpolationCat 𝕜 ⥤ QuasiBanachCat 𝕜` (so each `F(C) ≅ G(C)` is an isomorphism of quasi-Banach
+spaces, i.e. the two quasinorms are equivalent), compatible with the inclusions into `A₀ + A₁`
+(so `F(C)` and `G(C)` are the same subspace of the sum). This is how different constructions of
+the same interpolation functor (e.g. the K- and J-methods) are identified. -/
+structure Equiv (F G : InterpolationFunctor.{v, u} 𝕜) where
+  /-- The natural isomorphism of the underlying functors. -/
+  iso : F.toFunctor ≅ G.toFunctor
+  toSum_comp_hom (C : InterpolationCat.{v, u} 𝕜) :
+    (G.toSum C).comp (iso.hom.app C).hom = F.toSum C
+
+namespace Equiv
+
+variable {F G H : InterpolationFunctor.{v, u} 𝕜}
+
+/-- The identity equivalence. -/
+def refl (F : InterpolationFunctor.{v, u} 𝕜) : F.Equiv F where
+  iso := Iso.refl _
+  toSum_comp_hom C := by
+    sorry
+
+/-- The inverse equivalence. -/
+def symm (e : F.Equiv G) : G.Equiv F where
+  iso := e.iso.symm
+  toSum_comp_hom C := by
+    sorry
+
+/-- The composite equivalence. -/
+def trans (e : F.Equiv G) (e' : G.Equiv H) : F.Equiv H where
+  iso := e.iso ≪≫ e'.iso
+  toSum_comp_hom C := by
+    sorry
+
+/-- Equal interpolation functors are equivalent. -/
+def ofEq (h : F = G) : F.Equiv G :=
+  h ▸ refl F
+
+theorem toSum_comp_inv (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
+    (F.toSum C).comp (e.iso.inv.app C).hom = G.toSum C := by
+  sorry
+
+end Equiv
+
+end InterpolationFunctor

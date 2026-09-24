@@ -18,8 +18,10 @@ For `0 < θ < 1` and `0 < q ≤ ∞`, the real interpolation spaces `(A₀, A₁
 `A₀ ∩ A₁ ↪ F(A₀, A₁) ↪ A₀ + A₁`, compatible with morphisms. It is exact of type `θ`
 (`InterpolationCat.Hom.norm_realInterpolationMap_le`).
 
-This is the preferred interface to the K-method; the unbundled form (given two embeddings) is
-`InterpolationCouple.RealInterpolationSpace`.
+This is the implementation of the canonical real interpolation functor
+`realInterpolationFunctor` (`Analysis/Interpolation/RealInterpolation.lean`), which should be used
+downstream instead; the two are related by `realInterpolationFunctorEquivK`. The unbundled form of
+the K-method (given two embeddings) is `InterpolationCouple.RealInterpolationSpace`.
 -/
 
 universe v u

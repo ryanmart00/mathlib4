@@ -125,10 +125,8 @@ def ofIso {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) : X ≅ Y where
 def continuousLinearEquivOfIso {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) : X ≃L[𝕜] Y where
   __ := e.hom.hom
   invFun := e.inv.hom
-  left_inv x := by
-    sorry
-  right_inv x := by
-    sorry
+  left_inv x := ConcreteCategory.congr_hom e.hom_inv_id x
+  right_inv x := ConcreteCategory.congr_hom e.inv_hom_id x
 
 @[simp]
 theorem ofIso_hom {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) :

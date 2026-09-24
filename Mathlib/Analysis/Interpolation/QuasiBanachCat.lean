@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Algebra.Category.ModuleCat.Basic
+import Mathlib.CategoryTheory.ConcreteCategory.Basic
 import Mathlib.Analysis.Interpolation.QuasiNorm
 
 /-!
@@ -26,9 +26,11 @@ the *exact* triangle inequality rather than merely a quasi one, that should be e
 fact about the specific space in question (an isomorphism in `QuasiBanachCat` with a genuinely
 normed space), not as membership in a different category.
 
-Modeled closely on `TopModuleCat` (`Mathlib/Algebra/Category/ModuleCat/Topology/Basic.lean`),
-which does the same thing for topological modules generally — here we additionally require a
-quasi-norm and completeness.
+Objects bundle a carrier with `QuasinormedAddCommGroup`, `QuasiNormedSpace 𝕜` and
+`CompleteSpace` instances, as Mathlib's `SemiNormedGrp` does. It deliberately does *not* extend
+`ModuleCat`: `ModuleCat` bundles its own `AddCommGroup`, and `QuasinormedAddCommGroup` bundles
+another, which would be an instance diamond on a general object. The hom API is modeled on
+`TopModuleCat` (`Mathlib/Algebra/Category/ModuleCat/Topology/Basic.lean`).
 -/
 
 universe v u
@@ -38,23 +40,25 @@ variable (𝕜 : Type u) [NontriviallyNormedField 𝕜]
 open CategoryTheory ConcreteCategory
 
 /-- The category of quasi-Banach spaces over `𝕜` (the quasi-Banach analogue of Triebel's ℭ₁). -/
-structure QuasiBanachCat extends ModuleCat.{v} 𝕜 where
+structure QuasiBanachCat where
+  /-- The underlying type. -/
+  carrier : Type v
   [quasinormedAddCommGroup : QuasinormedAddCommGroup carrier]
-  [continuousSMul : ContinuousSMul 𝕜 carrier]
+  [quasiNormedSpace : QuasiNormedSpace 𝕜 carrier]
   [completeSpace : CompleteSpace carrier]
 
 namespace QuasiBanachCat
 
-noncomputable instance : CoeSort (QuasiBanachCat.{v} 𝕜) (Type v) := ⟨fun M ↦ M.toModuleCat⟩
+instance : CoeSort (QuasiBanachCat.{v} 𝕜) (Type v) := ⟨carrier⟩
 
-attribute [instance] quasinormedAddCommGroup continuousSMul completeSpace
+attribute [instance] quasinormedAddCommGroup quasiNormedSpace completeSpace
 
 /-- Make an object in `QuasiBanachCat 𝕜` from an unbundled quasi-Banach space. -/
-abbrev of (M : Type v) [QuasinormedAddCommGroup M] [Module 𝕜 M] [ContinuousSMul 𝕜 M]
-    [CompleteSpace M] : QuasiBanachCat.{v} 𝕜 :=
-  ⟨ModuleCat.of 𝕜 M⟩
+abbrev of (M : Type v) [QuasinormedAddCommGroup M] [QuasiNormedSpace 𝕜 M] [CompleteSpace M] :
+    QuasiBanachCat.{v} 𝕜 :=
+  ⟨M⟩
 
-lemma coe_of (M : Type v) [QuasinormedAddCommGroup M] [Module 𝕜 M] [ContinuousSMul 𝕜 M]
+lemma coe_of (M : Type v) [QuasinormedAddCommGroup M] [QuasiNormedSpace 𝕜 M]
     [CompleteSpace M] : (of 𝕜 M : Type v) = M := rfl
 
 variable {𝕜} in
@@ -85,14 +89,14 @@ abbrev Hom.hom {X Y : QuasiBanachCat 𝕜} (f : X.Hom Y) : X →L[𝕜] Y :=
 variable {𝕜} in
 /-- Construct a hom in `QuasiBanachCat` from a continuous linear map. -/
 abbrev ofHom {X Y : Type v}
-    [QuasinormedAddCommGroup X] [Module 𝕜 X] [ContinuousSMul 𝕜 X] [CompleteSpace X]
-    [QuasinormedAddCommGroup Y] [Module 𝕜 Y] [ContinuousSMul 𝕜 Y] [CompleteSpace Y]
+    [QuasinormedAddCommGroup X] [QuasiNormedSpace 𝕜 X] [CompleteSpace X]
+    [QuasinormedAddCommGroup Y] [QuasiNormedSpace 𝕜 Y] [CompleteSpace Y]
     (f : X →L[𝕜] Y) : of 𝕜 X ⟶ of 𝕜 Y :=
   ConcreteCategory.ofHom f
 
 @[simp] lemma hom_ofHom {X Y : Type v}
-    [QuasinormedAddCommGroup X] [Module 𝕜 X] [ContinuousSMul 𝕜 X] [CompleteSpace X]
-    [QuasinormedAddCommGroup Y] [Module 𝕜 Y] [ContinuousSMul 𝕜 Y] [CompleteSpace Y]
+    [QuasinormedAddCommGroup X] [QuasiNormedSpace 𝕜 X] [CompleteSpace X]
+    [QuasinormedAddCommGroup Y] [QuasiNormedSpace 𝕜 Y] [CompleteSpace Y]
     (f : X →L[𝕜] Y) : (ofHom f).hom = f := rfl
 
 @[simp] lemma hom_comp {X Y Z : QuasiBanachCat 𝕜} (f : X ⟶ Y) (g : Y ⟶ Z) :
@@ -136,6 +140,16 @@ theorem ofIso_hom {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) :
 @[simp]
 theorem continuousLinearEquivOfIso_apply {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
     continuousLinearEquivOfIso e x = e.hom x := by
+  sorry
+
+/-- The quasinorm comparison carried by an iso in `QuasiBanachCat` (one direction; the other is
+`norm_le_hom`). -/
+theorem norm_hom_le {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
+    ‖e.hom x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.hom.hom * ‖x‖ := by
+  sorry
+
+theorem norm_le_hom {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
+    ‖x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.inv.hom * ‖e.hom x‖ := by
   sorry
 
 end QuasiBanachCat

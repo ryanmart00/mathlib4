@@ -130,13 +130,13 @@ def continuousLinearEquivOfIso {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) : X ≃
 
 @[simp]
 theorem ofIso_hom {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) :
-    (ofIso e).hom.hom = e.toContinuousLinearMap := by
-  sorry
+    (ofIso e).hom.hom = e.toContinuousLinearMap :=
+  rfl
 
 @[simp]
 theorem continuousLinearEquivOfIso_apply {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
-    continuousLinearEquivOfIso e x = e.hom x := by
-  sorry
+    continuousLinearEquivOfIso e x = e.hom x :=
+  rfl
 
 /-- The quasinorm comparison carried by an iso in `QuasiBanachCat` (one direction; the other is
 `norm_le_hom`). -/

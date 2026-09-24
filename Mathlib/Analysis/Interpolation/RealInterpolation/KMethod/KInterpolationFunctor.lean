@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.InterpolationFunctor
-import Mathlib.Analysis.Interpolation.KMethod.RealInterpolationSpace
+import Mathlib.Analysis.Interpolation.RealInterpolation.KMethod.RealInterpolationSpace
 
 /-!
 # The K-method as an interpolation functor
@@ -17,9 +17,9 @@ For `0 < θ < 1` and `0 < q ≤ ∞`, the real interpolation spaces `(A₀, A₁
 (`InterpolationCat.Hom.norm_realInterpolationMap_le`).
 
 This is the implementation of the canonical real interpolation functor
-`realInterpolationFunctor` (`Analysis/Interpolation/RealInterpolation.lean`), which should be used
-downstream instead; the two are related by `realInterpolationFunctorEquivK`. The unbundled form of
-the K-method (given two embeddings) is `InterpolationCouple.RealInterpolationSpace`.
+`realInterpolationFunctor` (`Analysis/Interpolation/RealInterpolation/Basic.lean`), which should
+be used downstream instead; the two are related by `realInterpolationFunctorEquivK`. The unbundled
+form of the K-method (given two embeddings) is `InterpolationCouple.RealInterpolationSpace`.
 -/
 
 universe v u

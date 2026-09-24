@@ -6,9 +6,9 @@ Authors: Ryan Martinez
 import Mathlib.MeasureTheory.Function.LorentzSpace.Basic
 
 /-!
-# Classical interpolation of `Lᵖ` and Lorentz spaces
+# The Marcinkiewicz interpolation theorem
 
-DRAFT — statements only, all proofs deferred (`sorry`).
+DRAFT — statements only, all proofs deferred (`sorry`). (Formerly `LpLorentz.lean`.)
 
 Following Triebel, *Interpolation Theory, Function Spaces, Differential Operators*, §1.18.4-7.
 The end goal (per Ryan): the Marcinkiewicz interpolation theorem, i.e. that real-interpolating

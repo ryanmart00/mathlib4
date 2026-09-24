@@ -13,9 +13,10 @@ Triebel, *Interpolation Theory, Function Spaces, Differential Operators* §1.18.
 diagonal Lorentz space `L_{p,p}(μ)` is literally the ordinary `Lᵖ(μ)` space, both at the level of
 the raw quasinorm formulas (`lorentzNorm_diag`) and of the bundled types (`LorentzSpace.eq_Lp`).
 
-`lorentzNorm_diag` moved here from `Analysis/Interpolation/LpLorentz.lean` (2026-09-20, statement
-review): it is general-purpose Lorentz-space content with no dependence on the interpolation-couple
-machinery, matching why `distributionFunction`/`decreasingRearrangement`/`lorentzNorm` themselves
+`lorentzNorm_diag` moved here from `Analysis/Interpolation/LpLorentz.lean` (now
+`Analysis/Interpolation/Lorentz/Marcinkiewicz.lean`) at the 2026-09-20 statement review: it is
+general-purpose Lorentz-space content with no dependence on the interpolation-couple machinery,
+matching why `distributionFunction`/`decreasingRearrangement`/`lorentzNorm` themselves
 already live in this directory rather than there. Its statement needs two hypotheses:
 * `0 < p`: at `q = 0` (hence on the diagonal, `p = 0` too), `lorentzNorm` is the *constant*
   function `1` (see `LorentzSpace/Basic.lean`'s `instQuasinormedAddCommGroup` docstring, which is

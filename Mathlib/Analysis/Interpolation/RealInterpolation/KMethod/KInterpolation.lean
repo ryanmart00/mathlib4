@@ -3,7 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.KMethod.KFunctional
+import Mathlib.Analysis.Interpolation.RealInterpolation.KMethod.KFunctional
 import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
@@ -62,10 +62,11 @@ variable (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
 /-- The `(θ,q)` real-interpolation quasinorm built from the K-functional (Triebel §1.3.2):
 `(∫₀^∞ (t^{-θ}K(t,a))^q dt/t)^{1/q}` for `q < ∞`, `sup_{t>0} t^{-θ}K(t,a)` for `q = ∞`. The `q = ⊤`
 case is genuinely special-cased (not folded into the general formula by relying on
-`(⊤ : ℝ≥0∞).toReal = 0`) — that shortcut is what `LpLorentz.lean`'s existing (draft, unproved)
-`lorentzRealInterpolationNorm` does, and it's wrong: with every exponent silently becoming `0`,
-that formula collapses to the constant `1` for every `a` when `q = ⊤`, not the intended supremum.
-Worth fixing there too when `LpLorentz.lean` is eventually rewritten against this file (Unit 6). -/
+`(⊤ : ℝ≥0∞).toReal = 0`) — that shortcut is what `Lorentz/Marcinkiewicz.lean`'s existing (draft,
+unproved) `lorentzRealInterpolationNorm` does, and it's wrong: with every exponent silently
+becoming `0`, that formula collapses to the constant `1` for every `a` when `q = ⊤`, not the
+intended supremum. Worth fixing there too when `Lorentz/Marcinkiewicz.lean` is eventually rewritten
+against this file (Unit 6). -/
 noncomputable def InterpolationCouple.realInterpolationENorm (θ : ℝ) (q : ℝ≥0∞)
     (a : InterpolationCouple.sum ι₀ ι₁) : ℝ≥0∞ :=
   if q = ⊤ then

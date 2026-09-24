@@ -219,7 +219,9 @@ instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) :=
     isUniformAddGroup_uniformSpaceOn μ s
 
 instance instContinuousSMul : ContinuousSMul 𝕜 (L0 α E μ) := by
-  sorry
+  simp +instances only [instUniformSpace, UniformSpace.toTopologicalSpace_iInf]
+  exact continuousSMul_iInf fun s => continuousSMul_iInf fun _ => continuousSMul_iInf fun hμs =>
+    continuousSMul_uniformSpaceOn μ hμs
 
 theorem instUniformSpace_le_uniformSpaceOn {s : Set α} (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) :
     instUniformSpace μ ≤ (uniformSpaceOn μ s : UniformSpace (L0 α E μ)) :=

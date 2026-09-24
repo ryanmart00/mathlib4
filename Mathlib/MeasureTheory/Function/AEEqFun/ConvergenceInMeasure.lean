@@ -12,8 +12,6 @@ import Mathlib.Topology.Algebra.MulAction
 /-!
 # `L⁰`: the topology of convergence in measure
 
-DRAFT — statement-review stage.
-
 Built to serve as the common ambient topological vector space `𝒜` an `InterpolationCouple`
 (`Analysis/Interpolation/Couple.lean`) needs, for a couple of Lorentz (or plain `Lᵖ`) spaces.
 Neither `α →ₘ[μ] E` (`MeasureTheory.AEEqFun`) nor any variant of it carries a topology in Mathlib

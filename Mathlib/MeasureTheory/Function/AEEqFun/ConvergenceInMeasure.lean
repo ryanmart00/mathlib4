@@ -110,6 +110,18 @@ theorem kyFanEdist_neg_neg (s : Set α) (f g : α →ₘ[μ] E) :
   filter_upwards [coeFn_neg f, coeFn_neg g] with x hxf hxg
   simp only [hxf, hxg, Pi.neg_apply, edist_neg_neg]
 
+theorem kyFanEdist_sub_sub_le (s : Set α) (f g f' g' : α →ₘ[μ] E) :
+    kyFanEdist μ s (f - g) (f' - g') ≤ kyFanEdist μ s f f' + kyFanEdist μ s g g' := by
+  have hff' : AEMeasurable (fun x => min 1 (edist (f x) (f' x))) (μ.restrict s) :=
+    (aemeasurable_const.min (continuous_edist.comp_aestronglyMeasurable₂
+      f.aestronglyMeasurable f'.aestronglyMeasurable).aemeasurable).restrict
+  rw [kyFanEdist, kyFanEdist, kyFanEdist, ← lintegral_add_left' hff']
+  refine MeasureTheory.lintegral_mono_ae (ae_restrict_of_ae ?_)
+  filter_upwards [coeFn_sub f g, coeFn_sub f' g'] with x h1 h2
+  rw [h1, h2, Pi.sub_apply, Pi.sub_apply, sub_eq_add_neg, sub_eq_add_neg]
+  refine ENNReal.min_one_le_add_of_le ((edist_add_add_le _ _ _ _).trans_eq ?_)
+  rw [edist_neg_neg]
+
 /-- On a finite-measure set, the Ky Fan distance induces convergence in measure. -/
 theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s : Set α}
     (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) (f : ι → α →ₘ[μ] E) (g : α →ₘ[μ] E) :
@@ -170,21 +182,34 @@ noncomputable def uniformSpaceOn (s : Set α) : UniformSpace (L0 α E μ) :=
   uniformSpaceOfEDist (AEEqFun.kyFanEdist μ s) (AEEqFun.kyFanEdist_self μ s)
     (AEEqFun.kyFanEdist_comm μ s) (AEEqFun.kyFanEdist_triangle μ s)
 
-/-- The uniformity of convergence in measure on every finite-measure set. -/
-noncomputable instance instUniformSpace : UniformSpace (L0 α E μ) :=
-  ⨅ (s : Set α) (_ : MeasurableSet s) (_ : μ s ≠ ⊤), uniformSpaceOn μ s
-
 theorem isUniformAddGroup_uniformSpaceOn (s : Set α) :
     @IsUniformAddGroup (L0 α E μ) (uniformSpaceOn μ s) _ := by
-  sorry
-
-instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) := by
-  sorry
+  let _ : PseudoEMetricSpace (L0 α E μ) :=
+    { edist := AEEqFun.kyFanEdist μ s
+      edist_self := AEEqFun.kyFanEdist_self μ s
+      edist_comm := AEEqFun.kyFanEdist_comm μ s
+      edist_triangle := AEEqFun.kyFanEdist_triangle μ s
+      toUniformSpace := uniformSpaceOn μ s
+      uniformity_edist := rfl }
+  refine ⟨EMetric.uniformContinuous_iff.mpr fun ε hε => ⟨ε / 2, ENNReal.half_pos hε.ne', ?_⟩⟩
+  intro p q hpq
+  rw [Prod.edist_eq, max_lt_iff] at hpq
+  calc edist (p.1 - p.2) (q.1 - q.2) ≤ edist p.1 q.1 + edist p.2 q.2 :=
+        AEEqFun.kyFanEdist_sub_sub_le μ s _ _ _ _
+    _ < ε / 2 + ε / 2 := ENNReal.add_lt_add hpq.1 hpq.2
+    _ = ε := ENNReal.add_halves ε
 
 /-- Scalar multiplication is continuous for convergence in measure on a *finite-measure* set `s`.
 (Finiteness is needed: on `s` of infinite measure, `c • 1 ↛ 0` as `c → 0`.) -/
 theorem continuousSMul_uniformSpaceOn {s : Set α} (hμs : μ s ≠ ⊤) :
     @ContinuousSMul 𝕜 (L0 α E μ) _ _ (uniformSpaceOn μ s).toTopologicalSpace := by
+  sorry
+
+/-- The uniformity of convergence in measure on every finite-measure set. -/
+noncomputable instance instUniformSpace : UniformSpace (L0 α E μ) :=
+  ⨅ (s : Set α) (_ : MeasurableSet s) (_ : μ s ≠ ⊤), uniformSpaceOn μ s
+
+instance instIsUniformAddGroup : IsUniformAddGroup (L0 α E μ) := by
   sorry
 
 instance instContinuousSMul : ContinuousSMul 𝕜 (L0 α E μ) := by

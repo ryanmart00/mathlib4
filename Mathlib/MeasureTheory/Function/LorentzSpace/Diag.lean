@@ -27,9 +27,8 @@ rearrangement-preserves-integral/equimeasurability fact `∫₀^∞ f*(t)^p dt =
 `LorentzSpace.eq_Lp` is new: since `lorentzNorm_diag` gives *literal* equality of the defining
 `ℝ≥0∞`-valued quasinorms (not just an equivalence up to constants), the two bundled types —
 both literally `AddSubgroup (α →ₘ[μ] E)` cut out by their respective quasinorm being finite — have
-identical carriers, hence are literally equal as `AddSubgroup`s (per Ryan, 2026-09-20: this
-settles the "literal equality vs. `QuasiNormEquiv`" open question flagged in
-`LorentzSpace/Basic.lean`'s module docstring, in favor of literal equality).
+identical carriers, hence are literally equal as `AddSubgroup`s (per Ryan, 2026-09-20: literal
+equality rather than mere equivalence of quasi-Banach spaces).
 
 ## Main results
 * `lorentzNorm_diag`: `‖f‖_{L_{p,p}} = ‖f‖_{Lᵖ}` for `0 < p ≤ ∞`, as raw `ℝ≥0∞` quasinorms.

@@ -28,10 +28,11 @@ interpolation-couple framework; see `PROGRESS-interpolation-theory.md`).
   `NormedAddCommGroup` is an instance with `quasiTriangleConst = 1`
   (`NormedAddCommGroup.toQuasinormedAddCommGroup`), reusing its own topology verbatim, so the
   classical case is recovered exactly, not just up to equivalence.
-* `QuasiNormEquiv 𝕜 A B`: `A` and `B` are quasi-norm equivalent — a continuous `𝕜`-linear
-  equivalence whose norm comparison holds up to constants in both directions. Coercions to
-  functions both ways come for free from extending `ContinuousLinearEquiv` (`e` and `e.symm`); the
-  added data is purely the quantitative comparison.
+
+Equivalence of quasi-Banach spaces (quasinorms comparable up to constants in both directions) is
+not a separate notion: it is an isomorphism in `QuasiBanachCat` (`QuasiBanachCat.lean`), i.e. a
+continuous linear equivalence, since continuous linear maps between quasi-normed spaces are
+automatically bounded (`le_opQuasiNorm`).
 
 ## Notation
 
@@ -601,42 +602,3 @@ theorem le_opQuasiNorm (f : E →L[𝕜] F) (x : E) : ‖f x‖ ≤ opQuasiNorm 
     linarith
 
 end QuasinormedAddCommGroup
-
-open scoped QuasinormedAddCommGroup
-
-/-- Two quasi-normed `𝕜`-modules `A`, `B` are *quasi-norm equivalent*: a continuous `𝕜`-linear
-equivalence (giving coercions to functions both ways, `e` and `e.symm`, for free) whose norm
-comparison holds up to constants in both directions, `e ∼ id`. -/
-structure QuasiNormEquiv (𝕜 : Type*) [NontriviallyNormedField 𝕜]
-    (A : Type*) [QuasinormedAddCommGroup A] [Module 𝕜 A]
-    (B : Type*) [QuasinormedAddCommGroup B] [Module 𝕜 B]
-    extends A ≃L[𝕜] B where
-  isSim : (toFun : A → B) ∼ (id : A → A)
-
-namespace QuasiNormEquiv
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
-  {A : Type*} [QuasinormedAddCommGroup A] [Module 𝕜 A]
-  {B : Type*} [QuasinormedAddCommGroup B] [Module 𝕜 B]
-
-/-- Coercion to a function, so `e a` makes sense directly (not just `e.toFun a`). -/
-instance : CoeFun (QuasiNormEquiv 𝕜 A B) (fun _ => A → B) := ⟨fun e => e.toFun⟩
-
-theorem norm_le (e : QuasiNormEquiv 𝕜 A B) : ∃ C : ℝ, ∀ a : A, ‖e a‖ ≤ C * ‖a‖ := e.isSim.1
-
-theorem norm_ge (e : QuasiNormEquiv 𝕜 A B) : ∃ C : ℝ, ∀ a : A, ‖a‖ ≤ C * ‖e a‖ := e.isSim.2
-
-/-- The inverse of a quasi-norm equivalence is again one — the comparison constants invert
-(roughly `c ↦ 1/c`), obtained here by substituting `a = e.symm b` into `e`'s own bounds. -/
-def symm (e : QuasiNormEquiv 𝕜 A B) : QuasiNormEquiv 𝕜 B A where
-  toContinuousLinearEquiv := e.toContinuousLinearEquiv.symm
-  isSim := by
-    obtain ⟨C, hC⟩ := e.norm_le
-    obtain ⟨C', hC'⟩ := e.norm_ge
-    refine ⟨⟨C', fun b => ?_⟩, ⟨C, fun b => ?_⟩⟩
-    · simpa [e.toContinuousLinearEquiv.apply_symm_apply] using
-        hC' (e.toContinuousLinearEquiv.symm b)
-    · simpa [e.toContinuousLinearEquiv.apply_symm_apply] using
-        hC (e.toContinuousLinearEquiv.symm b)
-
-end QuasiNormEquiv

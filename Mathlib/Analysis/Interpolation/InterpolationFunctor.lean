@@ -54,46 +54,55 @@ namespace InterpolationFunctor
 
 variable {𝕜}
 
-/-- An equivalence of interpolation functors: a natural isomorphism of the underlying functors
-`InterpolationCat 𝕜 ⥤ QuasiBanachCat 𝕜` (so each `F(C) ≅ G(C)` is an isomorphism of quasi-Banach
-spaces, i.e. the two quasinorms are equivalent), compatible with the inclusions into `A₀ + A₁`
-(so `F(C)` and `G(C)` are the same subspace of the sum). This is how different constructions of
-the same interpolation functor (e.g. the K- and J-methods) are identified. -/
+/-- An equivalence of interpolation functors: for each couple `C`, an isomorphism
+`F(C) ≅ G(C)` in `QuasiBanachCat` (i.e. an equivalence of quasi-Banach spaces), compatible with
+the inclusions into `A₀ + A₁` (so `F(C)` and `G(C)` are the same subspace of the sum). Naturality
+is automatic (`Equiv.naturality`), since `toSum` is injective. This is how different constructions
+of the same interpolation functor (e.g. the K- and J-methods) are identified. -/
 structure Equiv (F G : InterpolationFunctor.{v, u} 𝕜) where
-  /-- The natural isomorphism of the underlying functors. -/
-  iso : F.toFunctor ≅ G.toFunctor
+  /-- The componentwise isomorphism of quasi-Banach spaces. -/
+  iso (C : InterpolationCat.{v, u} 𝕜) : F.obj C ≅ G.obj C
   toSum_comp_hom (C : InterpolationCat.{v, u} 𝕜) :
-    (G.toSum C).comp (iso.hom.app C).hom = F.toSum C
+    (G.toSum C).comp (iso C).hom.hom = F.toSum C
 
 namespace Equiv
 
 variable {F G H : InterpolationFunctor.{v, u} 𝕜}
 
+theorem toSum_comp_inv (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
+    (F.toSum C).comp (e.iso C).inv.hom = G.toSum C := by
+  sorry
+
+/-- The componentwise isomorphisms of an equivalence are natural. -/
+theorem naturality (e : F.Equiv G) {C D : InterpolationCat.{v, u} 𝕜} (T : C ⟶ D) :
+    F.map T ≫ (e.iso D).hom = (e.iso C).hom ≫ G.map T := by
+  sorry
+
+/-- An equivalence of interpolation functors as a natural isomorphism of the underlying
+functors. -/
+def toNatIso (e : F.Equiv G) : F.toFunctor ≅ G.toFunctor :=
+  NatIso.ofComponents e.iso fun T => e.naturality T
+
 /-- The identity equivalence. -/
 def refl (F : InterpolationFunctor.{v, u} 𝕜) : F.Equiv F where
-  iso := Iso.refl _
+  iso C := Iso.refl _
   toSum_comp_hom C := by
     sorry
 
 /-- The inverse equivalence. -/
 def symm (e : F.Equiv G) : G.Equiv F where
-  iso := e.iso.symm
-  toSum_comp_hom C := by
-    sorry
+  iso C := (e.iso C).symm
+  toSum_comp_hom C := e.toSum_comp_inv C
 
 /-- The composite equivalence. -/
 def trans (e : F.Equiv G) (e' : G.Equiv H) : F.Equiv H where
-  iso := e.iso ≪≫ e'.iso
+  iso C := e.iso C ≪≫ e'.iso C
   toSum_comp_hom C := by
     sorry
 
 /-- Equal interpolation functors are equivalent. -/
 def ofEq (h : F = G) : F.Equiv G :=
   h ▸ refl F
-
-theorem toSum_comp_inv (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
-    (F.toSum C).comp (e.iso.inv.app C).hom = G.toSum C := by
-  sorry
 
 end Equiv
 

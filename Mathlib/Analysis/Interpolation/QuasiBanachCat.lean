@@ -23,8 +23,8 @@ diamond, reuses the genuine norm's own topology verbatim) — so `QuasiBanachCat
 accepts a genuinely-normed space directly, and a second, parallel `BanachCat` category would
 just duplicate every declaration below for no payoff. Wherever a construction genuinely needs
 the *exact* triangle inequality rather than merely a quasi one, that should be expressed as a
-quasi-norm-equivalence-to-a-genuine-norm fact about the specific space in question
-(`QuasiNormEquiv`, `QuasiNorm.lean`), not as membership in a different category.
+fact about the specific space in question (an isomorphism in `QuasiBanachCat` with a genuinely
+normed space), not as membership in a different category.
 
 Modeled closely on `TopModuleCat` (`Mathlib/Algebra/Category/ModuleCat/Topology/Basic.lean`),
 which does the same thing for topological modules generally — here we additionally require a
@@ -99,5 +99,43 @@ abbrev ofHom {X Y : Type v}
     (f ≫ g).hom = g.hom.comp f.hom := rfl
 
 @[simp] lemma hom_id (X : QuasiBanachCat 𝕜) : hom (𝟙 X) = .id _ _ := rfl
+
+/-! ### Isomorphisms
+
+An isomorphism in `QuasiBanachCat` is exactly a continuous linear equivalence, i.e. (since every
+continuous linear map between quasi-normed spaces is bounded, `le_opQuasiNorm`) a linear
+equivalence whose quasinorm comparison holds up to constants in both directions. This is the
+notion of *equivalence of quasi-Banach spaces* used throughout. Mirrors `TopModuleCat.ofIso` /
+`Iso.toContinuousLinearEquiv`. -/
+
+variable {𝕜}
+
+/-- Construct an iso in `QuasiBanachCat` from a continuous linear equiv. -/
+def ofIso {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) : X ≅ Y where
+  hom := ConcreteCategory.ofHom e.toContinuousLinearMap
+  inv := ConcreteCategory.ofHom e.symm.toContinuousLinearMap
+  hom_inv_id := by
+    sorry
+  inv_hom_id := by
+    sorry
+
+/-- Cast an iso in `QuasiBanachCat` into a continuous linear equiv. -/
+def continuousLinearEquivOfIso {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) : X ≃L[𝕜] Y where
+  __ := e.hom.hom
+  invFun := e.inv.hom
+  left_inv x := by
+    sorry
+  right_inv x := by
+    sorry
+
+@[simp]
+theorem ofIso_hom {X Y : QuasiBanachCat 𝕜} (e : X ≃L[𝕜] Y) :
+    (ofIso e).hom.hom = e.toContinuousLinearMap := by
+  sorry
+
+@[simp]
+theorem continuousLinearEquivOfIso_apply {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
+    continuousLinearEquivOfIso e x = e.hom x := by
+  sorry
 
 end QuasiBanachCat

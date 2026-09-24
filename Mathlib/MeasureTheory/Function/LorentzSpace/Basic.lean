@@ -19,8 +19,8 @@ only a `QuasinormedAddCommGroup` instance here, for **all** `p, q` — the liter
 quasinorm is not a genuine norm even for `p > 1` (Hunt's maximal-function `f**` trick is needed for
 that, and is *not* attempted here). This is exactly the case the quasi-Banach generalization
 (`Analysis/Interpolation/QuasiNorm.lean` etc.) was built to accommodate. The fact that `L_{p,p}`
-recovers the genuine `Lᵖ` norm (up to a `QuasiNormEquiv`, or perhaps literal equality — open
-question, not yet settled) is deferred to a later theorem, once this bundled type exists.
+recovers the genuine `Lᵖ` space (as literal equality of subgroups) is `LorentzSpace.eq_Lp`
+(`LorentzSpace/Diag.lean`).
 
 ## Main definitions
 * `LorentzSpace E p q μ` — the bundled Lorentz space, mirroring `MeasureTheory.Lp`'s own definition.

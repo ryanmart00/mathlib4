@@ -40,10 +40,8 @@ variable (𝕜 E) in
 /-- The inclusion `LorentzSpace E p q μ → L0 α E μ`, as a linear map. -/
 noncomputable def toL0ₗ : LorentzSpace E p q μ →ₗ[𝕜] L0 α E μ where
   toFun f := L0.toL0 μ 𝕜 (f : α →ₘ[μ] E)
-  map_add' := by
-    sorry
-  map_smul' := by
-    sorry
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
 
 @[simp]
 theorem toL0ₗ_apply (f : LorentzSpace E p q μ) :

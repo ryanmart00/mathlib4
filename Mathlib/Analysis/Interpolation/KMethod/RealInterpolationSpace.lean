@@ -39,10 +39,10 @@ open scoped ENNReal
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
-  [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
+  [IsTopologicalAddGroup 𝒜] [T2Space 𝒜]
 variable {A₀ A₁ : Type*}
-  [QuasinormedAddCommGroup A₀] [QuasiNormedSpace 𝕜 A₀] [CompleteSpace A₀]
-  [QuasinormedAddCommGroup A₁] [QuasiNormedSpace 𝕜 A₁] [CompleteSpace A₁]
+  [QuasinormedAddCommGroup A₀] [QuasiNormedSpace 𝕜 A₀]
+  [QuasinormedAddCommGroup A₁] [QuasiNormedSpace 𝕜 A₁]
 variable (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
 
 namespace InterpolationCouple
@@ -126,7 +126,6 @@ theorem realInterpolationConst_lt_top {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1)
     ⟨lt_of_le_of_lt (setLIntegral_mono' measurableSet_Ioc hle1) hint1,
       lt_of_le_of_lt (setLIntegral_mono' measurableSet_Ioi hle2) hint2⟩)
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_zero (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :
     realInterpolationENorm ι₀ ι₁ θ q 0 = 0 := by
   unfold realInterpolationENorm
@@ -139,7 +138,6 @@ theorem realInterpolationENorm_zero (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) :
         ENNReal.zero_rpow_of_pos hr, zero_mul]]
     simp [hr]
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c : 𝕜)
     (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q (c • a) = ‖c‖ₑ * realInterpolationENorm ι₀ ι₁ θ q a := by
@@ -162,7 +160,6 @@ theorem realInterpolationENorm_smul (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (c 
       ENNReal.mul_rpow_of_nonneg _ _ (by positivity), ← ENNReal.rpow_mul, ENNReal.toReal_inv,
       mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The "`⊂ A₀ + A₁`" half of the sandwich, quantitatively: `c_{θ,q} ‖a‖_{A₀+A₁} ≤ ‖a‖_{θ,q}`. -/
 theorem ofReal_norm_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
     (a : sum ι₀ ι₁) :
@@ -198,7 +195,6 @@ theorem ofReal_norm_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞} (h
           gcongr
           exact hpt t ht
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q a = 0 ↔ a = 0 := by
   refine ⟨fun h => ?_, fun h => h ▸ realInterpolationENorm_zero ι₀ ι₁ θ hq⟩
@@ -210,7 +206,6 @@ theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 <
       (le_antisymm h0 (QuasinormedAddCommGroup.norm_nonneg a))
   · exact absurd h0 (realInterpolationConst_pos θ q).ne'
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich, quantitatively: `‖a‖_{θ,q} ≤ c_{θ,q} ‖a‖_{A₀∩A₁}`
 (strengthens `realInterpolationENorm_meetToSum_lt_top`). -/
 theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q) (b : meet ι₀ ι₁) :
@@ -307,8 +302,8 @@ noncomputable instance instNorm : Norm (RealInterpolationSpace ι₀ ι₁ θ q)
   norm a := (realInterpolationENorm ι₀ ι₁ θ q a).toReal
 
 theorem norm_def (a : RealInterpolationSpace ι₀ ι₁ θ q) :
-    ‖a‖ = (realInterpolationENorm ι₀ ι₁ θ q a).toReal := by
-  sorry
+    ‖a‖ = (realInterpolationENorm ι₀ ι₁ θ q a).toReal :=
+  rfl
 
 variable (θ q) in
 /-- The quasi-triangle constant of `(A₀, A₁)_{θ,q}`, extracted from
@@ -360,7 +355,8 @@ noncomputable instance instQuasiNormedSpace [Fact (0 < q)] :
 /-- `(A₀, A₁)_{θ,q}` is complete (Triebel §1.3.2, Theorem 1(a)): a Cauchy sequence is Cauchy in
 `A₀ + A₁` (by the sandwich bound), converges there, and the limit is also its limit in
 `(A₀, A₁)_{θ,q}` by a Fatou argument on the K-functional. -/
-instance instCompleteSpace [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
+instance instCompleteSpace [CompleteSpace A₀] [CompleteSpace A₁] [Fact (0 < θ)] [Fact (θ < 1)]
+    [Fact (0 < q)] :
     CompleteSpace (RealInterpolationSpace ι₀ ι₁ θ q) := by
   sorry
 

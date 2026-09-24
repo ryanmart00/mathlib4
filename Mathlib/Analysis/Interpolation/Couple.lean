@@ -21,16 +21,15 @@ Banach spaces in their own right.
 **Unit 2 (2026-09-17): generalized from `NormedAddCommGroup` legs to `QuasinormedAddCommGroup`**
 (quasi-norm, with its topology/uniform structure bundled in exactly like `NormedAddCommGroup`,
 see `Analysis/Normed/Quasi/Basic.lean`), with completeness kept as a separate `[CompleteSpace _]`
-bracket, matching `NormedAddCommGroup`'s own pattern (there is no separate "quasi-Banach" class). Every genuine
-`NormedAddCommGroup` still satisfies `QuasinormedAddCommGroup` via the bridge instance there, so
-nothing here is a behavior change for existing normed-leg callers. The parts that never touched
-a norm at all (`diff`, `plus`, both kernels' closedness,
-`meet`, `mem_meet_iff`, `meet.completeSpace`, `sum` as a bare type, `mem_ker_plus_iff`) generalized
+bracket, matching `NormedAddCommGroup`'s own pattern (there is no separate "quasi-Banach"
+class). Every genuine `NormedAddCommGroup` still satisfies `QuasinormedAddCommGroup` via the
+bridge instance there, so nothing here is a behavior change for existing normed-leg callers.
+The parts that never touched a norm at all (`diff`, `plus`, both kernels' closedness, `meet`,
+`mem_meet_iff`, `meet.completeSpace`, `sum` as a bare type, `mem_ker_plus_iff`) generalized
 with **no proof changes whatsoever** — pure topology/module-map facts. `A₀+A₁`'s norm and
 completeness needed real new content, from `Analysis/Normed/Quasi/Quotient.lean` (Unit 1): its
-quasi-norm via
-`QuasinormedAddCommGroup.quotientQuasinormedAddCommGroup` (needing the kernel closed in the
-*norm* sense, obtained from the already-proved *topological* closedness via
+quasi-norm via `QuasinormedAddCommGroup.quotientQuasinormedAddCommGroup` (needing the kernel
+closed in the *norm* sense, obtained from the already-proved *topological* closedness via
 `AddSubgroup.isNormClosed_of_isClosed`), and its completeness via
 `QuasinormedAddCommGroup.quotientNorm_completeSpace`. Its topology, `IsTopologicalAddGroup`
 instance, and module/`ContinuousSMul` structure all turned out to **already be automatic**
@@ -39,10 +38,9 @@ Mathlib instances for `Submodule.Quotient` (`Submodule.isTopologicalAddGroup_quo
 needed for any of those either. `FirstCountableTopology` needed no bridging at all once
 `QuasinormedAddCommGroup` grew its own generic `instFirstCountableTopology`
 (`Analysis/Normed/Quasi/Basic.lean`) — free for *any* quasi-normed leg from the quasi-norm's own
-neighborhood
-basis, no Aoki–Rolewicz needed, so `A₀+A₁` picks it up automatically the same way `A₀`, `A₁`
-themselves do. Only the quasi-norm and completeness needed real work; everything else was
-already there.
+neighborhood basis, no Aoki–Rolewicz needed, so `A₀+A₁` picks it up automatically the same way
+`A₀`, `A₁` themselves do. Only the quasi-norm and completeness needed real work; everything else
+was already there.
 
 Realized here as: `A₀ ⊓ A₁` (the "meet") is the kernel of `diff (a₀,a₁) = ι₀ a₀ - ι₁ a₁` on
 `A₀ × A₁` — the pullback/equalizer, matching Triebel's `A₀ ∩ A₁` as the set of points reachable

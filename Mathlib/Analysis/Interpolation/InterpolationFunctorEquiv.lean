@@ -9,8 +9,6 @@ import Mathlib.CategoryTheory.Comma.Over.Basic
 /-!
 # Equivalence of interpolation functors
 
-DRAFT — statement-review stage.
-
 The inclusions `F.toSum C : F(C) →L[𝕜] A₀ + A₁` of an interpolation functor form a natural
 transformation `F ⟶ Sum` to the sum functor (`sumInterpolationFunctor`); its naturality is exactly
 the `map_toSum` axiom. So an interpolation functor is naturally an object of the over category

@@ -116,9 +116,11 @@ theorem InterpolationCouple.kFunctional_le_two_mul_max_mul_norm (t : ℝ) (ht : 
     rw [Prod.norm_def]
     rcases le_total ‖x.1‖ ‖x.2‖ with h | h
     · rw [max_eq_right h]
-      nlinarith [le_max_right (1 : ℝ) t, le_max_left (1 : ℝ) t, QuasinormedAddCommGroup.norm_nonneg x.1, QuasinormedAddCommGroup.norm_nonneg x.2]
+      nlinarith [le_max_right (1 : ℝ) t, le_max_left (1 : ℝ) t,
+        QuasinormedAddCommGroup.norm_nonneg x.1, QuasinormedAddCommGroup.norm_nonneg x.2]
     · rw [max_eq_left h]
-      nlinarith [le_max_left (1 : ℝ) t, le_max_right (1 : ℝ) t, QuasinormedAddCommGroup.norm_nonneg x.1, QuasinormedAddCommGroup.norm_nonneg x.2]
+      nlinarith [le_max_left (1 : ℝ) t, le_max_right (1 : ℝ) t,
+        QuasinormedAddCommGroup.norm_nonneg x.1, QuasinormedAddCommGroup.norm_nonneg x.2]
   calc InterpolationCouple.KFunctional ι₀ ι₁ t a
       ≤ ‖x.1‖ + t * ‖x.2‖ := hb
     _ ≤ 2 * max 1 t * ‖x‖ := hc

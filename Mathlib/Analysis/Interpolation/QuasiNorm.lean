@@ -339,7 +339,7 @@ theorem continuous_of_bound {F : Type*} [QuasinormedAddCommGroup F] (f : E →+ 
   intro ε hε
   have hC : 0 < |C| + 1 := by positivity
   refine ⟨ε / (|C| + 1), div_pos hε hC, fun x (hx : ‖x‖ < ε / (|C| + 1)) => ?_⟩
-  show ‖f x‖ < ε
+  change ‖f x‖ < ε
   calc ‖f x‖ ≤ C * ‖x‖ := h x
     _ ≤ (|C| + 1) * ‖x‖ := by nlinarith [le_abs_self C, norm_nonneg x]
     _ < (|C| + 1) * (ε / (|C| + 1)) := by gcongr

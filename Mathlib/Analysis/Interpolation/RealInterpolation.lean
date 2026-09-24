@@ -9,8 +9,6 @@ import Mathlib.Analysis.Interpolation.KMethod.KInterpolationFunctor
 /-!
 # Real interpolation
 
-DRAFT — statement-review stage.
-
 The real interpolation functor `(A₀, A₁) ↦ (A₀, A₁)_{θ,q}`, for `0 < θ < 1`, `0 < q ≤ ∞`
 (Triebel §1.3), as an interpolation functor `InterpolationCat 𝕜 ⥤ QuasiBanachCat 𝕜`.
 

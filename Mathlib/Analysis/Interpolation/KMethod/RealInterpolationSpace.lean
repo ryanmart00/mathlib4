@@ -4,11 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.KMethod.KInterpolation
+import Mathlib.Analysis.Interpolation.QuasiNormCompleteness
 
 /-!
 # The real interpolation space `(A₀, A₁)_{θ,q}` as a quasi-Banach space
-
-DRAFT — statement-review stage.
 
 The unbundled form of the K-method: given two quasi-Banach spaces `A₀`, `A₁` with embeddings
 `ι₀ : A₀ →L[𝕜] 𝒜`, `ι₁ : A₁ →L[𝕜] 𝒜` into a common Hausdorff TVS, the real interpolation space
@@ -386,7 +385,7 @@ theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 
 noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submodule 𝕜 (sum ι₀ ι₁) where
   carrier := {a | realInterpolationENorm ι₀ ι₁ θ q a < ⊤}
   zero_mem' := by
-    show realInterpolationENorm ι₀ ι₁ θ q 0 < ⊤
+    change realInterpolationENorm ι₀ ι₁ θ q 0 < ⊤
     rcases eq_or_ne q 0 with rfl | hq
     · simp [realInterpolationENorm]
     · rw [realInterpolationENorm_zero ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)]
@@ -394,7 +393,7 @@ noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submo
   add_mem' := by
     intro a b (ha : realInterpolationENorm ι₀ ι₁ θ q a < ⊤)
       (hb : realInterpolationENorm ι₀ ι₁ θ q b < ⊤)
-    show realInterpolationENorm ι₀ ι₁ θ q (a + b) < ⊤
+    change realInterpolationENorm ι₀ ι₁ θ q (a + b) < ⊤
     rcases eq_or_ne q 0 with rfl | hq
     · simp [realInterpolationENorm]
     obtain ⟨C, -, hC⟩ := exists_realInterpolationENorm_add_le ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)
@@ -402,7 +401,7 @@ noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submo
       (ENNReal.mul_lt_top ENNReal.ofReal_lt_top (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
   smul_mem' := by
     intro c a (ha : realInterpolationENorm ι₀ ι₁ θ q a < ⊤)
-    show realInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤
+    change realInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤
     rcases eq_or_ne q 0 with rfl | hq
     · simp [realInterpolationENorm]
     rw [realInterpolationENorm_smul ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)]
@@ -518,14 +517,6 @@ noncomputable instance instQuasiNormedSpace [Fact (0 < q)] :
     QuasiNormedSpace 𝕜 (RealInterpolationSpace ι₀ ι₁ θ q) where
   norm_smul_le c a := (norm_smul ι₀ ι₁ c a).le
 
-/-- `(A₀, A₁)_{θ,q}` is complete (Triebel §1.3.2, Theorem 1(a)): a Cauchy sequence is Cauchy in
-`A₀ + A₁` (by the sandwich bound), converges there, and the limit is also its limit in
-`(A₀, A₁)_{θ,q}` by a Fatou argument on the K-functional. -/
-instance instCompleteSpace [CompleteSpace A₀] [CompleteSpace A₁] [Fact (0 < θ)] [Fact (θ < 1)]
-    [Fact (0 < q)] :
-    CompleteSpace (RealInterpolationSpace ι₀ ι₁ θ q) := by
-  sorry
-
 /-! ### The sandwich maps -/
 
 variable (θ q) in
@@ -585,6 +576,56 @@ theorem toSum_comp_fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     (toSum ι₀ ι₁ θ q).comp (fromMeet ι₀ ι₁ θ q) = meetToSum ι₀ ι₁ :=
   ContinuousLinearMap.ext fun _ => rfl
 
+/-! ### Completeness -/
+
+/-- `(A₀, A₁)_{θ,q}` is complete (Triebel §1.3.2, Theorem 1(a)): a Cauchy sequence is Cauchy in
+`A₀ + A₁` (by the sandwich bound), converges there, and the limit is also its limit in
+`(A₀, A₁)_{θ,q}` by a Fatou argument on the K-functional. -/
+instance instCompleteSpace [CompleteSpace A₀] [CompleteSpace A₁] [Fact (0 < θ)] [Fact (θ < 1)]
+    [Fact (0 < q)] :
+    CompleteSpace (RealInterpolationSpace ι₀ ι₁ θ q) := by
+  refine QuasinormedAddCommGroup.completeSpace_of_cauchy_complete fun f B hB hf => ?_
+  have hBt : Tendsto B atTop (𝓝 0) := hB.tendsto_atTop_zero
+  have hB0 : ∀ n, 0 ≤ B n := fun n =>
+    (QuasinormedAddCommGroup.norm_nonneg _).trans (hf n n n le_rfl le_rfl).le
+  -- The image in `A₀ + A₁` is Cauchy, hence converges to some `s`.
+  have hfC : CauchySeq f := QuasinormedAddCommGroup.cauchySeq_of_le_tendsto_zero B
+    (fun N n m hn hm => (hf N n m hn hm).le) hBt
+  obtain ⟨s, hs⟩ := cauchySeq_tendsto_of_complete
+    ((toSum ι₀ ι₁ θ q).uniformContinuous.comp_cauchySeq hfC)
+  set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) with hCk
+  have hCk0 : 0 ≤ Ck :=
+    zero_le_one.trans (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  -- By the Fatou bound, `s - f n` has `(θ,q)`-quasinorm at most `Ck · B n`.
+  have hkey : ∀ n, realInterpolationENorm ι₀ ι₁ θ q (s - (f n : sum ι₀ ι₁)) ≤
+      ENNReal.ofReal Ck * ENNReal.ofReal (B n) := by
+    intro n
+    refine realInterpolationENorm_le_of_tendsto ι₀ ι₁ θ Fact.out
+      (y := fun m => (f m : sum ι₀ ι₁) - (f n : sum ι₀ ι₁)) (hs.sub_const _) ?_
+    filter_upwards [eventually_ge_atTop n] with m hm
+    have hfin : realInterpolationENorm ι₀ ι₁ θ q ((f m : sum ι₀ ι₁) - (f n : sum ι₀ ι₁)) < ⊤ :=
+      (f m - f n).2
+    rw [← ENNReal.ofReal_toReal hfin.ne]
+    exact ENNReal.ofReal_le_ofReal (hf n m n hm le_rfl).le
+  have hmem : s ∈ realInterpolationSubmodule ι₀ ι₁ θ q := by
+    rw [← sub_add_cancel s (f 0 : sum ι₀ ι₁)]
+    exact (realInterpolationSubmodule ι₀ ι₁ θ q).add_mem
+      ((hkey 0).trans_lt (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ENNReal.ofReal_lt_top))
+      (f 0).2
+  let x : RealInterpolationSpace ι₀ ι₁ θ q := ⟨s, hmem⟩
+  refine ⟨x, QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero.mpr ?_⟩
+  refine squeeze_zero (fun n => QuasinormedAddCommGroup.norm_nonneg _) (fun n => ?_)
+    (by simpa using hBt.const_mul Ck)
+  rw [show f n - x = -(x - f n) from (neg_sub _ _).symm, norm_neg, norm_def]
+  change (realInterpolationENorm ι₀ ι₁ θ q (s - (f n : sum ι₀ ι₁))).toReal ≤ _
+  calc (realInterpolationENorm ι₀ ι₁ θ q (s - (f n : sum ι₀ ι₁))).toReal
+      ≤ (ENNReal.ofReal Ck * ENNReal.ofReal (B n)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top ENNReal.ofReal_ne_top)
+          (hkey n)
+    _ = Ck * B n := by rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hCk0,
+        ENNReal.toReal_ofReal (hB0 n)]
+
 end RealInterpolationSpace
 
 end InterpolationCouple
@@ -604,7 +645,7 @@ noncomputable def realInterpolationMapₗ (T : C ⟶ D) :
     ((T.sumMap : sum C.ι₀ C.ι₁ →ₗ[𝕜] sum D.ι₀ D.ι₁).comp
       (realInterpolationSubmodule C.ι₀ C.ι₁ θ q).subtype).codRestrict _ (by
         intro a
-        show realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁)) < ⊤
+        change realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁)) < ⊤
         have ha : realInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
         have h₀ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₀
         have h₁ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₁

@@ -9,8 +9,6 @@ import Mathlib.Analysis.Interpolation.KMethod.RealInterpolationSpace
 /-!
 # The K-method as an interpolation functor
 
-DRAFT — statement-review stage.
-
 For `0 < θ < 1` and `0 < q ≤ ∞`, the real interpolation spaces `(A₀, A₁)_{θ,q}` of
 `KMethod/RealInterpolationSpace.lean` assemble into an interpolation functor
 `kInterpolationFunctor 𝕜 θ q : InterpolationFunctor 𝕜` (Triebel §1.3.3), i.e. a functor

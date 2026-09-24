@@ -141,8 +141,8 @@ theorem continuousLinearEquivOfIso_apply {X Y : QuasiBanachCat 𝕜} (e : X ≅ 
 /-- The quasinorm comparison carried by an iso in `QuasiBanachCat` (one direction; the other is
 `norm_le_hom`). -/
 theorem norm_hom_le {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
-    ‖e.hom x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.hom.hom * ‖x‖ := by
-  sorry
+    ‖e.hom x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.hom.hom * ‖x‖ :=
+  QuasinormedAddCommGroup.le_opQuasiNorm e.hom.hom x
 
 theorem norm_le_hom {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
     ‖x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.inv.hom * ‖e.hom x‖ := by

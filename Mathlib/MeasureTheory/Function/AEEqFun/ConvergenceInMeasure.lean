@@ -127,7 +127,51 @@ theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s 
     (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) (f : ι → α →ₘ[μ] E) (g : α →ₘ[μ] E) :
     Tendsto (fun i => kyFanEdist μ s (f i) g) l (𝓝 0) ↔
       TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
-  sorry
+  have hmeas (i : ι) : AEMeasurable (fun x => edist (f i x) (g x)) (μ.restrict s) :=
+    (continuous_edist.comp_aestronglyMeasurable₂ (f i).aestronglyMeasurable
+      g.aestronglyMeasurable).aemeasurable.restrict
+  constructor
+  · intro h ε hε
+    have hm0 : min 1 ε ≠ 0 := (lt_min one_pos hε).ne'
+    have hmt : min 1 ε ≠ ⊤ := ((min_le_left _ _).trans_lt ENNReal.one_lt_top).ne
+    -- Chebyshev: `min 1 ε * μ|s {ε ≤ d} ≤ ∫ min 1 d`
+    have hbound (i : ι) : μ.restrict s {x | ε ≤ edist (f i x) (g x)} ≤
+        kyFanEdist μ s (f i) g / min 1 ε := by
+      rw [ENNReal.le_div_iff_mul_le (Or.inl hm0) (Or.inl hmt), mul_comm]
+      calc min 1 ε * μ.restrict s {x | ε ≤ edist (f i x) (g x)}
+          ≤ min 1 ε * μ.restrict s {x | min 1 ε ≤ min 1 (edist (f i x) (g x))} := by
+            exact mul_le_mul' le_rfl (measure_mono fun x (hx : ε ≤ _) => min_le_min le_rfl hx)
+        _ ≤ kyFanEdist μ s (f i) g :=
+            mul_meas_ge_le_lintegral₀ (aemeasurable_const.min (hmeas i)) _
+    have h2 : Tendsto (fun i => kyFanEdist μ s (f i) g / min 1 ε) l (𝓝 0) := by
+      simpa using ENNReal.Tendsto.div_const h (Or.inr hm0)
+    exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds h2 (fun _ => zero_le)
+      hbound
+  · intro h
+    rw [ENNReal.tendsto_nhds_zero]
+    intro ε hε
+    have hε2 : 0 < ε / 2 := ENNReal.half_pos hε.ne'
+    obtain ⟨δ, hδ, hδμ⟩ := ENNReal.exists_nnreal_pos_mul_lt hμs hε2.ne'
+    have hev := ENNReal.tendsto_nhds_zero.mp (h δ (by exact_mod_cast hδ)) (ε / 2) hε2
+    filter_upwards [hev] with i hi
+    set T := {x | (δ : ℝ≥0∞) ≤ edist (f i x) (g x)}
+    calc kyFanEdist μ s (f i) g
+        ≤ ∫⁻ x in s, (δ : ℝ≥0∞) + T.indicator (fun _ => 1) x ∂μ := by
+          refine MeasureTheory.lintegral_mono fun x => ?_
+          by_cases hx : x ∈ T
+          · rw [Set.indicator_of_mem hx]
+            exact (min_le_left _ _).trans le_add_self
+          · rw [Set.indicator_of_notMem hx, add_zero]
+            exact (min_le_right _ _).trans (not_le.mp hx).le
+      _ = δ * μ s + ∫⁻ x in s, T.indicator (fun _ => 1) x ∂μ := by
+          rw [lintegral_add_left measurable_const, setLIntegral_const]
+      _ ≤ δ * μ s + 1 * μ.restrict s T := by
+          gcongr
+          exact lintegral_indicator_const_le _ _
+      _ ≤ ε / 2 + ε / 2 := by
+          rw [one_mul]
+          exact add_le_add hδμ.le hi
+      _ = ε := ENNReal.add_halves ε
 
 /-- For a `σ`-finite measure, two functions at Ky Fan distance `0` on every finite-measure set are
 equal. This is what makes `L0` Hausdorff. -/

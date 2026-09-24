@@ -38,8 +38,7 @@ noncomputable def kInterpolationFunctor (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < �
   obj C := QuasiBanachCat.of 𝕜 (RealInterpolationSpace C.ι₀ C.ι₁ θ q)
   map T := QuasiBanachCat.ofHom (T.realInterpolationMap θ q)
   map_id C := ConcreteCategory.ext (InterpolationCat.Hom.realInterpolationMap_id θ q C)
-  map_comp φ ψ := by
-    sorry
+  map_comp φ ψ := ConcreteCategory.ext (InterpolationCat.Hom.realInterpolationMap_comp θ q φ ψ)
   toSum C := RealInterpolationSpace.toSum C.ι₀ C.ι₁ θ q
   toSum_injective C := RealInterpolationSpace.toSum_injective C.ι₀ C.ι₁
   fromMeet C := RealInterpolationSpace.fromMeet C.ι₀ C.ι₁ θ q

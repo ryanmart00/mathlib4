@@ -472,7 +472,15 @@ noncomputable def realInterpolationMap (T : C ⟶ D) :
   toLinearMap :=
     ((T.sumMap : sum C.ι₀ C.ι₁ →ₗ[𝕜] sum D.ι₀ D.ι₁).comp
       (realInterpolationSubmodule C.ι₀ C.ι₁ θ q).subtype).codRestrict _ (by
-        sorry)
+        intro a
+        show realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁)) < ⊤
+        have ha : realInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
+        have h₀ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₀
+        have h₁ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₁
+        exact (T.realInterpolationENorm_sumMap_le θ Fact.out Fact.out q Fact.out _ _
+          (by linarith) (by linarith) (le_add_of_nonneg_right zero_le_one)
+          (le_add_of_nonneg_right zero_le_one) a).trans_lt
+            (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ha))
   cont := by
     sorry
 

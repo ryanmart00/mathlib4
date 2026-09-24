@@ -531,7 +531,7 @@ theorem norm_realInterpolationMap_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 
     (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
     (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
     (a : RealInterpolationSpace C.ι₀ C.ι₁ θ q) :
-    ‖T.realInterpolationMap θ q a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
-  sorry
+    ‖T.realInterpolationMap θ q a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ :=
+  T.norm_realInterpolationMapₗ_le θ q hM₀ hM₁ h₀ h₁ a
 
 end InterpolationCat.Hom

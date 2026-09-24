@@ -341,7 +341,8 @@ instance instT2Space [SigmaFinite μ] : T2Space (L0 α E μ) := by
     refine t0Space_iff_uniformity.mpr fun f g h =>
       AEEqFun.eq_of_forall_kyFanEdist_eq_zero μ fun s hs hμs => ?_
     by_contra hne
-    have hmem := @edist_mem_uniformity _ (pseudoEMetricSpaceOn (E := E) μ s) _ (pos_iff_ne_zero.mpr hne)
+    have hmem :=
+      @edist_mem_uniformity _ (pseudoEMetricSpaceOn (E := E) μ s) _ (pos_iff_ne_zero.mpr hne)
     have hfg := h _ (UniformSpace.le_def.mp (instUniformSpace_le_uniformSpaceOn μ hs hμs) hmem)
     exact lt_irrefl (AEEqFun.kyFanEdist μ s f g) hfg
   infer_instance
@@ -351,7 +352,15 @@ theorem tendsto_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} (f : ι → L0
     (g : L0 α E μ) :
     Tendsto f l (𝓝 g) ↔ ∀ s, MeasurableSet s → μ s ≠ ⊤ →
       TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
-  sorry
+  have key (s : Set α) (hs : MeasurableSet s) (hμs : μ s ≠ ⊤) :
+      Tendsto f l (@nhds _ (uniformSpaceOn μ s).toTopologicalSpace g) ↔
+        TendstoInMeasure (μ.restrict s) (fun i => ⇑(f i)) l ⇑g := by
+    let _ := pseudoEMetricSpaceOn (E := E) μ s
+    rw [tendsto_iff_edist_tendsto_0]
+    exact AEEqFun.tendsto_kyFanEdist_iff_tendstoInMeasure μ hs hμs f g
+  simp +instances only [instUniformSpace, UniformSpace.toTopologicalSpace_iInf, nhds_iInf,
+    tendsto_iInf]
+  exact forall_congr' fun s => forall_congr' fun hs => forall_congr' fun hμs => key s hs hμs
 
 end L0
 

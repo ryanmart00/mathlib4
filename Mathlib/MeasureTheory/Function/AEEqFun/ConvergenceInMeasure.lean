@@ -77,7 +77,7 @@ theorem kyFanEdist_self (s : Set α) (f : α →ₘ[μ] E) : kyFanEdist μ s f f
 
 theorem kyFanEdist_comm (s : Set α) (f g : α →ₘ[μ] E) :
     kyFanEdist μ s f g = kyFanEdist μ s g f := by
-  sorry
+  simp_rw [kyFanEdist, edist_comm (f _)]
 
 theorem kyFanEdist_triangle (s : Set α) (f g h : α →ₘ[μ] E) :
     kyFanEdist μ s f h ≤ kyFanEdist μ s f g + kyFanEdist μ s g h := by

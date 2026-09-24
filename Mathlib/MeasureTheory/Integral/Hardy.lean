@@ -224,6 +224,17 @@ theorem lintegral_Ioi_comp_rpow_mul_inv {a : ℝ} (ha : 0 < a) (H : ℝ → ℝ�
   rw [hkey, ← mul_assoc, ← ENNReal.ofReal_mul (inv_nonneg.mpr ha.le), inv_mul_cancel₀ ha.ne',
     ENNReal.ofReal_one, one_mul]
 
+/-- Pointwise domination `F ≤ c G` on `(0, ∞)` passes to `∫₀^∞ F^s dt/t ≤ c^s ∫₀^∞ G^s dt/t`. -/
+theorem lintegral_rpow_mul_inv_le_of_le {F G : ℝ → ℝ≥0∞} {c : ℝ≥0∞} (hc : c ≠ ⊤) {s : ℝ}
+    (hs : 0 ≤ s) (h : ∀ t ∈ Ioi (0 : ℝ), F t ≤ c * G t) :
+    ∫⁻ t in Ioi 0, F t ^ s * ENNReal.ofReal t⁻¹ ≤
+      c ^ s * ∫⁻ t in Ioi 0, G t ^ s * ENNReal.ofReal t⁻¹ := by
+  rw [← lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hs hc)]
+  refine setLIntegral_mono' measurableSet_Ioi fun t ht => ?_
+  rw [← mul_assoc, ← ENNReal.mul_rpow_of_nonneg _ _ hs]
+  gcongr
+  exact h t ht
+
 /-- `∫₀ᵀ u^{θ-1} du = T^θ / θ`. -/
 theorem lintegral_Ioc_zero_rpow_sub_one {θ : ℝ} (hθ : 0 < θ) {T : ℝ} (hT : 0 < T) :
     ∫⁻ u in Ioc 0 T, ENNReal.ofReal u ^ (θ - 1) = ENNReal.ofReal T ^ θ * ENNReal.ofReal θ⁻¹ := by

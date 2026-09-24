@@ -73,7 +73,7 @@ noncomputable def kyFanEdist (s : Set α) (f g : α →ₘ[μ] E) : ℝ≥0∞ :
   ∫⁻ x in s, min 1 (edist (f x) (g x)) ∂μ
 
 theorem kyFanEdist_self (s : Set α) (f : α →ₘ[μ] E) : kyFanEdist μ s f f = 0 := by
-  sorry
+  simp [kyFanEdist]
 
 theorem kyFanEdist_comm (s : Set α) (f g : α →ₘ[μ] E) :
     kyFanEdist μ s f g = kyFanEdist μ s g f := by

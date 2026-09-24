@@ -34,8 +34,8 @@ The bundled form, the K-method as an `InterpolationFunctor`, is in
 * `InterpolationCat.Hom.norm_realInterpolationMap_le`: exactness of type `θ`.
 -/
 
-open MeasureTheory Set
-open scoped ENNReal
+open Filter MeasureTheory Set
+open scoped ENNReal Topology
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -205,6 +205,139 @@ theorem realInterpolationENorm_eq_zero_iff (θ : ℝ) {q : ℝ≥0∞} (hq : 0 <
     exact (QuasinormedAddCommGroup.norm_eq_zero_iff a).mp
       (le_antisymm h0 (QuasinormedAddCommGroup.norm_nonneg a))
   · exact absurd h0 (realInterpolationConst_pos θ q).ne'
+
+/-- A Fatou-type lower semicontinuity bound: if `y m → z` in `A₀ + A₁` and eventually
+`‖y m‖_{θ,q} ≤ R`, then `‖z‖_{θ,q} ≤ Ck · R`, with `Ck` the quasi-triangle constant of the
+K-functional (`kFunctional_add_le`). -/
+theorem realInterpolationENorm_le_of_tendsto (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
+    {y : ℕ → sum ι₀ ι₁} {z : sum ι₀ ι₁} (hy : Tendsto y atTop (𝓝 z)) {R : ℝ≥0∞}
+    (hR : ∀ᶠ m in atTop, realInterpolationENorm ι₀ ι₁ θ q (y m) ≤ R) :
+    realInterpolationENorm ι₀ ι₁ θ q z ≤
+      ENNReal.ofReal (max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+        (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁))) * R := by
+  set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) with hCk
+  have hCk0 : 0 ≤ Ck :=
+    zero_le_one.trans (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  have hnorm : Tendsto (fun m => ‖z - y m‖) atTop (𝓝 0) := by
+    refine (QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero.mp hy).congr fun m => ?_
+    rw [← neg_sub z (y m), QuasinormedAddCommGroup.norm_neg]
+  -- The pointwise (in `t`) Fatou bound for the K-functional.
+  have hpt : ∀ t : ℝ, 0 < t → ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ≤
+      ENNReal.ofReal Ck *
+        liminf (fun m => ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop := by
+    intro t ht
+    have htθ : 0 ≤ t ^ (-θ) := Real.rpow_nonneg ht.le _
+    set e : ℕ → ℝ≥0∞ := fun m =>
+      ENNReal.ofReal (Ck * (t ^ (-θ) * (2 * max 1 t * ‖z - y m‖))) with he_def
+    have he : Tendsto e atTop (𝓝 0) := by
+      have h := tendsto_const_nhds (x := Ck) |>.mul (tendsto_const_nhds (x := t ^ (-θ)) |>.mul
+        (tendsto_const_nhds (x := 2 * max 1 t) |>.mul hnorm))
+      simpa using ENNReal.tendsto_ofReal h
+    have hbound : ∀ m, ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ≤
+        ENNReal.ofReal Ck * ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) + e m := by
+      intro m
+      have hK := kFunctional_add_le ι₀ ι₁ t ht.le (y m) (z - y m)
+      rw [add_sub_cancel] at hK
+      have hK2 := kFunctional_le_two_mul_max_mul_norm ι₀ ι₁ t ht.le (z - y m)
+      have hK0 := kFunctional_nonneg ι₀ ι₁ t ht.le (y m)
+      have hn := QuasinormedAddCommGroup.norm_nonneg (z - y m)
+      rw [he_def, ← ENNReal.ofReal_mul hCk0,
+        ← ENNReal.ofReal_add (mul_nonneg hCk0 (mul_nonneg htθ hK0))
+          (mul_nonneg hCk0 (mul_nonneg htθ (by positivity)))]
+      apply ENNReal.ofReal_le_ofReal
+      calc t ^ (-θ) * KFunctional ι₀ ι₁ t z
+          ≤ t ^ (-θ) * (Ck * (KFunctional ι₀ ι₁ t (y m) + KFunctional ι₀ ι₁ t (z - y m))) :=
+            mul_le_mul_of_nonneg_left hK htθ
+        _ = Ck * (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) +
+              Ck * (t ^ (-θ) * KFunctional ι₀ ι₁ t (z - y m)) := by ring
+        _ ≤ Ck * (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) +
+              Ck * (t ^ (-θ) * (2 * max 1 t * ‖z - y m‖)) := by gcongr
+    calc ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z)
+        ≤ liminf (fun m => ENNReal.ofReal Ck *
+            ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) + e m) atTop :=
+          le_liminf_of_le (by isBoundedDefault) (Eventually.of_forall hbound)
+      _ = liminf (fun m => ENNReal.ofReal Ck *
+            ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop :=
+          ENNReal.liminf_add_of_right_tendsto_zero he _
+      _ = ENNReal.ofReal Ck *
+            liminf (fun m => ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop :=
+          ENNReal.liminf_const_mul_of_ne_top ENNReal.ofReal_ne_top
+  by_cases htop : q = ⊤
+  · subst htop
+    simp only [realInterpolationENorm, ite_true] at hR ⊢
+    calc ⨆ t : Ioi (0 : ℝ), ENNReal.ofReal ((t : ℝ) ^ (-θ) * KFunctional ι₀ ι₁ t z)
+        ≤ ⨆ t : Ioi (0 : ℝ), ENNReal.ofReal Ck *
+            liminf (fun m => ENNReal.ofReal ((t : ℝ) ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop :=
+          iSup_mono fun t => hpt t t.2
+      _ ≤ ENNReal.ofReal Ck * liminf (fun m => ⨆ t : Ioi (0 : ℝ),
+            ENNReal.ofReal ((t : ℝ) ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop := by
+          refine iSup_le fun t => ?_
+          gcongr
+          exact liminf_le_liminf (Eventually.of_forall fun m => le_iSup (fun t : Ioi (0 : ℝ) =>
+            ENNReal.ofReal ((t : ℝ) ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) t)
+      _ ≤ ENNReal.ofReal Ck * R := by
+          gcongr
+          exact liminf_le_of_frequently_le' hR.frequently
+  have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+  simp only [realInterpolationENorm, htop, ite_false, ENNReal.toReal_inv] at hR ⊢
+  set r := q.toReal with hr_def
+  -- Globally measurable integrands, agreeing with the real ones on `Ioi 0`.
+  set G : ℕ → ℝ → ℝ≥0∞ := fun m t =>
+    ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ (max t 0) (y m)) ^ r * ENNReal.ofReal t⁻¹
+    with hG
+  have hGmeas : ∀ m, AEMeasurable (G m) (volume.restrict (Ioi 0)) := fun m => by
+    have := kFunctional_max_measurable ι₀ ι₁ (y m)
+    exact (by fun_prop : Measurable (G m)).aemeasurable
+  have hGeq : ∀ m, ∀ t ∈ Ioi (0 : ℝ), G m t =
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) ^ r * ENNReal.ofReal t⁻¹ :=
+    fun m t ht => by simp only [hG, kFunctional_max_eq ι₀ ι₁ (y m) ht]
+  have hptz : ∀ t ∈ Ioi (0 : ℝ),
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ^ r * ENNReal.ofReal t⁻¹ ≤
+        ENNReal.ofReal Ck ^ r * liminf (fun m => G m t) atTop := by
+    intro t ht
+    have h1 := hpt t ht
+    calc ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ^ r * ENNReal.ofReal t⁻¹
+        ≤ (ENNReal.ofReal Ck * liminf (fun m =>
+            ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m))) atTop) ^ r *
+              ENNReal.ofReal t⁻¹ := by gcongr
+      _ = ENNReal.ofReal Ck ^ r * (liminf (fun m =>
+            ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t (y m)) ^ r) atTop *
+              ENNReal.ofReal t⁻¹) := by
+          rw [ENNReal.mul_rpow_of_nonneg _ _ hr.le, mul_assoc]
+          congr 2
+          exact (ENNReal.monotone_rpow_of_nonneg hr.le).map_liminf_of_continuousAt _
+            ENNReal.continuous_rpow_const.continuousAt
+      _ = ENNReal.ofReal Ck ^ r * liminf (fun m => G m t) atTop := by
+          congr 1
+          rw [mul_comm, ← ENNReal.liminf_const_mul_of_ne_top ENNReal.ofReal_ne_top]
+          congr 1
+          ext m
+          rw [hGeq m t ht, mul_comm]
+  have hbound : ∫⁻ t in Ioi (0 : ℝ),
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ^ r * ENNReal.ofReal t⁻¹ ≤
+        ENNReal.ofReal Ck ^ r * R ^ r := by
+    calc ∫⁻ t in Ioi (0 : ℝ),
+          ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ^ r * ENNReal.ofReal t⁻¹
+        ≤ ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal Ck ^ r * liminf (fun m => G m t) atTop :=
+          setLIntegral_mono' measurableSet_Ioi hptz
+      _ = ENNReal.ofReal Ck ^ r * ∫⁻ t in Ioi (0 : ℝ), liminf (fun m => G m t) atTop :=
+          lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr.le ENNReal.ofReal_ne_top)
+      _ ≤ ENNReal.ofReal Ck ^ r * liminf (fun m => ∫⁻ t in Ioi (0 : ℝ), G m t) atTop := by
+          gcongr
+          exact lintegral_liminf_le' hGmeas
+      _ ≤ ENNReal.ofReal Ck ^ r * R ^ r := by
+          gcongr
+          refine liminf_le_of_frequently_le' (hR.mono fun m hm => ?_).frequently
+          rw [setLIntegral_congr_fun measurableSet_Ioi (hGeq m)]
+          exact (ENNReal.rpow_inv_rpow hr.ne' _).symm.le.trans (ENNReal.rpow_le_rpow hm hr.le)
+  calc (∫⁻ t in Ioi (0 : ℝ),
+        ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t z) ^ r * ENNReal.ofReal t⁻¹) ^ r⁻¹
+      ≤ (ENNReal.ofReal Ck ^ r * R ^ r) ^ r⁻¹ :=
+        ENNReal.rpow_le_rpow hbound (inv_nonneg.mpr hr.le)
+    _ = ENNReal.ofReal Ck * R := by
+        rw [ENNReal.mul_rpow_of_nonneg _ _ (inv_nonneg.mpr hr.le), ENNReal.rpow_rpow_inv hr.ne',
+          ENNReal.rpow_rpow_inv hr.ne']
 
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich, quantitatively: `‖a‖_{θ,q} ≤ c_{θ,q} ‖a‖_{A₀∩A₁}`
 (strengthens `realInterpolationENorm_meetToSum_lt_top`). -/

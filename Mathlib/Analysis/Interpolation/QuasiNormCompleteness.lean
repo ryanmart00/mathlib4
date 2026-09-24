@@ -59,3 +59,17 @@ theorem QuasinormedAddCommGroup.completeSpace_of_cauchy_complete
     apply H u (fun n => (1 / 2 : ℝ) ^ n) summable_geometric_two
     intro N n m hn hm
     exact hu N m n hm hn
+
+/-- A sequence in a quasi-normed group whose tail differences are controlled by a sequence tending
+to `0` is Cauchy. -/
+theorem QuasinormedAddCommGroup.cauchySeq_of_le_tendsto_zero {f : ℕ → E} (B : ℕ → ℝ)
+    (h : ∀ N n m : ℕ, N ≤ n → N ≤ m → ‖f n - f m‖ ≤ B N) (hB : Tendsto B atTop (𝓝 0)) :
+    CauchySeq f := by
+  have hb : (𝓤 E).HasBasis (fun ε : ℝ => 0 < ε)
+      fun ε => (fun x : E × E => x.2 - x.1) ⁻¹' {y : E | ‖y‖ < ε} := by
+    rw [uniformity_eq_comap_nhds_zero]
+    exact QuasinormedAddCommGroup.nhds_zero_hasBasis.comap _
+  rw [hb.cauchySeq_iff]
+  intro ε hε
+  obtain ⟨N, hN⟩ := eventually_atTop.mp ((tendsto_order.1 hB).2 ε hε)
+  exact ⟨N, fun m hm n hn => (h N n m hn hm).trans_lt (hN N le_rfl)⟩

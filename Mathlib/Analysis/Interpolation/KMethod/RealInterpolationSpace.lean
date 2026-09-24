@@ -60,7 +60,22 @@ noncomputable def realInterpolationConst (θ : ℝ) (q : ℝ≥0∞) : ℝ≥0�
       ^ q⁻¹.toReal
 
 theorem realInterpolationConst_pos (θ : ℝ) (q : ℝ≥0∞) : 0 < realInterpolationConst θ q := by
-  sorry
+  unfold realInterpolationConst
+  split_ifs with htop
+  · refine lt_of_lt_of_le ?_ (le_iSup _ (⟨1, mem_Ioi.mpr one_pos⟩ : Ioi (0 : ℝ)))
+    simp
+  rcases eq_or_ne q 0 with rfl | hq0
+  · simp
+  have hr : 0 < q.toReal := ENNReal.toReal_pos hq0 htop
+  refine ENNReal.rpow_pos_of_nonneg ?_ ENNReal.toReal_nonneg
+  have hmeas : Measurable fun t : ℝ =>
+      ENNReal.ofReal (t ^ (-θ) * min 1 t) ^ q.toReal * ENNReal.ofReal t⁻¹ := by
+    fun_prop
+  rw [setLIntegral_pos_iff hmeas]
+  refine lt_of_lt_of_le (by simp) (measure_mono (s := Ioi (0 : ℝ)) fun t (ht : 0 < t) => ⟨?_, ht⟩)
+  have h1 : 0 < t ^ (-θ) * min 1 t := mul_pos (Real.rpow_pos_of_pos ht _) (lt_min one_pos ht)
+  exact mul_ne_zero (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr h1) ENNReal.ofReal_ne_top).ne'
+    (ENNReal.ofReal_pos.mpr (inv_pos.mpr ht)).ne'
 
 theorem realInterpolationConst_lt_top {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) :
     realInterpolationConst θ q < ⊤ := by

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
+import Mathlib.MeasureTheory.Integral.Lebesgue.DominatedConvergence
 import Mathlib.MeasureTheory.Measure.Typeclasses.SFinite
 import Mathlib.Topology.Algebra.IsUniformGroup.Constructions
 import Mathlib.Topology.Algebra.MulAction
@@ -121,6 +122,48 @@ theorem kyFanEdist_sub_sub_le (s : Set α) (f g f' g' : α →ₘ[μ] E) :
   rw [h1, h2, Pi.sub_apply, Pi.sub_apply, sub_eq_add_neg, sub_eq_add_neg]
   refine ENNReal.min_one_le_add_of_le ((edist_add_add_le _ _ _ _).trans_eq ?_)
   rw [edist_neg_neg]
+
+section SMul
+
+variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 E]
+
+theorem kyFanEdist_smul_zero_eq (s : Set α) (a : 𝕜) (f : α →ₘ[μ] E) :
+    kyFanEdist μ s (a • f) 0 = ∫⁻ x in s, min 1 (‖a‖ₑ * ‖f x‖ₑ) ∂μ := by
+  refine lintegral_congr_ae (ae_restrict_of_ae ?_)
+  filter_upwards [coeFn_smul a f, coeFn_zero (μ := μ) (β := E)] with x h1 h2
+  rw [h1, h2, Pi.smul_apply, Pi.zero_apply, edist_zero_right, enorm_smul]
+
+theorem kyFanEdist_smul_zero_le (s : Set α) {a : 𝕜} {C : ℝ≥0∞} (hC : 1 ≤ C) (ha : ‖a‖ₑ ≤ C)
+    (f : α →ₘ[μ] E) : kyFanEdist μ s (a • f) 0 ≤ C * kyFanEdist μ s f 0 := by
+  have h1 : kyFanEdist μ s f 0 = ∫⁻ x in s, min 1 ‖f x‖ₑ ∂μ := by
+    simpa using kyFanEdist_smul_zero_eq μ s (1 : 𝕜) f
+  rw [kyFanEdist_smul_zero_eq, h1,
+    ← lintegral_const_mul'' _ (aemeasurable_const.min f.aestronglyMeasurable.enorm).restrict]
+  refine MeasureTheory.lintegral_mono fun x => ?_
+  by_cases hx : 1 ≤ ‖f x‖ₑ
+  · rw [min_eq_left hx, mul_one]
+    exact (min_le_left _ _).trans hC
+  · rw [min_eq_right (not_le.mp hx).le]
+    exact (min_le_right _ _).trans (by gcongr)
+
+/-- On a finite-measure set, `a • f → 0` in measure as `a → 0`. -/
+theorem tendsto_kyFanEdist_smul_zero {s : Set α} (hμs : μ s ≠ ⊤) (f : α →ₘ[μ] E) :
+    Tendsto (fun a : 𝕜 => kyFanEdist μ s (a • f) 0) (𝓝 0) (𝓝 0) := by
+  simp_rw [kyFanEdist_smul_zero_eq]
+  have hpt (x : α) : Tendsto (fun a : 𝕜 => min 1 (‖a‖ₑ * ‖f x‖ₑ)) (𝓝 0) (𝓝 0) := by
+    have h : Tendsto (fun a : 𝕜 => ‖a‖ₑ * ‖f x‖ₑ) (𝓝 0) (𝓝 0) := by
+      simpa using ENNReal.Tendsto.mul_const (continuous_enorm.tendsto' (0 : 𝕜) 0 enorm_zero)
+        (Or.inr enorm_ne_top)
+    simpa using (tendsto_const_nhds (x := (1 : ℝ≥0∞))).min h
+  have hlim := tendsto_lintegral_filter_of_dominated_convergence' (μ := μ.restrict s)
+    (F := fun (a : 𝕜) x => min 1 (‖a‖ₑ * ‖f x‖ₑ)) (f := 0) (fun _ => 1)
+    (Eventually.of_forall fun _ =>
+      (aemeasurable_const.min (aemeasurable_const.mul f.aestronglyMeasurable.enorm)).restrict)
+    (Eventually.of_forall fun _ => ae_of_all _ fun _ => min_le_left _ _)
+    (by simpa using hμs) (ae_of_all _ hpt)
+  simpa using hlim
+
+end SMul
 
 /-- On a finite-measure set, the Ky Fan distance induces convergence in measure. -/
 theorem tendsto_kyFanEdist_iff_tendstoInMeasure {ι : Type*} {l : Filter ι} {s : Set α}
@@ -252,7 +295,29 @@ theorem isUniformAddGroup_uniformSpaceOn (s : Set α) :
 (Finiteness is needed: on `s` of infinite measure, `c • 1 ↛ 0` as `c → 0`.) -/
 theorem continuousSMul_uniformSpaceOn {s : Set α} (hμs : μ s ≠ ⊤) :
     @ContinuousSMul 𝕜 (L0 α E μ) _ _ (uniformSpaceOn μ s).toTopologicalSpace := by
-  sorry
+  let _ := pseudoEMetricSpaceOn (E := E) μ s
+  have : @IsTopologicalAddGroup (L0 α E μ) (uniformSpaceOn μ s).toTopologicalSpace _ :=
+    @IsUniformAddGroup.isTopologicalAddGroup _ (uniformSpaceOn μ s) _
+      (isUniformAddGroup_uniformSpaceOn μ s)
+  refine ContinuousSMul.of_nhds_zero ?_ (fun m => ?_) (fun a => ?_)
+  · rw [tendsto_iff_edist_tendsto_0]
+    have h1 : ∀ᶠ a : 𝕜 in 𝓝 0, ‖a‖ₑ < 1 :=
+      (continuous_enorm.tendsto' (0 : 𝕜) 0 enorm_zero).eventually (gt_mem_nhds zero_lt_one)
+    have hev : ∀ᶠ p : 𝕜 × L0 α E μ in 𝓝 0 ×ˢ 𝓝 0, edist (p.1 • p.2) 0 ≤ edist p.2 0 := by
+      filter_upwards [tendsto_fst.eventually h1] with p hp
+      exact (AEEqFun.kyFanEdist_smul_zero_le μ s le_rfl hp.le (p.2 : α →ₘ[μ] E)).trans_eq
+        (one_mul _)
+    exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds
+      ((tendsto_iff_edist_tendsto_0.mp tendsto_id).comp tendsto_snd)
+      (Eventually.of_forall fun _ => zero_le) hev
+  · rw [tendsto_iff_edist_tendsto_0]
+    exact AEEqFun.tendsto_kyFanEdist_smul_zero μ hμs (m : α →ₘ[μ] E)
+  · rw [tendsto_iff_edist_tendsto_0]
+    have h0 := tendsto_iff_edist_tendsto_0.mp (tendsto_id (x := 𝓝 (0 : L0 α E μ)))
+    have hC : max 1 ‖a‖ₑ ≠ ⊤ := max_ne_top ENNReal.one_ne_top enorm_ne_top
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
+      (by simpa using ENNReal.Tendsto.const_mul h0 (Or.inr hC)) (fun _ => zero_le) fun m => ?_
+    exact AEEqFun.kyFanEdist_smul_zero_le μ s (le_max_left _ _) (le_max_right _ _) m
 
 /-- The uniformity of convergence in measure on every finite-measure set. -/
 noncomputable instance instUniformSpace : UniformSpace (L0 α E μ) :=

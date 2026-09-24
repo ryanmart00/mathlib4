@@ -328,6 +328,39 @@ theorem InterpolationCouple.meetToSum_apply (ι₀ : A₀ →L[𝕜] 𝒜) (ι�
     (a₀ : A₀) (a₁ : A₁) (ha) :
     InterpolationCouple.meetToSum ι₀ ι₁ ⟨(a₀, a₁), ha⟩ = InterpolationCouple.inl₀ ι₀ ι₁ a₀ := rfl
 
+/-- The canonical continuous linear map `A₀ + A₁ →L[𝕜] 𝒜`, `[(a₀, a₁)] ↦ ι₀ a₀ + ι₁ a₁`: `plus`
+descended to the quotient. It is injective (`sumToAmbient_injective`), since the quotient is by
+exactly `ker plus`, so it identifies `A₀ + A₁` with the subspace `ι₀(A₀) + ι₁(A₁)` of `𝒜`. -/
+noncomputable def InterpolationCouple.sumToAmbient (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    InterpolationCouple.sum ι₀ ι₁ →L[𝕜] 𝒜 :=
+  (InterpolationCouple.plus ι₀ ι₁).ker.liftQL (InterpolationCouple.plus ι₀ ι₁) le_rfl
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+@[simp]
+theorem InterpolationCouple.sumToAmbient_mk (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
+    (a₀ : A₀) (a₁ : A₁) :
+    InterpolationCouple.sumToAmbient ι₀ ι₁ (Submodule.Quotient.mk (a₀, a₁)) = ι₀ a₀ + ι₁ a₁ := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+@[simp]
+theorem InterpolationCouple.sumToAmbient_inl₀ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₀) :
+    InterpolationCouple.sumToAmbient ι₀ ι₁ (InterpolationCouple.inl₀ ι₀ ι₁ a) = ι₀ a := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+@[simp]
+theorem InterpolationCouple.sumToAmbient_inl₁ (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) (a : A₁) :
+    InterpolationCouple.sumToAmbient ι₀ ι₁ (InterpolationCouple.inl₁ ι₀ ι₁ a) = ι₁ a := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- `A₀ + A₁ → 𝒜` is injective, with no hypothesis on `ι₀, ι₁`: the quotient defining the sum is
+by exactly the kernel of `plus`. -/
+theorem InterpolationCouple.sumToAmbient_injective (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    Function.Injective (InterpolationCouple.sumToAmbient ι₀ ι₁) := by
+  sorry
+
 /-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
 `InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs
 `open scoped InterpolationCouple`) so it doesn't shadow `Set`/`Submodule`'s `∩`/`+` elsewhere.

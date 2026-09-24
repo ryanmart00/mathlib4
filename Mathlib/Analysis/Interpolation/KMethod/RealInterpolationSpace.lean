@@ -343,7 +343,10 @@ theorem norm_neg (a : RealInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a
 
 theorem norm_eq_zero_iff [Fact (0 < q)] (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖a‖ = 0 ↔ a = 0 := by
-  sorry
+  have ha : realInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+  rw [norm_def, ENNReal.toReal_eq_zero_iff, or_iff_left ha.ne,
+    realInterpolationENorm_eq_zero_iff ι₀ ι₁ θ Fact.out]
+  exact Submodule.coe_eq_zero (x := (a : realInterpolationSubmodule ι₀ ι₁ θ q))
 
 /-- The quasi-normed group structure on `(A₀, A₁)_{θ,q}`, for `0 < q`. Built exactly as
 `LorentzSpace.instQuasinormedAddCommGroup`. -/

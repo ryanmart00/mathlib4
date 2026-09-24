@@ -62,8 +62,8 @@ noncomputable def iso (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) : F.obj
   ((Over.forget _).mapIso e).app C
 
 theorem toSum_comp_hom (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
-    (G.toSum C).comp (e.iso C).hom.hom = F.toSum C := by
-  sorry
+    (G.toSum C).comp (e.iso C).hom.hom = F.toSum C :=
+  congrArg ConcreteCategory.hom (NatTrans.congr_app (Over.w e.hom) C)
 
 theorem toSum_comp_inv (e : F.Equiv G) (C : InterpolationCat.{v, u} 𝕜) :
     (F.toSum C).comp (e.iso C).inv.hom = G.toSum C := by

@@ -273,7 +273,12 @@ noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submo
     exact (hC a b).trans_lt
       (ENNReal.mul_lt_top ENNReal.ofReal_lt_top (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
   smul_mem' := by
-    sorry
+    intro c a (ha : realInterpolationENorm ι₀ ι₁ θ q a < ⊤)
+    show realInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤
+    rcases eq_or_ne q 0 with rfl | hq
+    · simp [realInterpolationENorm]
+    rw [realInterpolationENorm_smul ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)]
+    exact ENNReal.mul_lt_top enorm_lt_top ha
 
 /-- `(A₀, A₁)_{θ,q}` (Triebel §1.3.2): the elements of `A₀ + A₁` of finite `(θ,q)`-quasinorm; a
 quasi-Banach space for `0 < θ < 1`, `0 < q`.

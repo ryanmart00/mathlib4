@@ -363,7 +363,7 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
       norm_neg := norm_neg ι₀ ι₁
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace
-      toIsTopologicalAddGroup := sorry
+      toIsTopologicalAddGroup := hB.isTopologicalAddGroup
       toIsUniformAddGroup := sorry
       nhds_zero_hasBasis := sorry }
 

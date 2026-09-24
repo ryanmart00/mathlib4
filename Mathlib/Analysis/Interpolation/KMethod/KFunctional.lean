@@ -199,6 +199,28 @@ theorem InterpolationCouple.kFunctional_add_le (t : ℝ) (ht : 0 ≤ t)
     _ ≤ Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
           InterpolationCouple.KFunctional ι₀ ι₁ t b) + ε := hfin
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+theorem InterpolationCouple.kFunctional_zero (t : ℝ) (ht : 0 ≤ t) :
+    InterpolationCouple.KFunctional ι₀ ι₁ t 0 = 0 := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The K-functional is absolutely homogeneous: `K(t, c • a) = ‖c‖ · K(t, a)`. -/
+theorem InterpolationCouple.kFunctional_smul (t : ℝ) (ht : 0 ≤ t) (c : 𝕜)
+    (a : InterpolationCouple.sum ι₀ ι₁) :
+    InterpolationCouple.KFunctional ι₀ ι₁ t (c • a) =
+      ‖c‖ * InterpolationCouple.KFunctional ι₀ ι₁ t a := by
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- On the meet, `K(t, a) ≤ min(1, t) · ‖a‖_{A₀ ∩ A₁}` (use the representations `(a₀, 0)` and
+`(0, a₁)`). -/
+theorem InterpolationCouple.kFunctional_meetToSum_le (t : ℝ) (ht : 0 ≤ t)
+    (b : InterpolationCouple.meet ι₀ ι₁) :
+    InterpolationCouple.KFunctional ι₀ ι₁ t (InterpolationCouple.meetToSum ι₀ ι₁ b) ≤
+      min 1 t * ‖b‖ := by
+  sorry
+
 /-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
 proof deferred. -/
 theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :

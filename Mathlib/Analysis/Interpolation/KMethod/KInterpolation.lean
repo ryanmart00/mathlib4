@@ -29,16 +29,14 @@ L-method) will eventually get their own sibling directories/files.
   `ℝ≥0∞`-valued (mirroring Mathlib's own `eLpNorm`), so it can genuinely be infinite for an `a`
   that doesn't belong to the space, rather than being an always-finite `ℝ` that would need some
   other way to express non-membership.
-* `InterpolationCouple.RealInterpolationSpace`: `(A₀,A₁)_{θ,q}`, the subtype of `A₀+A₁` with
-  finite `(θ,q)`-quasinorm. Deliberately just the bare subtype for now — no algebraic structure
-  (`AddCommGroup`, let alone `QuasinormedAddCommGroup`) is registered on it yet; that instance
-  work (now unblocked by `realInterpolationENorm_add_le` below) is future work, not yet started.
+The space `(A₀,A₁)_{θ,q}` itself, with its quasi-Banach structure, is built in
+`KMethod/RealInterpolationSpace.lean`, and the K-method interpolation functor in
+`KMethod/KInterpolationFunctor.lean`.
 
 ## Main theorems (all proved)
 
 * `realInterpolationENorm_meetToSum_lt_top`: the "`A₀∩A₁` embeds" half of Triebel's sandwich
-  `A₀∩A₁ ⊂ (A₀,A₁)_{θ,q} ⊂ A₀+A₁` — the "`⊂ A₀+A₁`" half is definitional (`RealInterpolationSpace`
-  is *literally* a subtype of `sum`), so needs no separate statement.
+  `A₀∩A₁ ⊂ (A₀,A₁)_{θ,q} ⊂ A₀+A₁`.
 * `realInterpolationENorm_add_le`: the quasi-triangle inequality for `realInterpolationENorm`,
   the fact that actually makes `RealInterpolationSpace` a quasi-normed group once instances are
   built.
@@ -76,12 +74,6 @@ noncomputable def InterpolationCouple.realInterpolationENorm (θ : ℝ) (q : ℝ
     (∫⁻ t in Ioi (0 : ℝ),
       ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a) ^ q.toReal *
         ENNReal.ofReal t⁻¹) ^ q⁻¹.toReal
-
-/-- `(A₀,A₁)_{θ,q}` (Triebel §1.3.2): the elements of `A₀+A₁` with finite `(θ,q)`-quasinorm. See
-the module docstring for why this is deliberately left as a bare subtype for now. -/
-def InterpolationCouple.RealInterpolationSpace (θ : ℝ) (q : ℝ≥0∞) : Type _ :=
-  {a : InterpolationCouple.sum ι₀ ι₁ //
-    InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a < ⊤}
 
 /-- Algebraic identity combining a power-law bound `t^p·C` on the K-functional with the `dt/t`
 weight into a single power of `t`: `ofReal(t^p·C)^n · ofReal(t⁻¹) = ofReal(C^n) · ofReal(t^{pn-1})`.

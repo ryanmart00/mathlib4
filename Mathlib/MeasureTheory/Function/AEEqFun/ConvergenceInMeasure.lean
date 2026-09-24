@@ -100,7 +100,9 @@ theorem kyFanEdist_triangle (s : Set α) (f g h : α →ₘ[μ] E) :
 
 theorem kyFanEdist_add_add (s : Set α) (f g h : α →ₘ[μ] E) :
     kyFanEdist μ s (f + h) (g + h) = kyFanEdist μ s f g := by
-  sorry
+  refine lintegral_congr_ae (ae_restrict_of_ae ?_)
+  filter_upwards [coeFn_add f h, coeFn_add g h] with x hxf hxg
+  simp only [hxf, hxg, Pi.add_apply, edist_add_right]
 
 theorem kyFanEdist_neg_neg (s : Set α) (f g : α →ₘ[μ] E) :
     kyFanEdist μ s (-f) (-g) = kyFanEdist μ s f g := by

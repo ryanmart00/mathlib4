@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Normed.Quasi.Basic
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.SpecialFunctions.Log.Base
-import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Topology.Algebra.InfiniteSum.Group
 
 /-!
 # The Aoki–Rolewicz theorem
@@ -349,7 +349,18 @@ theorem aokiRolewiczNorm_neg (x : E) : aokiRolewiczNorm (-x) = aokiRolewiczNorm 
 /-- In a complete quasi-normed group, `∑ ‖xᵢ‖^ρ < ∞` implies that `∑ xᵢ` converges. -/
 theorem summable_of_summable_norm_rpow [CompleteSpace E] {ι : Type*} {x : ι → E}
     (h : Summable fun i => ‖x i‖ ^ aokiRolewiczExponent E) : Summable x := by
-  sorry
+  set ρ := aokiRolewiczExponent E
+  have hρ : 0 < ρ⁻¹ := inv_pos.mpr (aokiRolewiczExponent_pos E)
+  rw [summable_iff_vanishing]
+  intro e he
+  obtain ⟨ε, hε, hεe⟩ := (nhds_zero_hasBasis (E := E)).mem_iff.mp he
+  -- the sums `∑ₜ ‖xᵢ‖^ρ` over finite sets far out are small enough that the
+  -- Aoki–Rolewicz bound `4^{1/ρ} (∑ₜ ‖xᵢ‖^ρ)^{1/ρ}` is below `ε`
+  have hU : (fun u : ℝ => (4 : ℝ) ^ ρ⁻¹ * u ^ ρ⁻¹) ⁻¹' Set.Iio ε ∈ nhds (0 : ℝ) :=
+    (continuous_const.mul (Real.continuous_rpow_const hρ.le)).continuousAt.preimage_mem_nhds
+      (Iio_mem_nhds (by simpa [Real.zero_rpow hρ.ne'] using hε))
+  obtain ⟨s, hs⟩ := h.vanishing hU
+  exact ⟨s, fun t ht => hεe ((norm_sum_le_rpow t x).trans_lt (hs t ht))⟩
 
 /-- The Aoki–Rolewicz bound for infinite sums: `‖∑' xᵢ‖ ≤ 4^{1/ρ} (∑' ‖xᵢ‖^ρ)^{1/ρ}`. Note that we
 do not assume that `∑' i, x i` is summable, and it might not be the case if `E` is not complete. -/

@@ -266,8 +266,9 @@ noncomputable def aokiRolewiczNorm (x : E) : ℝ :=
   sInf {r : ℝ | ∃ (n : ℕ) (y : Fin n → E), ∑ i, y i = x ∧
     (∑ i, ‖y i‖ ^ aokiRolewiczExponent E) ^ (aokiRolewiczExponent E)⁻¹ = r}
 
-theorem aokiRolewiczNorm_nonneg (x : E) : 0 ≤ aokiRolewiczNorm x := by
-  sorry
+theorem aokiRolewiczNorm_nonneg (x : E) : 0 ≤ aokiRolewiczNorm x :=
+  Real.sInf_nonneg fun _ ⟨_, _, _, hr⟩ => hr ▸ Real.rpow_nonneg
+    (Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _) _
 
 theorem aokiRolewiczNorm_le_norm (x : E) : aokiRolewiczNorm x ≤ ‖x‖ := by
   sorry

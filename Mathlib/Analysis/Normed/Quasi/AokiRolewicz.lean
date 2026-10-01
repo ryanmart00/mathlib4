@@ -57,7 +57,7 @@ theorem aokiRolewiczExponent_pos : 0 < aokiRolewiczExponent E :=
   inv_pos.mp (one_pos.trans_le (one_le_inv_aokiRolewiczExponent E))
 
 theorem aokiRolewiczExponent_le_one : aokiRolewiczExponent E ≤ 1 := by
-  sorry
+  simpa using inv_le_one_of_one_le₀ (one_le_inv_aokiRolewiczExponent E)
 
 theorem quasiTriangleConst_eq_two_rpow :
     quasiTriangleConst (E := E) = (2 : ℝ) ^ ((aokiRolewiczExponent E)⁻¹ - 1) := by

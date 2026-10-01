@@ -340,7 +340,11 @@ theorem aokiRolewiczNorm_add_rpow_le (x y : E) :
     _ < _ := by linarith
 
 theorem aokiRolewiczNorm_neg (x : E) : aokiRolewiczNorm (-x) = aokiRolewiczNorm x := by
-  sorry
+  have key (z : E) : aokiRolewiczNorm (-z) ≤ aokiRolewiczNorm z := by
+    refine le_csInf ⟨_, 1, fun _ => z, by simp, rfl⟩ ?_
+    rintro _ ⟨n, y, rfl, rfl⟩
+    simpa [Finset.sum_neg_distrib, norm_neg] using aokiRolewiczNorm_sum_le fun i => -y i
+  exact le_antisymm (key x) (by simpa using key (-x))
 
 /-- In a complete quasi-normed group, `∑ ‖xᵢ‖^ρ < ∞` implies that `∑ xᵢ` converges. -/
 theorem summable_of_summable_norm_rpow [CompleteSpace E] {ι : Type*} {x : ι → E}

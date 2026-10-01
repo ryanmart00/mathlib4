@@ -270,8 +270,16 @@ theorem aokiRolewiczNorm_nonneg (x : E) : 0 ≤ aokiRolewiczNorm x :=
   Real.sInf_nonneg fun _ ⟨_, _, _, hr⟩ => hr ▸ Real.rpow_nonneg
     (Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _) _
 
+/-- Any finite decomposition `x = ∑ yᵢ` bounds `N(x)` from above. -/
+private theorem aokiRolewiczNorm_sum_le {n : ℕ} (y : Fin n → E) :
+    aokiRolewiczNorm (∑ i, y i) ≤
+      (∑ i, ‖y i‖ ^ aokiRolewiczExponent E) ^ (aokiRolewiczExponent E)⁻¹ :=
+  csInf_le ⟨0, fun _ ⟨_, _, _, hr⟩ => hr ▸ Real.rpow_nonneg
+    (Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _) _⟩ ⟨n, y, rfl, rfl⟩
+
 theorem aokiRolewiczNorm_le_norm (x : E) : aokiRolewiczNorm x ≤ ‖x‖ := by
-  sorry
+  simpa [Real.rpow_rpow_inv (norm_nonneg x) (aokiRolewiczExponent_pos E).ne'] using
+    aokiRolewiczNorm_sum_le fun _ : Fin 1 => x
 
 theorem norm_le_aokiRolewiczNorm (x : E) :
     ‖x‖ ≤ (4 : ℝ) ^ (aokiRolewiczExponent E)⁻¹ * aokiRolewiczNorm x := by

@@ -290,12 +290,54 @@ theorem norm_le_aokiRolewiczNorm (x : E) :
   rw [div_le_iff₀' h4]
   exact norm_sum_le_rpow Finset.univ y
 
+/-- Near-optimal decompositions: if `N(x)^ρ < c`, then some decomposition `x = ∑ yᵢ` has
+`∑ ‖yᵢ‖^ρ < c`. -/
+private theorem exists_sum_eq_of_aokiRolewiczNorm_rpow_lt (x : E) {c : ℝ}
+    (hc : aokiRolewiczNorm x ^ aokiRolewiczExponent E < c) :
+    ∃ (n : ℕ) (y : Fin n → E), ∑ i, y i = x ∧ ∑ i, ‖y i‖ ^ aokiRolewiczExponent E < c := by
+  set ρ := aokiRolewiczExponent E
+  have hρ : 0 < ρ := aokiRolewiczExponent_pos E
+  have hN := aokiRolewiczNorm_nonneg x
+  have hc0 : 0 ≤ c := (Real.rpow_nonneg hN _).trans hc.le
+  have hlt : aokiRolewiczNorm x < c ^ ρ⁻¹ :=
+    calc aokiRolewiczNorm x = (aokiRolewiczNorm x ^ ρ) ^ ρ⁻¹ :=
+          (Real.rpow_rpow_inv hN hρ.ne').symm
+      _ < c ^ ρ⁻¹ := Real.rpow_lt_rpow (Real.rpow_nonneg hN _) hc (inv_pos.mpr hρ)
+  have hne : {r : ℝ | ∃ (n : ℕ) (y : Fin n → E), ∑ i, y i = x ∧
+      (∑ i, ‖y i‖ ^ ρ) ^ ρ⁻¹ = r}.Nonempty := ⟨_, 1, fun _ => x, by simp, rfl⟩
+  obtain ⟨_, ⟨n, y, hy, rfl⟩, hr⟩ := exists_lt_of_csInf_lt hne hlt
+  refine ⟨n, y, hy, ?_⟩
+  have hA : 0 ≤ ∑ i, ‖y i‖ ^ ρ :=
+    Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _
+  exact (Real.rpow_lt_rpow_iff hA hc0 (inv_pos.mpr hρ)).mp hr
+
 /-- The `ρ`-triangle inequality `N(x + y)^ρ ≤ N(x)^ρ + N(y)^ρ`. -/
 theorem aokiRolewiczNorm_add_rpow_le (x y : E) :
     aokiRolewiczNorm (x + y) ^ aokiRolewiczExponent E ≤
       aokiRolewiczNorm x ^ aokiRolewiczExponent E +
         aokiRolewiczNorm y ^ aokiRolewiczExponent E := by
-  sorry
+  set ρ := aokiRolewiczExponent E
+  have hρ : 0 < ρ := aokiRolewiczExponent_pos E
+  refine le_of_forall_pos_lt_add fun ε hε => ?_
+  obtain ⟨n, a, rfl, ha⟩ := exists_sum_eq_of_aokiRolewiczNorm_rpow_lt x
+    (c := aokiRolewiczNorm x ^ ρ + ε / 2) (by linarith)
+  obtain ⟨m, b, rfl, hb⟩ := exists_sum_eq_of_aokiRolewiczNorm_rpow_lt y
+    (c := aokiRolewiczNorm y ^ ρ + ε / 2) (by linarith)
+  have hA : 0 ≤ ∑ i, ‖a i‖ ^ ρ :=
+    Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _
+  have hB : 0 ≤ ∑ i, ‖b i‖ ^ ρ :=
+    Finset.sum_nonneg fun _ _ => Real.rpow_nonneg (norm_nonneg _) _
+  have hsum : ∑ i, Fin.append a b i = ∑ i, a i + ∑ i, b i := by
+    rw [Fin.sum_univ_add]; simp
+  have hnorm : ∑ i, ‖Fin.append a b i‖ ^ ρ = ∑ i, ‖a i‖ ^ ρ + ∑ i, ‖b i‖ ^ ρ := by
+    rw [Fin.sum_univ_add]; simp
+  have h := aokiRolewiczNorm_sum_le (Fin.append a b)
+  rw [hsum, hnorm] at h
+  calc aokiRolewiczNorm (∑ i, a i + ∑ i, b i) ^ ρ
+      ≤ ((∑ i, ‖a i‖ ^ ρ + ∑ i, ‖b i‖ ^ ρ) ^ ρ⁻¹) ^ ρ :=
+        Real.rpow_le_rpow (aokiRolewiczNorm_nonneg _) h hρ.le
+    _ = ∑ i, ‖a i‖ ^ ρ + ∑ i, ‖b i‖ ^ ρ := Real.rpow_inv_rpow (add_nonneg hA hB) hρ.ne'
+    _ < _ := by linarith
 
 theorem aokiRolewiczNorm_neg (x : E) : aokiRolewiczNorm (-x) = aokiRolewiczNorm x := by
   sorry

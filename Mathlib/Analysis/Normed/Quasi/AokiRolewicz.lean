@@ -61,7 +61,8 @@ theorem aokiRolewiczExponent_le_one : aokiRolewiczExponent E ≤ 1 := by
 
 theorem quasiTriangleConst_eq_two_rpow :
     quasiTriangleConst (E := E) = (2 : ℝ) ^ ((aokiRolewiczExponent E)⁻¹ - 1) := by
-  sorry
+  rw [aokiRolewiczExponent, inv_inv, add_sub_cancel_left,
+    Real.rpow_logb two_pos (by norm_num) quasiTriangleConst_pos]
 
 variable {E}
 

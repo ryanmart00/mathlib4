@@ -283,7 +283,12 @@ theorem aokiRolewiczNorm_le_norm (x : E) : aokiRolewiczNorm x ≤ ‖x‖ := by
 
 theorem norm_le_aokiRolewiczNorm (x : E) :
     ‖x‖ ≤ (4 : ℝ) ^ (aokiRolewiczExponent E)⁻¹ * aokiRolewiczNorm x := by
-  sorry
+  have h4 : 0 < (4 : ℝ) ^ (aokiRolewiczExponent E)⁻¹ := by positivity
+  rw [← div_le_iff₀' h4]
+  refine le_csInf ⟨_, 1, fun _ => x, by simp, rfl⟩ ?_
+  rintro _ ⟨n, y, rfl, rfl⟩
+  rw [div_le_iff₀' h4]
+  exact norm_sum_le_rpow Finset.univ y
 
 /-- The `ρ`-triangle inequality `N(x + y)^ρ ≤ N(x)^ρ + N(y)^ρ`. -/
 theorem aokiRolewiczNorm_add_rpow_le (x y : E) :

@@ -21,9 +21,9 @@ Let `E` be a quasi-normed group with quasi-triangle constant `C ≥ 1`, i.e.
 
 The analytic content is the finite-sum bound `‖∑ xᵢ‖ ≤ 4^{1/ρ} (∑ ‖xᵢ‖^ρ)^{1/ρ}`
 (`norm_sum_le_rpow`, Kalton–Peck–Roberts, *An F-space sampler*, Theorem 1.3). The `ρ`-norm
-properties follow from it formally. As a consequence, in a complete quasi-normed group every
-family with `∑ ‖xᵢ‖^ρ < ∞` is summable, with the same bound on its sum
-(`summable_of_summable_norm_rpow`, `norm_tsum_le_rpow`). A quasi-norm need not be continuous, so
+properties follow from it formally. As a consequence, the same bound holds for `‖∑' xᵢ‖` whenever
+`∑ ‖xᵢ‖^ρ < ∞` (`norm_tsum_le_rpow`), and in a complete quasi-normed group such a family is
+summable (`summable_of_summable_norm_rpow`). A quasi-norm need not be continuous, so
 the bound on `‖∑' xᵢ‖` goes through the `ρ`-norm, whose `ρ`-th power is subadditive.
 
 This is what makes the discrete J-method of real interpolation work for quasi-Banach couples
@@ -98,8 +98,9 @@ theorem summable_of_summable_norm_rpow [CompleteSpace E] {ι : Type*} {x : ι �
     (h : Summable fun i => ‖x i‖ ^ aokiRolewiczExponent E) : Summable x := by
   sorry
 
-/-- The Aoki–Rolewicz bound for infinite sums: `‖∑' xᵢ‖ ≤ 4^{1/ρ} (∑' ‖xᵢ‖^ρ)^{1/ρ}`. -/
-theorem norm_tsum_le_rpow [CompleteSpace E] {ι : Type*} {x : ι → E}
+/-- The Aoki–Rolewicz bound for infinite sums: `‖∑' xᵢ‖ ≤ 4^{1/ρ} (∑' ‖xᵢ‖^ρ)^{1/ρ}`. Note that we
+do not assume that `∑' i, x i` is summable, and it might not be the case if `E` is not complete. -/
+theorem norm_tsum_le_rpow {ι : Type*} {x : ι → E}
     (h : Summable fun i => ‖x i‖ ^ aokiRolewiczExponent E) :
     ‖∑' i, x i‖ ≤ (4 : ℝ) ^ (aokiRolewiczExponent E)⁻¹ *
       (∑' i, ‖x i‖ ^ aokiRolewiczExponent E) ^ (aokiRolewiczExponent E)⁻¹ := by

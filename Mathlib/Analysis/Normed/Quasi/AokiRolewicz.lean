@@ -11,8 +11,6 @@ import Mathlib.Topology.Algebra.InfiniteSum.Group
 /-!
 # The Aoki–Rolewicz theorem
 
-DRAFT — statements only.
-
 Let `E` be a quasi-normed group with quasi-triangle constant `C ≥ 1`, i.e.
 `‖x + y‖ ≤ C (‖x‖ + ‖y‖)`. Put `ρ = 1 / (1 + log₂ C) ∈ (0, 1]`, so that `C = 2^{1/ρ - 1}`
 (`aokiRolewiczExponent`). The **Aoki–Rolewicz theorem** says that `E` carries an equivalent
@@ -368,6 +366,49 @@ theorem norm_tsum_le_rpow {ι : Type*} {x : ι → E}
     (h : Summable fun i => ‖x i‖ ^ aokiRolewiczExponent E) :
     ‖∑' i, x i‖ ≤ (4 : ℝ) ^ (aokiRolewiczExponent E)⁻¹ *
       (∑' i, ‖x i‖ ^ aokiRolewiczExponent E) ^ (aokiRolewiczExponent E)⁻¹ := by
-  sorry
+  classical
+  set ρ := aokiRolewiczExponent E
+  have hρ : 0 < ρ := aokiRolewiczExponent_pos E
+  set S := ∑' i, ‖x i‖ ^ ρ
+  have hS0 : 0 ≤ S := tsum_nonneg fun _ => Real.rpow_nonneg (norm_nonneg _) _
+  by_cases hx : Summable x
+  swap
+  · rw [tsum_eq_zero_of_not_summable hx, norm_zero]
+    positivity
+  have hle (z : E) : aokiRolewiczNorm z ^ ρ ≤ ‖z‖ ^ ρ :=
+    Real.rpow_le_rpow (aokiRolewiczNorm_nonneg z) (aokiRolewiczNorm_le_norm z) hρ.le
+  -- `N^ρ` is subadditive and vanishes at `0`, so it is bounded by `S` on all partial sums
+  have hzero : aokiRolewiczNorm (0 : E) ^ ρ = 0 := by
+    rw [le_antisymm ((aokiRolewiczNorm_le_norm 0).trans_eq norm_zero)
+      (aokiRolewiczNorm_nonneg 0), Real.zero_rpow hρ.ne']
+  have hpartial (t : Finset ι) : aokiRolewiczNorm (∑ i ∈ t, x i) ^ ρ ≤ S :=
+    (Finset.le_sum_of_subadditive (fun z => aokiRolewiczNorm z ^ ρ) hzero.le
+      aokiRolewiczNorm_add_rpow_le t x).trans
+      ((Finset.sum_le_sum fun i _ => hle (x i)).trans
+        (h.sum_le_tsum t fun _ _ => Real.rpow_nonneg (norm_nonneg _) _))
+  -- pass to the limit, using `N(∑')^ρ ≤ N(∑ₜ)^ρ + ‖∑' - ∑ₜ‖^ρ`
+  have hlim : Filter.Tendsto (fun t : Finset ι => S + ‖∑' i, x i - ∑ i ∈ t, x i‖ ^ ρ)
+      Filter.atTop (nhds S) := by
+    have h0 : Filter.Tendsto (fun t : Finset ι => ‖∑' i, x i - ∑ i ∈ t, x i‖)
+        Filter.atTop (nhds 0) := by
+      refine (tendsto_iff_norm_sub_tendsto_zero.mp hx.hasSum).congr fun t => ?_
+      rw [← norm_neg (∑' i, x i - ∑ i ∈ t, x i), neg_sub]
+    simpa [Real.zero_rpow hρ.ne'] using
+      tendsto_const_nhds.add ((Real.continuous_rpow_const hρ.le).continuousAt.tendsto.comp h0)
+  have hφ : aokiRolewiczNorm (∑' i, x i) ^ ρ ≤ S := by
+    refine ge_of_tendsto' hlim fun t => ?_
+    calc aokiRolewiczNorm (∑' i, x i) ^ ρ
+        = aokiRolewiczNorm (∑ i ∈ t, x i + (∑' i, x i - ∑ i ∈ t, x i)) ^ ρ := by
+          rw [add_sub_cancel]
+      _ ≤ aokiRolewiczNorm (∑ i ∈ t, x i) ^ ρ +
+            aokiRolewiczNorm (∑' i, x i - ∑ i ∈ t, x i) ^ ρ :=
+          aokiRolewiczNorm_add_rpow_le _ _
+      _ ≤ S + ‖∑' i, x i - ∑ i ∈ t, x i‖ ^ ρ := add_le_add (hpartial t) (hle _)
+  have hN : aokiRolewiczNorm (∑' i, x i) ≤ S ^ ρ⁻¹ :=
+    calc aokiRolewiczNorm (∑' i, x i) = (aokiRolewiczNorm (∑' i, x i) ^ ρ) ^ ρ⁻¹ :=
+          (Real.rpow_rpow_inv (aokiRolewiczNorm_nonneg _) hρ.ne').symm
+      _ ≤ S ^ ρ⁻¹ := Real.rpow_le_rpow (Real.rpow_nonneg (aokiRolewiczNorm_nonneg _) _) hφ
+          (inv_pos.mpr hρ).le
+  exact (norm_le_aokiRolewiczNorm _).trans (mul_le_mul_of_nonneg_left hN (by positivity))
 
 end QuasinormedAddCommGroup

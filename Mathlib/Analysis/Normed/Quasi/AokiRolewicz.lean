@@ -49,8 +49,12 @@ quasi-triangle constant `C`. It satisfies `0 < ρ ≤ 1` and `C = 2^{1/ρ - 1}`.
 noncomputable def aokiRolewiczExponent : ℝ :=
   (1 + Real.logb 2 (quasiTriangleConst (E := E)))⁻¹
 
-theorem aokiRolewiczExponent_pos : 0 < aokiRolewiczExponent E := by
-  sorry
+theorem one_le_inv_aokiRolewiczExponent : 1 ≤ (aokiRolewiczExponent E)⁻¹ := by
+  rw [aokiRolewiczExponent, inv_inv, le_add_iff_nonneg_right]
+  exact Real.logb_nonneg one_lt_two one_le_quasiTriangleConst
+
+theorem aokiRolewiczExponent_pos : 0 < aokiRolewiczExponent E :=
+  inv_pos.mp (one_pos.trans_le (one_le_inv_aokiRolewiczExponent E))
 
 theorem aokiRolewiczExponent_le_one : aokiRolewiczExponent E ≤ 1 := by
   sorry

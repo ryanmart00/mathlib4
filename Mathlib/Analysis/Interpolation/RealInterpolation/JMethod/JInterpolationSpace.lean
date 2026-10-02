@@ -9,8 +9,6 @@ import Mathlib.Analysis.Interpolation.InterpolationCat
 /-!
 # The discrete J-method space `(A₀, A₁)_{θ,q;J}` as a quasi-normed space
 
-DRAFT — statements only, awaiting review.
-
 The unbundled form of the discrete J-method, mirroring `KMethod/RealInterpolationSpace.lean`: the
 submodule of `A₀ + A₁` of elements of finite J-quasinorm `jInterpolationENorm`, as a type synonym
 `JInterpolationSpace ι₀ ι₁ θ q` with its quasi-normed structure (for `0 < θ < 1`, `0 < q`), the
@@ -301,7 +299,7 @@ theorem norm_jInterpolationMap_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M
     (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
     (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
     (a : JInterpolationSpace C.ι₀ C.ι₁ θ q) :
-    ‖T.jInterpolationMap θ q a‖ ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * ‖a‖ := by
-  sorry
+    ‖T.jInterpolationMap θ q a‖ ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * ‖a‖ :=
+  T.norm_jInterpolationMapₗ_le θ q hM₀ hM₁ h₀ h₁ a
 
 end InterpolationCat.Hom

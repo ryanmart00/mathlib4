@@ -100,7 +100,20 @@ theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst ι₀ ι₁ θ q :=
 
 theorem norm_add_le (a b : JInterpolationSpace ι₀ ι₁ θ q) :
     ‖a + b‖ ≤ quasiTriangleConst ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by
-  sorry
+  have hC := (Classical.choose_spec (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)).2 a b
+  have ha : jInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+  have hb : jInterpolationENorm ι₀ ι₁ θ q (b : sum ι₀ ι₁) < ⊤ := b.2
+  have h1 : 0 ≤ quasiTriangleConst ι₀ ι₁ θ q := zero_le_one.trans (one_le_quasiTriangleConst ι₀ ι₁)
+  rw [norm_def, norm_def, norm_def]
+  calc (jInterpolationENorm ι₀ ι₁ θ q ((a + b : JInterpolationSpace ι₀ ι₁ θ q) :
+          sum ι₀ ι₁)).toReal
+      ≤ (ENNReal.ofReal (quasiTriangleConst ι₀ ι₁ θ q) *
+          (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
+          (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) hC
+    _ = quasiTriangleConst ι₀ ι₁ θ q * ((jInterpolationENorm ι₀ ι₁ θ q a).toReal +
+          (jInterpolationENorm ι₀ ι₁ θ q b).toReal) := by
+        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
 
 theorem norm_neg (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
   sorry

@@ -148,7 +148,27 @@ theorem InterpolationCouple.kFunctional_meetToSum_le_jFunctional {s t : ℝ} (hs
     (ht : 0 ≤ t) (b : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.KFunctional ι₀ ι₁ t (InterpolationCouple.meetToSum ι₀ ι₁ b) ≤
       min 1 (t / s) * InterpolationCouple.JFunctional ι₀ ι₁ s b := by
-  sorry
+  obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+  have hι := (InterpolationCouple.mem_meet_iff ι₀ ι₁ a₀ a₁).mp hb
+  change InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤
+    min 1 (t / s) * max ‖a₀‖ (s * ‖a₁‖)
+  have hbdd := InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht
+    (Submodule.Quotient.mk (a₀, 0))
+  have h0 : InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤ ‖a₀‖ :=
+    csInf_le hbdd ⟨a₀, 0, rfl, by simp⟩
+  have h1 : InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0)) ≤
+      t * ‖a₁‖ := by
+    refine csInf_le hbdd ⟨0, a₁, (Submodule.Quotient.eq _).mpr ?_, by simp⟩
+    simp [InterpolationCouple.plus, hι]
+  rcases le_total 1 (t / s) with h | h
+  · rw [min_eq_left h, one_mul]
+    exact h0.trans (le_max_left _ _)
+  · rw [min_eq_right h]
+    calc InterpolationCouple.KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, 0))
+        ≤ t * ‖a₁‖ := h1
+      _ = t / s * (s * ‖a₁‖) := by field_simp
+      _ ≤ t / s * max ‖a₀‖ (s * ‖a₁‖) :=
+          mul_le_mul_of_nonneg_left (le_max_right _ _) (div_nonneg ht hs.le)
 
 /-- Naturality of `J` (the analogue of `Hom.kFunctional_sumMap_le`): a morphism `T : C ⟶ D` with
 `opQuasiNorm T.f₀ ≤ M₀`, `opQuasiNorm T.f₁ ≤ M₁` satisfies

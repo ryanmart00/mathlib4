@@ -282,7 +282,10 @@ theorem toSum_comp_jInterpolationMap (T : C ⟶ D) :
 
 theorem jInterpolationMap_id (C : InterpolationCat 𝕜) :
     (𝟙 C : C ⟶ C).jInterpolationMap θ q = ContinuousLinearMap.id 𝕜 _ := by
-  sorry
+  refine ContinuousLinearMap.ext fun a => Subtype.ext ?_
+  change (𝟙 C : C ⟶ C).sumMap (a : sum C.ι₀ C.ι₁) = a
+  rw [Hom.sumMap_id]
+  rfl
 
 theorem jInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
     (φ ≫ ψ).jInterpolationMap θ q =

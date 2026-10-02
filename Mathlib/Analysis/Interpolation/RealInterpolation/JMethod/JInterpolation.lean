@@ -309,7 +309,11 @@ theorem exists_ofReal_mul_norm_le_jInterpolationENorm (θ : ℝ) (hθ0 : 0 < θ)
 theorem jInterpolationENorm_eq_zero_iff (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
     (hq : 0 < q) (a : sum ι₀ ι₁) :
     jInterpolationENorm ι₀ ι₁ θ q a = 0 ↔ a = 0 := by
-  sorry
+  refine ⟨fun h => ?_, fun h => h ▸ jInterpolationENorm_zero ι₀ ι₁ θ q⟩
+  obtain ⟨c, hc, hle⟩ := exists_ofReal_mul_norm_le_jInterpolationENorm ι₀ ι₁ θ hθ0 hθ1 hq
+  have h0 : c * ‖a‖ ≤ 0 := ENNReal.ofReal_eq_zero.mp (le_antisymm (h ▸ hle a) zero_le)
+  exact (QuasinormedAddCommGroup.norm_eq_zero_iff a).mp (le_antisymm
+    (le_of_mul_le_mul_left (by simpa using h0) hc) (QuasinormedAddCommGroup.norm_nonneg a))
 
 end InterpolationCouple
 

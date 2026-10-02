@@ -72,7 +72,15 @@ theorem InterpolationCouple.jFunctional_le_max_div_mul {s t : ℝ} (hs : 0 < s)
     (b : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.JFunctional ι₀ ι₁ t b ≤
       max 1 (t / s) * InterpolationCouple.JFunctional ι₀ ι₁ s b := by
-  sorry
+  have hx := QuasinormedAddCommGroup.norm_nonneg (b : A₀ × A₁).1
+  have hy := QuasinormedAddCommGroup.norm_nonneg (b : A₀ × A₁).2
+  have hm : 1 ≤ max 1 (t / s) := le_max_left _ _
+  unfold InterpolationCouple.JFunctional
+  refine max_le ?_ ?_
+  · exact (le_max_left _ _).trans (le_mul_of_one_le_left (le_max_of_le_left hx) hm)
+  · calc t * ‖(b : A₀ × A₁).2‖ = t / s * (s * ‖(b : A₀ × A₁).2‖) := by field_simp
+      _ ≤ _ := mul_le_mul (le_max_right _ _) (le_max_right _ _) (mul_nonneg hs.le hy)
+          (zero_le_one.trans hm)
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.jFunctional_zero (t : ℝ) :

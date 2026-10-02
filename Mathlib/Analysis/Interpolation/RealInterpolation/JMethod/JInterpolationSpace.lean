@@ -277,8 +277,8 @@ noncomputable def jInterpolationMap (T : C ⟶ D) :
 
 theorem toSum_comp_jInterpolationMap (T : C ⟶ D) :
     (JInterpolationSpace.toSum D.ι₀ D.ι₁ θ q).comp (T.jInterpolationMap θ q) =
-      T.sumMap.comp (JInterpolationSpace.toSum C.ι₀ C.ι₁ θ q) := by
-  sorry
+      T.sumMap.comp (JInterpolationSpace.toSum C.ι₀ C.ι₁ θ q) :=
+  ContinuousLinearMap.ext fun _ => rfl
 
 theorem jInterpolationMap_id (C : InterpolationCat 𝕜) :
     (𝟙 C : C ⟶ C).jInterpolationMap θ q = ContinuousLinearMap.id 𝕜 _ := by

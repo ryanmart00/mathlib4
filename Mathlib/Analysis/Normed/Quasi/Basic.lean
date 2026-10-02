@@ -229,6 +229,14 @@ instance (priority := 100) instFirstCountableTopology : FirstCountableTopology E
   have h2 : (uniformity E).IsCountablyGenerated := IsUniformAddGroup.uniformity_countably_generated
   infer_instance
 
+/-- Every quasi-normed group is Hausdorff: a nonzero `x` lies outside the norm-ball of radius
+`‖x‖` about `0`, which is a neighborhood of `0` by `nhds_zero_hasBasis`. -/
+instance (priority := 100) instT2Space : T2Space E :=
+  IsTopologicalAddGroup.t2Space_of_zero_sep fun x hx =>
+    ⟨{y : E | ‖y‖ < ‖x‖}, (nhds_zero_hasBasis (E := E)).mem_of_mem
+      ((norm_nonneg x).lt_of_ne fun h => hx ((norm_eq_zero_iff x).mp h.symm)),
+      fun h : ‖x‖ < ‖x‖ => lt_irrefl _ h⟩
+
 /-- Every genuine `NormedAddCommGroup` is quasi-normed with constant `1`, reusing its *own*
 underlying `Norm`, topology, and uniform structure verbatim — no diamond, nothing recomputed via
 `AddGroupFilterBasis.ofQuasiNorm`. -/

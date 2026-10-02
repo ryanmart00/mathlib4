@@ -234,7 +234,15 @@ variable {C D E : InterpolationCat 𝕜} (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < 
 noncomputable def jInterpolationMapₗ (T : C ⟶ D) :
     JInterpolationSpace C.ι₀ C.ι₁ θ q →ₗ[𝕜] JInterpolationSpace D.ι₀ D.ι₁ θ q :=
   ((T.sumMap : sum C.ι₀ C.ι₁ →ₗ[𝕜] sum D.ι₀ D.ι₁).comp
-    (jInterpolationSubmodule C.ι₀ C.ι₁ θ q).subtype).codRestrict _ sorry
+    (jInterpolationSubmodule C.ι₀ C.ι₁ θ q).subtype).codRestrict _ (by
+      intro a
+      change jInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁)) < ⊤
+      have ha : jInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
+      have h₀ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₀
+      have h₁ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₁
+      exact (T.jInterpolationENorm_sumMap_le θ (Fact.out : 0 < θ).le q _ _ (by linarith)
+        (by linarith) (le_add_of_nonneg_right zero_le_one) (le_add_of_nonneg_right zero_le_one)
+          a).trans_lt (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ha))
 
 /-- The map `(C.A₀, C.A₁)_{θ,q;J} → (D.A₀, D.A₁)_{θ,q;J}` induced by a morphism of couples: the
 restriction of `T.sumMap`, bounded by `jInterpolationENorm_sumMap_le`. -/

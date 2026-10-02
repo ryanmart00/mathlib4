@@ -85,7 +85,7 @@ theorem InterpolationCouple.jFunctional_le_max_div_mul {s t : ℝ} (hs : 0 < s)
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.jFunctional_zero (t : ℝ) :
     InterpolationCouple.JFunctional ι₀ ι₁ t 0 = 0 := by
-  sorry
+  simp [InterpolationCouple.JFunctional]
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The J-functional is absolutely homogeneous: `J(t, c • b) = ‖c‖ · J(t, b)`. -/

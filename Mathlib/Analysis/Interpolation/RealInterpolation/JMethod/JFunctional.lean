@@ -52,11 +52,12 @@ theorem InterpolationCouple.jFunctional_nonneg (t : ℝ) (b : InterpolationCoupl
     0 ≤ InterpolationCouple.JFunctional ι₀ ι₁ t b :=
   le_max_of_le_left (QuasinormedAddCommGroup.norm_nonneg _)
 
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `J(1, ·)` is the meet's own quasi-norm (the max-norm of `A₀ × A₁`, restricted). -/
 theorem InterpolationCouple.jFunctional_one (b : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.JFunctional ι₀ ι₁ 1 b = ‖b‖ := by
-  sorry
+  change _ = ‖(b : A₀ × A₁)‖
+  rw [InterpolationCouple.JFunctional, one_mul, Prod.norm_def]
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `J(t, b)` is monotone increasing in `t`. -/

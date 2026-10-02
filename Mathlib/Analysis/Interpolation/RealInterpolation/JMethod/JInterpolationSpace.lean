@@ -116,7 +116,10 @@ theorem norm_add_le (a b : JInterpolationSpace ι₀ ι₁ θ q) :
         rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
 
 theorem norm_neg (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
-  sorry
+  rw [norm_def, norm_def]
+  congr 1
+  change jInterpolationENorm ι₀ ι₁ θ q (-(a : sum ι₀ ι₁)) = _
+  rw [← neg_one_smul 𝕜 (a : sum ι₀ ι₁), jInterpolationENorm_smul, enorm_neg, enorm_one, one_mul]
 
 theorem norm_eq_zero_iff [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖a‖ = 0 ↔ a = 0 := by

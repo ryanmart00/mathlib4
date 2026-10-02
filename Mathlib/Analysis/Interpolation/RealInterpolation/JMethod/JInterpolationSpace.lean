@@ -95,8 +95,8 @@ variable (θ q) in
 noncomputable def quasiTriangleConst : ℝ :=
   Classical.choose (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)
 
-theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst ι₀ ι₁ θ q := by
-  sorry
+theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst ι₀ ι₁ θ q :=
+  (Classical.choose_spec (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)).1
 
 theorem norm_add_le (a b : JInterpolationSpace ι₀ ι₁ θ q) :
     ‖a + b‖ ≤ quasiTriangleConst ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by

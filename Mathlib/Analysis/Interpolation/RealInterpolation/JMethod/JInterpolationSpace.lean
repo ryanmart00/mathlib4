@@ -191,8 +191,8 @@ theorem toSum_apply [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
   rfl
 
 theorem toSum_injective [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
-    Function.Injective (toSum ι₀ ι₁ θ q) := by
-  sorry
+    Function.Injective (toSum ι₀ ι₁ θ q) :=
+  Subtype.val_injective
 
 variable (θ q) in
 /-- The inclusion `A₀ ∩ A₁ ↪ (A₀, A₁)_{θ,q;J}`, continuous (with constant `1`) by

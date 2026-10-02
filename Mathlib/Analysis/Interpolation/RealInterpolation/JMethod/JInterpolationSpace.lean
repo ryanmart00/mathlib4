@@ -123,7 +123,10 @@ theorem norm_neg (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖
 
 theorem norm_eq_zero_iff [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖a‖ = 0 ↔ a = 0 := by
-  sorry
+  have ha : jInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+  rw [norm_def, ENNReal.toReal_eq_zero_iff, or_iff_left ha.ne,
+    jInterpolationENorm_eq_zero_iff ι₀ ι₁ θ Fact.out Fact.out Fact.out]
+  exact Submodule.coe_eq_zero (x := (a : jInterpolationSubmodule ι₀ ι₁ θ q))
 
 /-- The quasi-normed group structure on `(A₀, A₁)_{θ,q;J}`, for `0 < θ < 1`, `0 < q` (unlike the
 K-method, definiteness of the J-quasinorm uses the sandwich bound, hence the conditions on `θ`). -/

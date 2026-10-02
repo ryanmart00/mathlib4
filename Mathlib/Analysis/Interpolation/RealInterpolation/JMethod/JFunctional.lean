@@ -63,8 +63,8 @@ omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpa
 /-- `J(t, b)` is monotone increasing in `t`. -/
 theorem InterpolationCouple.jFunctional_mono {s t : ℝ} (hst : s ≤ t)
     (b : InterpolationCouple.meet ι₀ ι₁) :
-    InterpolationCouple.JFunctional ι₀ ι₁ s b ≤ InterpolationCouple.JFunctional ι₀ ι₁ t b := by
-  sorry
+    InterpolationCouple.JFunctional ι₀ ι₁ s b ≤ InterpolationCouple.JFunctional ι₀ ι₁ t b :=
+  max_le_max le_rfl (mul_le_mul_of_nonneg_right hst (QuasinormedAddCommGroup.norm_nonneg _))
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- Change of parameter: `J(t, b) ≤ max(1, t/s) J(s, b)` for `s > 0`. -/

@@ -13,8 +13,10 @@ DRAFT — statements only, awaiting review.
 For an interpolation couple `{A₀, A₁}`, `t ≥ 0`, and `a ∈ A₀ ∩ A₁`,
 `J(t, a) = max(‖a‖_{A₀}, t ‖a‖_{A₁})` (Triebel §1.6.1; Bergh–Löfström §3.2). It is the dual
 counterpart of the K-functional: `K(t, ·)` is an equivalent family of quasi-norms on `A₀ + A₁`,
-and `J(t, ·)` one on `A₀ ∩ A₁`. The J-method describes `(A₀, A₁)_{θ,q}` through decompositions
-`a = ∑ᵥ uᵥ` with `uᵥ ∈ A₀ ∩ A₁`, measured by `J(2^ν, uᵥ)`.
+and `J(t, ·)` one on `A₀ ∩ A₁`. Triebel's J-method is the continuous one, `a = ∫₀^∞ u(t) dt/t`;
+we will use the discrete version (Bergh–Löfström §3.10–3.11), which describes `(A₀, A₁)_{θ,q}`
+through decompositions `a = ∑ᵥ uᵥ` with `uᵥ ∈ A₀ ∩ A₁`, measured by `J(2^ν, uᵥ)`. Unlike the
+integral, the series makes sense for quasi-Banach couples (by Aoki–Rolewicz).
 
 An element `b` of the meet is a pair `(a₀, a₁)` with `ι₀ a₀ = ι₁ a₁`, so `J` reads off both
 components; `J(1, b)` is exactly the meet's own quasi-norm (`jFunctional_one`).

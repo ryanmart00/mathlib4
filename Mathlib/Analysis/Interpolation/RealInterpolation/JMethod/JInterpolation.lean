@@ -85,7 +85,9 @@ theorem jInterpolationENorm_le (θ : ℝ) (q : ℝ≥0∞) {a : sum ι₀ ι₁}
 
 theorem jInterpolationENorm_zero (θ : ℝ) (q : ℝ≥0∞) :
     jInterpolationENorm ι₀ ι₁ θ q 0 = 0 := by
-  sorry
+  refine le_antisymm ((jInterpolationENorm_le ι₀ ι₁ θ q (fun _ => 0) ?_).trans_eq ?_) zero_le
+  · simp
+  · simp [jSequenceENorm, jFunctional_zero]
 
 theorem jInterpolationENorm_smul (θ : ℝ) (q : ℝ≥0∞) (c : 𝕜) (a : sum ι₀ ι₁) :
     jInterpolationENorm ι₀ ι₁ θ q (c • a) = ‖c‖ₑ * jInterpolationENorm ι₀ ι₁ θ q a := by

@@ -8,8 +8,6 @@ import Mathlib.Analysis.Interpolation.RealInterpolation.KMethod.KFunctional
 /-!
 # The J-functional
 
-DRAFT — statements only, awaiting review.
-
 For an interpolation couple `{A₀, A₁}`, `t ≥ 0`, and `a ∈ A₀ ∩ A₁`,
 `J(t, a) = max(‖a‖_{A₀}, t ‖a‖_{A₁})` (Triebel §1.6.1; Bergh–Löfström §3.2). It is the dual
 counterpart of the K-functional: `K(t, ·)` is an equivalent family of quasi-norms on `A₀ + A₁`,
@@ -181,4 +179,21 @@ theorem InterpolationCat.Hom.jFunctional_meetMap_le {C D : InterpolationCat 𝕜
     (b : InterpolationCouple.meet C.ι₀ C.ι₁) :
     InterpolationCouple.JFunctional D.ι₀ D.ι₁ t (T.meetMap b) ≤
       M₀ * InterpolationCouple.JFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) b := by
-  sorry
+  obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+  rw [InterpolationCat.Hom.meetMap_apply]
+  change max ‖T.f₀ a₀‖ (t * ‖T.f₁ a₁‖) ≤ M₀ * max ‖a₀‖ (t * M₁ / M₀ * ‖a₁‖)
+  have h0 : ‖T.f₀ a₀‖ ≤ M₀ * ‖a₀‖ :=
+    (QuasinormedAddCommGroup.le_opQuasiNorm T.f₀ a₀).trans
+      (mul_le_mul_of_nonneg_right h₀ (QuasinormedAddCommGroup.norm_nonneg a₀))
+  have h1 : ‖T.f₁ a₁‖ ≤ M₁ * ‖a₁‖ :=
+    (QuasinormedAddCommGroup.le_opQuasiNorm T.f₁ a₁).trans
+      (mul_le_mul_of_nonneg_right h₁ (QuasinormedAddCommGroup.norm_nonneg a₁))
+  have hJ : 0 ≤ max ‖a₀‖ (t * M₁ / M₀ * ‖a₁‖) :=
+    le_max_of_le_left (QuasinormedAddCommGroup.norm_nonneg a₀)
+  refine max_le (h0.trans (mul_le_mul_of_nonneg_left (le_max_left _ _) hM₀.le)) ?_
+  rcases le_or_gt 0 t with ht | ht
+  · calc t * ‖T.f₁ a₁‖ ≤ t * (M₁ * ‖a₁‖) := mul_le_mul_of_nonneg_left h1 ht
+      _ = M₀ * (t * M₁ / M₀ * ‖a₁‖) := by field_simp
+      _ ≤ _ := mul_le_mul_of_nonneg_left (le_max_right _ _) hM₀.le
+  · exact (mul_nonpos_iff.mpr (Or.inr ⟨ht.le, QuasinormedAddCommGroup.norm_nonneg _⟩)).trans
+      (mul_nonneg hM₀.le hJ)

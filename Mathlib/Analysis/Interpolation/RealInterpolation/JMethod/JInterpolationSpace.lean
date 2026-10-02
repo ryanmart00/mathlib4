@@ -244,12 +244,36 @@ noncomputable def jInterpolationMapₗ (T : C ⟶ D) :
         (by linarith) (le_add_of_nonneg_right zero_le_one) (le_add_of_nonneg_right zero_le_one)
           a).trans_lt (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ha))
 
+omit [Fact (θ < 1)] [Fact (0 < q)] in
+theorem norm_jInterpolationMapₗ_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
+    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
+    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (a : JInterpolationSpace C.ι₀ C.ι₁ θ q) :
+    ‖T.jInterpolationMapₗ θ q a‖ ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * ‖a‖ := by
+  have ha : jInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
+  have hb := T.jInterpolationENorm_sumMap_le θ (Fact.out : 0 < θ).le q M₀ M₁ hM₀ hM₁ h₀ h₁
+    (a : sum C.ι₀ C.ι₁)
+  have hM : 0 ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) := by positivity
+  rw [JInterpolationSpace.norm_def, JInterpolationSpace.norm_def]
+  change (jInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁))).toReal ≤ _
+  calc (jInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap (a : sum C.ι₀ C.ι₁))).toReal
+      ≤ (ENNReal.ofReal (2 * (M₀ ^ (1 - θ) * M₁ ^ θ)) *
+          jInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top ha.ne) hb
+    _ = 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * (jInterpolationENorm C.ι₀ C.ι₁ θ q a).toReal := by
+        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hM]
+
 /-- The map `(C.A₀, C.A₁)_{θ,q;J} → (D.A₀, D.A₁)_{θ,q;J}` induced by a morphism of couples: the
 restriction of `T.sumMap`, bounded by `jInterpolationENorm_sumMap_le`. -/
 noncomputable def jInterpolationMap (T : C ⟶ D) :
     JInterpolationSpace C.ι₀ C.ι₁ θ q →L[𝕜] JInterpolationSpace D.ι₀ D.ι₁ θ q where
   toLinearMap := T.jInterpolationMapₗ θ q
-  cont := sorry
+  cont := by
+    have h₀ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₀
+    have h₁ := QuasinormedAddCommGroup.opQuasiNorm_nonneg T.f₁
+    exact QuasinormedAddCommGroup.continuous_of_bound (T.jInterpolationMapₗ θ q).toAddMonoidHom
+      _ (T.norm_jInterpolationMapₗ_le θ q (by linarith) (by linarith)
+        (le_add_of_nonneg_right zero_le_one) (le_add_of_nonneg_right zero_le_one))
 
 theorem toSum_comp_jInterpolationMap (T : C ⟶ D) :
     (JInterpolationSpace.toSum D.ι₀ D.ι₁ θ q).comp (T.jInterpolationMap θ q) =

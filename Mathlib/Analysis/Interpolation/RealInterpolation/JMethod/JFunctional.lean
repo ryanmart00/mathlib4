@@ -108,7 +108,38 @@ theorem InterpolationCouple.jFunctional_add_le (t : ℝ) (a b : InterpolationCou
         (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) *
         (InterpolationCouple.JFunctional ι₀ ι₁ t a +
           InterpolationCouple.JFunctional ι₀ ι₁ t b) := by
-  sorry
+  set C := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁))
+  have hC₀ : QuasinormedAddCommGroup.quasiTriangleConst (E := A₀) ≤ C := le_max_left _ _
+  have hC₁ : QuasinormedAddCommGroup.quasiTriangleConst (E := A₁) ≤ C := le_max_right _ _
+  have hC : 0 ≤ C :=
+    zero_le_one.trans (hC₀.trans' QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  have hJa := InterpolationCouple.jFunctional_nonneg ι₀ ι₁ t a
+  have hJb := InterpolationCouple.jFunctional_nonneg ι₀ ι₁ t b
+  unfold InterpolationCouple.JFunctional at hJa hJb ⊢
+  rw [Submodule.coe_add, Prod.fst_add, Prod.snd_add]
+  have hn₀ : 0 ≤ ‖(a : A₀ × A₁).1‖ + ‖(b : A₀ × A₁).1‖ :=
+    add_nonneg (QuasinormedAddCommGroup.norm_nonneg _) (QuasinormedAddCommGroup.norm_nonneg _)
+  have hn₁ : 0 ≤ ‖(a : A₀ × A₁).2‖ + ‖(b : A₀ × A₁).2‖ :=
+    add_nonneg (QuasinormedAddCommGroup.norm_nonneg _) (QuasinormedAddCommGroup.norm_nonneg _)
+  refine max_le ?_ ?_
+  · calc ‖(a : A₀ × A₁).1 + (b : A₀ × A₁).1‖
+        ≤ QuasinormedAddCommGroup.quasiTriangleConst (E := A₀) *
+            (‖(a : A₀ × A₁).1‖ + ‖(b : A₀ × A₁).1‖) :=
+          QuasinormedAddCommGroup.norm_add_le _ _
+      _ ≤ C * (‖(a : A₀ × A₁).1‖ + ‖(b : A₀ × A₁).1‖) := mul_le_mul_of_nonneg_right hC₀ hn₀
+      _ ≤ _ := mul_le_mul_of_nonneg_left (add_le_add (le_max_left _ _) (le_max_left _ _)) hC
+  · rcases le_or_gt 0 t with ht | ht
+    · calc t * ‖(a : A₀ × A₁).2 + (b : A₀ × A₁).2‖
+          ≤ t * (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁) *
+              (‖(a : A₀ × A₁).2‖ + ‖(b : A₀ × A₁).2‖)) :=
+            mul_le_mul_of_nonneg_left (QuasinormedAddCommGroup.norm_add_le _ _) ht
+        _ ≤ t * (C * (‖(a : A₀ × A₁).2‖ + ‖(b : A₀ × A₁).2‖)) :=
+            mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hC₁ hn₁) ht
+        _ = C * (t * ‖(a : A₀ × A₁).2‖ + t * ‖(b : A₀ × A₁).2‖) := by ring
+        _ ≤ _ := mul_le_mul_of_nonneg_left (add_le_add (le_max_right _ _) (le_max_right _ _)) hC
+    · exact (mul_nonpos_iff.mpr (Or.inr ⟨ht.le, QuasinormedAddCommGroup.norm_nonneg _⟩)).trans
+        (mul_nonneg hC (add_nonneg hJa hJb))
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The basic K–J inequality: for `b ∈ A₀ ∩ A₁`, `s > 0` and `t ≥ 0`,

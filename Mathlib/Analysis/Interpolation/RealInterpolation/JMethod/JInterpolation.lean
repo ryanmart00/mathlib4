@@ -9,12 +9,11 @@ import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
 import Mathlib.MeasureTheory.Function.LpSeminorm.SMul
 import Mathlib.MeasureTheory.Function.LpSeminorm.TriangleInequality
+import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.Count
 
 /-!
 # Real interpolation spaces via the discrete J-method
-
-DRAFT — statements only, awaiting review.
 
 The discrete J-method (Bergh–Löfström §3.10–3.11; the continuous version is Triebel §1.6.1).
 For an interpolation couple `{A₀, A₁}`, `θ ∈ ℝ` and `0 < q ≤ ∞`, a *representation* of
@@ -317,6 +316,7 @@ theorem jInterpolationENorm_eq_zero_iff (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 
 
 end InterpolationCouple
 
+open InterpolationCouple in
 /-- A morphism of couples `T` with `opQuasiNorm T.f₀ ≤ M₀`, `opQuasiNorm T.f₁ ≤ M₁` satisfies
 `‖T a‖_J ≤ 2 M₀^{1-θ} M₁^θ ‖a‖_J` (`θ ≥ 0`). Proof: map a representation by `T.meetMap`, use
 `Hom.jFunctional_meetMap_le`, and shift the index by the `k ∈ ℤ` with
@@ -330,4 +330,81 @@ theorem InterpolationCat.Hom.jInterpolationENorm_sumMap_le {C D : InterpolationC
     InterpolationCouple.jInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap a) ≤
       ENNReal.ofReal (2 * (M₀ ^ (1 - θ) * M₁ ^ θ)) *
         InterpolationCouple.jInterpolationENorm C.ι₀ C.ι₁ θ q a := by
-  sorry
+  set lam := M₁ / M₀ with hlam_def
+  have hlam : 0 < lam := div_pos hM₁ hM₀
+  obtain ⟨k, hk1, hk2⟩ := exists_mem_Ico_zpow hlam one_lt_two
+  set K := 2 * (M₀ ^ (1 - θ) * M₁ ^ θ)
+  have hK : 0 < K := by positivity
+  have hK0 : ENNReal.ofReal K ≠ 0 := (ENNReal.ofReal_pos.mpr hK).ne'
+  -- the induced maps commute with `meetToSum`
+  have hcomm (b : meet C.ι₀ C.ι₁) :
+      meetToSum D.ι₀ D.ι₁ (T.meetMap b) = T.sumMap (meetToSum C.ι₀ C.ι₁ b) := by
+    obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+    rw [Hom.meetMap_apply, meetToSum_apply, meetToSum_apply, inl₀_eq_mk, inl₀_eq_mk,
+      Hom.sumMap_mk, map_zero]
+  -- pointwise comparison of the weighted sequences, with the index shifted by `k`
+  have hpt (u : ℤ → meet C.ι₀ C.ι₁) (ν : ℤ) :
+      ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional D.ι₀ D.ι₁ (2 ^ ν) (T.meetMap (u (ν + k))) ≤
+        K * (((2 : ℝ) ^ (ν + k)) ^ (-θ) * JFunctional C.ι₀ C.ι₁ (2 ^ (ν + k)) (u (ν + k))) := by
+    have h2ν : 0 < (2 : ℝ) ^ ν := zpow_pos two_pos ν
+    have h2k : 0 < (2 : ℝ) ^ k := zpow_pos two_pos k
+    have hJ1 := T.jFunctional_meetMap_le (2 ^ ν) M₀ M₁ hM₀ h₀ h₁ (u (ν + k))
+    have hJ2 := jFunctional_le_max_div_mul C.ι₀ C.ι₁ (zpow_pos two_pos (ν + k))
+      (t := 2 ^ ν * M₁ / M₀) (u (ν + k))
+    have hratio : max 1 ((2 : ℝ) ^ ν * M₁ / M₀ / 2 ^ (ν + k)) ≤ 2 := by
+      have heq : (2 : ℝ) ^ ν * M₁ / M₀ / 2 ^ (ν + k) = lam / 2 ^ k := by
+        rw [zpow_add₀ two_ne_zero, hlam_def]
+        field_simp
+      rw [heq, max_le_iff, div_le_iff₀ h2k]
+      rw [zpow_add_one₀ two_ne_zero] at hk2
+      exact ⟨one_le_two, by linarith⟩
+    have hJC0 := jFunctional_nonneg C.ι₀ C.ι₁ (2 ^ (ν + k)) (u (ν + k))
+    have hsplit : ((2 : ℝ) ^ ν) ^ (-θ) = ((2 : ℝ) ^ k) ^ θ * ((2 : ℝ) ^ (ν + k)) ^ (-θ) := by
+      have hkθ : ((2 : ℝ) ^ k) ^ θ ≠ 0 := (Real.rpow_pos_of_pos h2k θ).ne'
+      rw [zpow_add₀ two_ne_zero, Real.mul_rpow h2ν.le h2k.le, Real.rpow_neg h2k.le]
+      field_simp
+    have hM : M₀ * lam ^ θ = M₀ ^ (1 - θ) * M₁ ^ θ := by
+      rw [Real.div_rpow hM₁.le hM₀.le, Real.rpow_sub hM₀, Real.rpow_one]
+      field_simp
+    calc ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional D.ι₀ D.ι₁ (2 ^ ν) (T.meetMap (u (ν + k)))
+        ≤ ((2 : ℝ) ^ ν) ^ (-θ) * (M₀ * JFunctional C.ι₀ C.ι₁ (2 ^ ν * M₁ / M₀) (u (ν + k))) :=
+          mul_le_mul_of_nonneg_left hJ1 (by positivity)
+      _ ≤ ((2 : ℝ) ^ ν) ^ (-θ) *
+            (M₀ * (2 * JFunctional C.ι₀ C.ι₁ (2 ^ (ν + k)) (u (ν + k)))) :=
+          mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left
+            (hJ2.trans (mul_le_mul_of_nonneg_right hratio hJC0)) hM₀.le) (by positivity)
+      _ = 2 * (M₀ * ((2 : ℝ) ^ k) ^ θ) *
+            (((2 : ℝ) ^ (ν + k)) ^ (-θ) * JFunctional C.ι₀ C.ι₁ (2 ^ (ν + k)) (u (ν + k))) := by
+          rw [hsplit]
+          ring
+      _ ≤ 2 * (M₀ * lam ^ θ) *
+            (((2 : ℝ) ^ (ν + k)) ^ (-θ) * JFunctional C.ι₀ C.ι₁ (2 ^ (ν + k)) (u (ν + k))) :=
+          mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left
+            (mul_le_mul_of_nonneg_left (Real.rpow_le_rpow h2k.le hk1 hθ) hM₀.le) zero_le_two)
+            (mul_nonneg (by positivity) hJC0)
+      _ = _ := by rw [hM]
+  conv_rhs => rw [jInterpolationENorm, ENNReal.mul_iInf_of_ne hK0 ENNReal.ofReal_ne_top]
+  refine le_iInf fun u => ?_
+  rw [ENNReal.mul_iInf_of_ne hK0 ENNReal.ofReal_ne_top]
+  refine le_iInf fun hu => ?_
+  have h1 : HasSum (fun μ => T.sumMap (meetToSum C.ι₀ C.ι₁ (u μ))) (T.sumMap a) :=
+    hu.map T.sumMap T.sumMap.continuous
+  have h2 := (Equiv.addRight k).hasSum_iff.mpr h1
+  simp only [Function.comp_def, Equiv.coe_addRight] at h2
+  have hw : HasSum (fun ν => meetToSum D.ι₀ D.ι₁ (T.meetMap (u (ν + k)))) (T.sumMap a) := by
+    rw [funext fun ν => hcomm (u (ν + k))]
+    exact h2
+  refine (jInterpolationENorm_le D.ι₀ D.ι₁ θ q _ hw).trans ?_
+  rw [jSequenceENorm_eq, jSequenceENorm_eq]
+  set gC := fun μ : ℤ => ((2 : ℝ) ^ μ) ^ (-θ) * JFunctional C.ι₀ C.ι₁ (2 ^ μ) (u μ)
+  calc eLpNorm (fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) *
+        JFunctional D.ι₀ D.ι₁ (2 ^ ν) (T.meetMap (u (ν + k)))) q Measure.count
+      ≤ eLpNorm (K • (gC ∘ fun ν => ν + k)) q Measure.count := by
+        refine eLpNorm_mono_real Measurable.of_discrete.aestronglyMeasurable fun ν => ?_
+        rw [Real.norm_of_nonneg (mul_nonneg (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _)
+          (jFunctional_nonneg D.ι₀ D.ι₁ _ _))]
+        exact hpt u ν
+    _ = ‖K‖ₑ * eLpNorm (gC ∘ fun ν => ν + k) q Measure.count := eLpNorm_const_smul _ _ _ _
+    _ = ENNReal.ofReal K * eLpNorm gC q Measure.count := by
+        rw [Real.enorm_of_nonneg hK.le, eLpNorm_comp_measurePreserving
+          Measurable.of_discrete.aestronglyMeasurable (measurePreserving_add_right Measure.count k)]

@@ -199,8 +199,19 @@ variable (θ q) in
 `jInterpolationENorm_meetToSum_le`. -/
 noncomputable def fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     meet ι₀ ι₁ →L[𝕜] JInterpolationSpace ι₀ ι₁ θ q where
-  toLinearMap := (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict _ sorry
-  cont := sorry
+  toLinearMap := (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict _ fun b =>
+    (jInterpolationENorm_meetToSum_le ι₀ ι₁ θ q b).trans_lt ENNReal.ofReal_lt_top
+  cont := by
+    refine QuasinormedAddCommGroup.continuous_of_bound (E := meet ι₀ ι₁)
+      (F := JInterpolationSpace ι₀ ι₁ θ q)
+      (LinearMap.toAddMonoidHom <| (meetToSum ι₀ ι₁ : meet ι₀ ι₁ →ₗ[𝕜] sum ι₀ ι₁).codRestrict
+        (jInterpolationSubmodule ι₀ ι₁ θ q) fun b =>
+          (jInterpolationENorm_meetToSum_le ι₀ ι₁ θ q b).trans_lt ENNReal.ofReal_lt_top)
+      1 fun b => ?_
+    change (jInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b)).toReal ≤ 1 * ‖b‖
+    rw [one_mul]
+    exact ENNReal.toReal_le_of_le_ofReal (QuasinormedAddCommGroup.norm_nonneg b)
+      (jInterpolationENorm_meetToSum_le ι₀ ι₁ θ q b)
 
 theorem toSum_comp_fromMeet [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     (toSum ι₀ ι₁ θ q).comp (fromMeet ι₀ ι₁ θ q) = meetToSum ι₀ ι₁ := by

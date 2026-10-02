@@ -5,6 +5,7 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.RealInterpolation.JMethod.JFunctional
 import Mathlib.Analysis.Normed.Quasi.AokiRolewicz
+import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
 import Mathlib.MeasureTheory.Function.LpSeminorm.SMul
 import Mathlib.MeasureTheory.Measure.Count
 
@@ -127,7 +128,22 @@ theorem exists_jInterpolationENorm_add_le (θ : ℝ) (q : ℝ≥0∞) :
 `‖b‖_J ≤ J(1, b) = ‖b‖`. -/
 theorem jInterpolationENorm_meetToSum_le (θ : ℝ) (q : ℝ≥0∞) (b : meet ι₀ ι₁) :
     jInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b) ≤ ENNReal.ofReal ‖b‖ := by
-  sorry
+  set u : ℤ → meet ι₀ ι₁ := Pi.single 0 b with hu_def
+  have hu : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) (meetToSum ι₀ ι₁ b) := by
+    simpa [hu_def] using hasSum_single (0 : ℤ)
+      (f := fun ν => meetToSum ι₀ ι₁ (u ν)) fun ν hν => by simp [hu_def, hν]
+  refine (jInterpolationENorm_le ι₀ ι₁ θ q _ hu).trans ?_
+  have hg : (fun ν : ℤ => ENNReal.ofReal (((2 : ℝ) ^ ν) ^ (-θ) *
+      JFunctional ι₀ ι₁ (2 ^ ν) (u ν))) =
+        ({0} : Set ℤ).indicator fun _ => ENNReal.ofReal ‖b‖ := by
+    funext ν
+    by_cases hν : ν = 0
+    · subst hν
+      simp [hu_def, jFunctional_one]
+    · simp [hu_def, hν, jFunctional_zero]
+  rw [jSequenceENorm, hg]
+  refine (eLpNorm_indicator_const_le _ q (measurableSet_singleton 0).nullMeasurableSet).trans ?_
+  simp
 
 /-- The "`⊂ A₀ + A₁`" half of the sandwich: `c ‖a‖_{A₀ + A₁} ≤ ‖a‖_J` for some `c > 0`. For a
 representation, `‖uᵥ‖_{A₀+A₁} ≤ min(1, 2^{-ν}) J(2^ν, uᵥ) ≤ min(2^{νθ}, 2^{ν(θ-1)}) ‖x‖_{ℓ^q}`

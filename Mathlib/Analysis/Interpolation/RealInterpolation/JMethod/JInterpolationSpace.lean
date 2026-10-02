@@ -290,7 +290,10 @@ theorem jInterpolationMap_id (C : InterpolationCat 𝕜) :
 theorem jInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
     (φ ≫ ψ).jInterpolationMap θ q =
       (ψ.jInterpolationMap θ q).comp (φ.jInterpolationMap θ q) := by
-  sorry
+  refine ContinuousLinearMap.ext fun a => Subtype.ext ?_
+  change (φ ≫ ψ).sumMap (a : sum C.ι₀ C.ι₁) = ψ.sumMap (φ.sumMap (a : sum C.ι₀ C.ι₁))
+  rw [Hom.sumMap_comp]
+  rfl
 
 /-- The discrete J-method is of type `θ` up to the factor `2`: if `‖T.f₀‖ ≤ M₀` and
 `‖T.f₁‖ ≤ M₁`, the induced map has quasinorm at most `2 M₀^{1-θ} M₁^θ`. -/

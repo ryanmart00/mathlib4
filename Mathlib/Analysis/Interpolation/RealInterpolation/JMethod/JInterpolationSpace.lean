@@ -46,9 +46,21 @@ namespace InterpolationCouple
 /-- The submodule of `A₀ + A₁` of elements of finite discrete J-quasinorm. -/
 noncomputable def jInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submodule 𝕜 (sum ι₀ ι₁) where
   carrier := {a | jInterpolationENorm ι₀ ι₁ θ q a < ⊤}
-  zero_mem' := sorry
-  add_mem' := sorry
-  smul_mem' := sorry
+  zero_mem' := by
+    change jInterpolationENorm ι₀ ι₁ θ q 0 < ⊤
+    rw [jInterpolationENorm_zero]
+    exact ENNReal.zero_lt_top
+  add_mem' := by
+    intro a b (ha : jInterpolationENorm ι₀ ι₁ θ q a < ⊤) (hb : jInterpolationENorm ι₀ ι₁ θ q b < ⊤)
+    change jInterpolationENorm ι₀ ι₁ θ q (a + b) < ⊤
+    obtain ⟨C, -, hC⟩ := exists_jInterpolationENorm_add_le ι₀ ι₁ θ q
+    exact (hC a b).trans_lt
+      (ENNReal.mul_lt_top ENNReal.ofReal_lt_top (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
+  smul_mem' := by
+    intro c a (ha : jInterpolationENorm ι₀ ι₁ θ q a < ⊤)
+    change jInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤
+    rw [jInterpolationENorm_smul]
+    exact ENNReal.mul_lt_top enorm_lt_top ha
 
 /-- `(A₀, A₁)_{θ,q;J}`: the elements of `A₀ + A₁` of finite discrete J-quasinorm. A type synonym
 for `jInterpolationSubmodule`, for the same reason as `RealInterpolationSpace` (the coerced

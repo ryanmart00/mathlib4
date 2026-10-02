@@ -5,6 +5,7 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.RealInterpolation.JMethod.JFunctional
 import Mathlib.Analysis.Normed.Quasi.AokiRolewicz
+import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
 import Mathlib.MeasureTheory.Function.LpSeminorm.SMul
 import Mathlib.MeasureTheory.Function.LpSeminorm.TriangleInequality
@@ -195,6 +196,31 @@ theorem jInterpolationENorm_meetToSum_le (θ : ℝ) (q : ℝ≥0∞) (b : meet �
   refine (eLpNorm_indicator_const_le _ q (measurableSet_singleton 0).nullMeasurableSet).trans ?_
   simp
 
+/-- Two-sided geometric series over `ℤ`. -/
+private theorem summable_pow_natAbs {r : ℝ} (h0 : 0 ≤ r) (h1 : r < 1) :
+    Summable fun ν : ℤ => r ^ ν.natAbs :=
+  Summable.of_nat_of_neg (by simpa using summable_geometric_of_lt_one h0 h1)
+    (by simpa using summable_geometric_of_lt_one h0 h1)
+
+/-- The weight comparison behind the sum bound: with `r = 2^ν`,
+`min(1, r⁻¹) r^θ = min(r^θ, r^{θ-1}) ≤ (2^{-δ})^{|ν|}` whenever `δ ≤ θ` and `δ ≤ 1 - θ`. -/
+private theorem min_one_inv_mul_rpow_le {θ δ : ℝ} (hδθ : δ ≤ θ) (hδ1 : δ ≤ 1 - θ) (ν : ℤ) :
+    min 1 ((2 : ℝ) ^ ν)⁻¹ * ((2 : ℝ) ^ ν) ^ θ ≤ ((2 : ℝ) ^ (-δ)) ^ ν.natAbs := by
+  have hr : 0 < (2 : ℝ) ^ ν := zpow_pos two_pos ν
+  rw [Real.rpow_pow_comm zero_le_two]
+  rcases le_or_gt 0 ν with hν | hν
+  · have h1 : 1 ≤ (2 : ℝ) ^ ν := one_le_zpow₀ one_le_two hν
+    have heq : (2 : ℝ) ^ ν.natAbs = (2 : ℝ) ^ ν := by
+      rw [← zpow_natCast, Int.natAbs_of_nonneg hν]
+    rw [heq, min_eq_right (inv_le_one_of_one_le₀ h1), ← Real.rpow_neg_one, ← Real.rpow_add hr]
+    exact Real.rpow_le_rpow_of_exponent_le h1 (by linarith)
+  · have h1 : (2 : ℝ) ^ ν ≤ 1 := zpow_le_one_of_nonpos₀ one_le_two hν.le
+    have heq : (2 : ℝ) ^ ν.natAbs = ((2 : ℝ) ^ ν)⁻¹ := by
+      rw [← zpow_natCast, Int.ofNat_natAbs_of_nonpos hν.le, zpow_neg]
+    rw [heq, min_eq_left ((one_le_inv₀ hr).mpr h1), one_mul, Real.inv_rpow hr.le,
+      Real.rpow_neg hr.le, inv_inv]
+    exact Real.rpow_le_rpow_of_exponent_ge hr h1 hδθ
+
 /-- The "`⊂ A₀ + A₁`" half of the sandwich: `c ‖a‖_{A₀ + A₁} ≤ ‖a‖_J` for some `c > 0`. For a
 representation, `‖uᵥ‖_{A₀+A₁} ≤ min(1, 2^{-ν}) J(2^ν, uᵥ) ≤ min(2^{νθ}, 2^{ν(θ-1)}) ‖x‖_{ℓ^q}`
 (`x` the weighted sequence), and Aoki–Rolewicz in `A₀ + A₁` sums the geometric weights. -/
@@ -202,7 +228,83 @@ theorem exists_ofReal_mul_norm_le_jInterpolationENorm (θ : ℝ) (hθ0 : 0 < θ)
     {q : ℝ≥0∞} (hq : 0 < q) :
     ∃ c : ℝ, 0 < c ∧ ∀ a : sum ι₀ ι₁,
       ENNReal.ofReal (c * ‖a‖) ≤ jInterpolationENorm ι₀ ι₁ θ q a := by
-  sorry
+  set ρ := QuasinormedAddCommGroup.aokiRolewiczExponent (sum ι₀ ι₁)
+  have hρ : 0 < ρ := QuasinormedAddCommGroup.aokiRolewiczExponent_pos _
+  set δ := min θ (1 - θ)
+  have hδ : 0 < δ := lt_min hθ0 (by linarith)
+  set r := ((2 : ℝ) ^ (-δ)) ^ ρ
+  have hr0 : 0 ≤ r := by positivity
+  have hr1 : r < 1 := Real.rpow_lt_one (by positivity)
+    (Real.rpow_lt_one_of_one_lt_of_neg one_lt_two (neg_neg_of_pos hδ)) hρ
+  have hW := summable_pow_natAbs hr0 hr1
+  set W := ∑' ν : ℤ, r ^ ν.natAbs
+  have hW0 : 0 ≤ W := tsum_nonneg fun _ => pow_nonneg hr0 _
+  set B := (4 : ℝ) ^ ρ⁻¹
+  have hB : 0 ≤ B := by positivity
+  set M := B * W ^ ρ⁻¹ + 1
+  have hM : 0 < M := add_pos_of_nonneg_of_pos (mul_nonneg hB (Real.rpow_nonneg hW0 _)) one_pos
+  refine ⟨M⁻¹, inv_pos.mpr hM, fun a => le_iInf₂ fun u hu => ?_⟩
+  rw [jSequenceENorm_eq]
+  set g := fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν)
+  set s := eLpNorm g q Measure.count
+  rcases eq_or_ne s ⊤ with hs | hs
+  · rw [hs]
+    exact le_top
+  set S := s.toReal
+  have hS : 0 ≤ S := ENNReal.toReal_nonneg
+  have hgnn (ν : ℤ) : 0 ≤ g ν :=
+    mul_nonneg (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _) (jFunctional_nonneg ι₀ ι₁ _ _)
+  -- each weighted term is at most the `ℓ^q` norm
+  have hgS (ν : ℤ) : g ν ≤ S := by
+    have h := enorm_le_eLpNorm_count g ν hq.ne'
+    rw [Real.enorm_of_nonneg (hgnn ν)] at h
+    exact (ENNReal.ofReal_le_iff_le_toReal hs).mp h
+  -- termwise bound in `A₀ + A₁`, via the K–J inequality at `t = 1`
+  have hterm (ν : ℤ) : ‖meetToSum ι₀ ι₁ (u ν)‖ ≤ ((2 : ℝ) ^ (-δ)) ^ ν.natAbs * S := by
+    have hk := min_mul_norm_le_kFunctional ι₀ ι₁ 1 zero_le_one (meetToSum ι₀ ι₁ (u ν))
+    have hkj := kFunctional_meetToSum_le_jFunctional ι₀ ι₁ (zpow_pos two_pos ν) zero_le_one (u ν)
+    rw [min_self, one_mul] at hk
+    have hJ : JFunctional ι₀ ι₁ (2 ^ ν) (u ν) = ((2 : ℝ) ^ ν) ^ θ * g ν := by
+      simp only [g]
+      rw [← mul_assoc, ← Real.rpow_add (zpow_pos two_pos ν), add_neg_cancel, Real.rpow_zero,
+        one_mul]
+    calc ‖meetToSum ι₀ ι₁ (u ν)‖
+        ≤ min 1 (1 / (2 : ℝ) ^ ν) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν) := hk.trans hkj
+      _ = min 1 ((2 : ℝ) ^ ν)⁻¹ * ((2 : ℝ) ^ ν) ^ θ * g ν := by rw [hJ, one_div]; ring
+      _ ≤ ((2 : ℝ) ^ (-δ)) ^ ν.natAbs * S :=
+          mul_le_mul (min_one_inv_mul_rpow_le (min_le_left _ _) (min_le_right _ _) ν) (hgS ν)
+            (hgnn ν) (by positivity)
+  have hterm' (ν : ℤ) : ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ ≤ r ^ ν.natAbs * S ^ ρ := by
+    calc ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ ≤ (((2 : ℝ) ^ (-δ)) ^ ν.natAbs * S) ^ ρ :=
+          Real.rpow_le_rpow (QuasinormedAddCommGroup.norm_nonneg _) (hterm ν) hρ.le
+      _ = r ^ ν.natAbs * S ^ ρ := by
+          rw [Real.mul_rpow (by positivity) hS,
+            ← Real.rpow_pow_comm (x := (2 : ℝ) ^ (-δ)) (by positivity)]
+  have hsumm : Summable fun ν => ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ :=
+    Summable.of_nonneg_of_le (fun _ => Real.rpow_nonneg (QuasinormedAddCommGroup.norm_nonneg _) _)
+      hterm' (hW.mul_right _)
+  -- Aoki–Rolewicz in `A₀ + A₁`
+  have hA := QuasinormedAddCommGroup.norm_tsum_le_rpow hsumm
+  rw [hu.tsum_eq] at hA
+  have hsum_le : ∑' ν, ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ ≤ W * S ^ ρ := by
+    rw [← tsum_mul_right]
+    exact hsumm.tsum_le_tsum hterm' (hW.mul_right _)
+  have hpow : (∑' ν, ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ) ^ ρ⁻¹ ≤ W ^ ρ⁻¹ * S := by
+    calc (∑' ν, ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ) ^ ρ⁻¹ ≤ (W * S ^ ρ) ^ ρ⁻¹ :=
+          Real.rpow_le_rpow (tsum_nonneg fun _ =>
+            Real.rpow_nonneg (QuasinormedAddCommGroup.norm_nonneg _) _) hsum_le
+            (inv_pos.mpr hρ).le
+      _ = W ^ ρ⁻¹ * S := by
+          rw [Real.mul_rpow hW0 (Real.rpow_nonneg hS _), Real.rpow_rpow_inv hS hρ.ne']
+  have hnorm : ‖a‖ ≤ M * S :=
+    calc ‖a‖ ≤ B * (∑' ν, ‖meetToSum ι₀ ι₁ (u ν)‖ ^ ρ) ^ ρ⁻¹ := hA
+      _ ≤ B * (W ^ ρ⁻¹ * S) := mul_le_mul_of_nonneg_left hpow hB
+      _ ≤ M * S := by
+          rw [add_mul, one_mul, mul_assoc]
+          linarith
+  calc ENNReal.ofReal (M⁻¹ * ‖a‖) ≤ ENNReal.ofReal S :=
+        ENNReal.ofReal_le_ofReal (by rw [inv_mul_le_iff₀ hM]; exact hnorm)
+    _ = s := ENNReal.ofReal_toReal hs
 
 theorem jInterpolationENorm_eq_zero_iff (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
     (hq : 0 < q) (a : sum ι₀ ι₁) :

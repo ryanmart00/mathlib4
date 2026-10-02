@@ -49,8 +49,8 @@ noncomputable def InterpolationCouple.JFunctional (t : ℝ) (b : InterpolationCo
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 theorem InterpolationCouple.jFunctional_nonneg (t : ℝ) (b : InterpolationCouple.meet ι₀ ι₁) :
-    0 ≤ InterpolationCouple.JFunctional ι₀ ι₁ t b := by
-  sorry
+    0 ≤ InterpolationCouple.JFunctional ι₀ ι₁ t b :=
+  le_max_of_le_left (QuasinormedAddCommGroup.norm_nonneg _)
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `J(1, ·)` is the meet's own quasi-norm (the max-norm of `A₀ × A₁`, restricted). -/

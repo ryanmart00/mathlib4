@@ -65,11 +65,23 @@ noncomputable def jInterpolationENorm (θ : ℝ) (q : ℝ≥0∞) (a : sum ι₀
   ⨅ (u : ℤ → meet ι₀ ι₁) (_ : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) a),
     jSequenceENorm ι₀ ι₁ θ q u
 
+omit [T2Space 𝒜] in
+/-- `jSequenceENorm` is the `eLpNorm` of the corresponding nonnegative real sequence, so the
+real-valued `eLpNorm` API (scaling, quasi-triangle inequality) applies. -/
+private theorem jSequenceENorm_eq (θ : ℝ) (q : ℝ≥0∞) (u : ℤ → meet ι₀ ι₁) :
+    jSequenceENorm ι₀ ι₁ θ q u =
+      eLpNorm (fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν))
+        q Measure.count :=
+  eLpNorm_congr_enorm_ae Measurable.of_discrete.aestronglyMeasurable
+    Measurable.of_discrete.aestronglyMeasurable (Filter.Eventually.of_forall fun ν => by
+      rw [enorm_eq_self, Real.enorm_of_nonneg (mul_nonneg
+        (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _) (jFunctional_nonneg ι₀ ι₁ _ _))])
+
 /-- Any representation bounds the J-quasinorm. -/
 theorem jInterpolationENorm_le (θ : ℝ) (q : ℝ≥0∞) {a : sum ι₀ ι₁} (u : ℤ → meet ι₀ ι₁)
     (hu : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) a) :
-    jInterpolationENorm ι₀ ι₁ θ q a ≤ jSequenceENorm ι₀ ι₁ θ q u := by
-  sorry
+    jInterpolationENorm ι₀ ι₁ θ q a ≤ jSequenceENorm ι₀ ι₁ θ q u :=
+  iInf₂_le u hu
 
 theorem jInterpolationENorm_zero (θ : ℝ) (q : ℝ≥0∞) :
     jInterpolationENorm ι₀ ι₁ θ q 0 = 0 := by

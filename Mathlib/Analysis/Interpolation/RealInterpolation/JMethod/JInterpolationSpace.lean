@@ -173,7 +173,18 @@ variable (θ q) in
 noncomputable def toSum [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     JInterpolationSpace ι₀ ι₁ θ q →L[𝕜] sum ι₀ ι₁ where
   toLinearMap := (jInterpolationSubmodule ι₀ ι₁ θ q).subtype
-  cont := sorry
+  cont := by
+    obtain ⟨c, hc, hle⟩ := exists_ofReal_mul_norm_le_jInterpolationENorm ι₀ ι₁ θ
+      (Fact.out : 0 < θ) (Fact.out : θ < 1) (Fact.out : 0 < q)
+    refine QuasinormedAddCommGroup.continuous_of_bound (E := JInterpolationSpace ι₀ ι₁ θ q)
+      (F := sum ι₀ ι₁) (jInterpolationSubmodule ι₀ ι₁ θ q).subtype.toAddMonoidHom c⁻¹
+      fun a => ?_
+    have ha : jInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+    have h := ENNReal.toReal_mono ha.ne (hle (a : sum ι₀ ι₁))
+    rw [ENNReal.toReal_ofReal (mul_nonneg hc.le (QuasinormedAddCommGroup.norm_nonneg _))] at h
+    change ‖(a : sum ι₀ ι₁)‖ ≤ c⁻¹ * (jInterpolationENorm ι₀ ι₁ θ q a).toReal
+    rw [inv_mul_eq_div, le_div_iff₀ hc, mul_comm]
+    exact h
 
 theorem toSum_apply [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
     (a : JInterpolationSpace ι₀ ι₁ θ q) : toSum ι₀ ι₁ θ q a = (a : sum ι₀ ι₁) := by

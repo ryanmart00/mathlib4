@@ -5,7 +5,7 @@ Authors: Ryan Martinez
 -/
 import Mathlib.Analysis.Interpolation.RealInterpolation.JMethod.JFunctional
 import Mathlib.Analysis.Normed.Quasi.AokiRolewicz
-import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
+import Mathlib.MeasureTheory.Function.LpSeminorm.SMul
 import Mathlib.MeasureTheory.Measure.Count
 
 /-!
@@ -91,7 +91,29 @@ theorem jInterpolationENorm_zero (θ : ℝ) (q : ℝ≥0∞) :
 
 theorem jInterpolationENorm_smul (θ : ℝ) (q : ℝ≥0∞) (c : 𝕜) (a : sum ι₀ ι₁) :
     jInterpolationENorm ι₀ ι₁ θ q (c • a) = ‖c‖ₑ * jInterpolationENorm ι₀ ι₁ θ q a := by
-  sorry
+  -- scaling a representation scales its sequence norm by `‖c‖ₑ`
+  have hseq (c : 𝕜) (u : ℤ → meet ι₀ ι₁) :
+      jSequenceENorm ι₀ ι₁ θ q (fun ν => c • u ν) = ‖c‖ₑ * jSequenceENorm ι₀ ι₁ θ q u := by
+    rw [jSequenceENorm_eq, jSequenceENorm_eq, ← enorm_norm c, ← eLpNorm_const_smul]
+    congr 1
+    funext ν
+    rw [Pi.smul_apply, jFunctional_smul, smul_eq_mul]
+    ring
+  have key (c : 𝕜) (a : sum ι₀ ι₁) :
+      jInterpolationENorm ι₀ ι₁ θ q (c • a) ≤ ‖c‖ₑ * jInterpolationENorm ι₀ ι₁ θ q a := by
+    rcases eq_or_ne c 0 with rfl | hc
+    · simp [jInterpolationENorm_zero]
+    have h0 : ‖c‖ₑ ≠ 0 := by simpa using hc
+    conv_rhs => rw [jInterpolationENorm, ENNReal.mul_iInf_of_ne h0 enorm_ne_top]
+    refine le_iInf fun u => ?_
+    rw [ENNReal.mul_iInf_of_ne h0 enorm_ne_top]
+    refine le_iInf fun hu => ?_
+    rw [← hseq]
+    exact jInterpolationENorm_le ι₀ ι₁ θ q _ (by simpa only [map_smul] using hu.const_smul c)
+  rcases eq_or_ne c 0 with rfl | hc
+  · simp [jInterpolationENorm_zero]
+  refine le_antisymm (key c a) (ENNReal.mul_le_of_le_div' ?_)
+  simpa [enorm_inv, hc, ENNReal.div_eq_inv_mul] using key c⁻¹ (c • a)
 
 /-- Quasi-triangle inequality for the J-quasinorm, with a real constant `C ≥ 1` (add the two
 representations termwise; combine `jFunctional_add_le` with the `ℓ^q` quasi-triangle inequality). -/

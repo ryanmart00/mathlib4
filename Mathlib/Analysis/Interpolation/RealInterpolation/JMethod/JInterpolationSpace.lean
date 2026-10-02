@@ -145,7 +145,15 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < θ)] [Fact (θ < 1
       toUniformSpace := hB.uniformSpace
       toIsTopologicalAddGroup := hB.isTopologicalAddGroup
       toIsUniformAddGroup := hB.isUniformAddGroup
-      nhds_zero_hasBasis := sorry }
+      nhds_zero_hasBasis := by
+        change (@nhds _ hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
+          fun ε : ℝ => {x : JInterpolationSpace ι₀ ι₁ θ q | ‖x‖ < ε}
+        rw [hB.nhds_eq (x₀ := 0), AddGroupFilterBasis.N_zero]
+        refine (FilterBasis.hasBasis hB.toFilterBasis).to_hasBasis' ?_ ?_
+        · rintro s ⟨ε, hε, rfl⟩
+          exact ⟨ε, hε, subset_rfl⟩
+        · rintro ε hε
+          exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩ }
 
 theorem norm_smul [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (c : 𝕜)
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖c • a‖ = ‖c‖ * ‖a‖ := by

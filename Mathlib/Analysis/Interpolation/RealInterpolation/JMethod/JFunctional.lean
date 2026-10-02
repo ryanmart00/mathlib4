@@ -93,7 +93,11 @@ theorem InterpolationCouple.jFunctional_smul (t : ℝ) (c : 𝕜)
     (b : InterpolationCouple.meet ι₀ ι₁) :
     InterpolationCouple.JFunctional ι₀ ι₁ t (c • b) =
       ‖c‖ * InterpolationCouple.JFunctional ι₀ ι₁ t b := by
-  sorry
+  unfold InterpolationCouple.JFunctional
+  rw [Submodule.coe_smul, Prod.smul_fst, Prod.smul_snd, QuasiNormedSpace.norm_smul,
+    QuasiNormedSpace.norm_smul, mul_max_of_nonneg _ _ (norm_nonneg c)]
+  congr 1
+  ring
 
 omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- Quasi-subadditivity: `J(t, a + b) ≤ C (J(t, a) + J(t, b))`, with `C` the larger of the two

@@ -377,6 +377,31 @@ theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 
             ENNReal.mul_rpow_of_nonneg _ _ hr', ← ENNReal.rpow_mul, ENNReal.toReal_inv,
             mul_inv_cancel₀ hr.ne', ENNReal.rpow_one, mul_comm]
 
+/-- Pointwise control of the K-functional by the `(θ,q)`-quasinorm: `t^{-θ} K(t,a) ≤ c ‖a‖_{θ,q}`
+for all `t > 0`. For `q = ∞` this is the definition (`c = 1`); for `q < ∞` it follows from
+monotonicity of `K(·,a)`, integrating `s^{-θ} K(s,a) ≥ s^{-θ} K(t,a)` over `s ≥ t` (giving
+`c = (θq)^{1/q}`). Needs `0 < θ`. -/
+theorem exists_ofReal_rpow_neg_mul_kFunctional_le {θ : ℝ} (hθ : 0 < θ) {q : ℝ≥0∞} (hq : 0 < q) :
+    ∃ c : ℝ≥0∞, c ≠ ⊤ ∧ ∀ (a : sum ι₀ ι₁) (t : ℝ), 0 < t →
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) ≤ c * realInterpolationENorm ι₀ ι₁ θ q a :=
+  sorry
+
+/-- An element of finite `(θ,q)`-quasinorm has `K(t,a) → 0` as `t → 0⁺` (since
+`K(t,a) ≲ t^θ ‖a‖_{θ,q}`). One of the two hypotheses of the fundamental lemma
+`exists_jFunctional_le_kFunctional`. -/
+theorem tendsto_kFunctional_nhdsGT_zero {θ : ℝ} (hθ : 0 < θ) {q : ℝ≥0∞} (hq : 0 < q)
+    {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
+    Tendsto (fun t => KFunctional ι₀ ι₁ t a) (𝓝[>] 0) (𝓝 0) :=
+  sorry
+
+/-- An element of finite `(θ,q)`-quasinorm has `K(t,a)/t → 0` as `t → ∞` (since
+`K(t,a)/t ≲ t^{θ-1} ‖a‖_{θ,q}`). The other hypothesis of the fundamental lemma
+`exists_jFunctional_le_kFunctional`. -/
+theorem tendsto_kFunctional_div_atTop {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
+    (hq : 0 < q) {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
+    Tendsto (fun t => KFunctional ι₀ ι₁ t a / t) atTop (𝓝 0) :=
+  sorry
+
 /-! ### The space -/
 
 /-- The submodule of `A₀ + A₁` of elements of finite `(θ,q)`-quasinorm. Defined for every `θ, q`

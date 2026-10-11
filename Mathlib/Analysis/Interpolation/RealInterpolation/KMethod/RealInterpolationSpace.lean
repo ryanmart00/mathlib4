@@ -451,13 +451,55 @@ theorem ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le (θ : ℝ)
           gcongr
           exact hpt u hu
 
+omit [T2Space 𝒜] in
+/-- The consequence of `ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le` used in
+Bergh–Löfström's proof of Theorem 3.3.1: `K(t,a) ≤ M t^θ` for an element of finite
+`(θ,q)`-quasinorm. -/
+private theorem exists_kFunctional_le_mul_rpow (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
+    {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
+    ∃ M : ℝ, ∀ t : ℝ, 0 < t → KFunctional ι₀ ι₁ t a ≤ M * t ^ θ := by
+  set c := realInterpolationConst θ q
+  have hc0 : c ≠ 0 := (realInterpolationConst_pos θ q).ne'
+  have h6 := fun t (ht : 0 < t) =>
+    ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le ι₀ ι₁ θ hq a ht
+  -- `K(t,a) = t^θ · (t^{-θ} K(t,a))`
+  have hsplit (t : ℝ) (ht : 0 < t) :
+      KFunctional ι₀ ι₁ t a = t ^ θ * (t ^ (-θ) * KFunctional ι₀ ι₁ t a) := by
+    rw [← mul_assoc, ← Real.rpow_add ht, add_neg_cancel, Real.rpow_zero, one_mul]
+  rcases eq_or_ne c ⊤ with hct | hct
+  · -- `c = ∞` (only possible for `θ ∉ (0,1)`): finiteness of `‖a‖_{θ,q}` forces `K(·,a) = 0`
+    refine ⟨0, fun t ht => ?_⟩
+    have h := h6 t ht
+    rw [show realInterpolationConst θ q = ⊤ from hct] at h
+    have h0 : ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) = 0 := by
+      by_contra hne
+      exact ha (top_le_iff.mp (ENNReal.mul_top hne ▸ h))
+    rw [ENNReal.ofReal_eq_zero] at h0
+    rw [hsplit t ht, zero_mul]
+    exact mul_nonpos_of_nonneg_of_nonpos (Real.rpow_nonneg ht.le _) h0
+  · refine ⟨(realInterpolationENorm ι₀ ι₁ θ q a / c).toReal, fun t ht => ?_⟩
+    have h := (ENNReal.le_div_iff_mul_le (Or.inl hc0) (Or.inl hct)).mpr (h6 t ht)
+    rw [ENNReal.ofReal_le_iff_le_toReal (ENNReal.div_ne_top ha hc0)] at h
+    rw [hsplit t ht, mul_comm _ (t ^ θ)]
+    exact mul_le_mul_of_nonneg_left h (Real.rpow_nonneg ht.le _)
+
+omit [T2Space 𝒜] in
 /-- An element of finite `(θ,q)`-quasinorm has `K(t,a) → 0` as `t → 0⁺` (since
 `K(t,a) ≲ t^θ ‖a‖_{θ,q}`). One of the two hypotheses of the fundamental lemma
 `exists_jFunctional_le_kFunctional`. -/
 theorem tendsto_kFunctional_nhdsGT_zero {θ : ℝ} (hθ : 0 < θ) {q : ℝ≥0∞} (hq : 0 < q)
     {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
-    Tendsto (fun t => KFunctional ι₀ ι₁ t a) (𝓝[>] 0) (𝓝 0) :=
-  sorry
+    Tendsto (fun t => KFunctional ι₀ ι₁ t a) (𝓝[>] 0) (𝓝 0) := by
+  -- B–L (proof of Theorem 3.3.1): by (6), `K(t,a) ≤ M t^θ → 0` as `t → 0`.
+  obtain ⟨M, hM⟩ := exists_kFunctional_le_mul_rpow ι₀ ι₁ θ hq ha
+  have hlim : Tendsto (fun t : ℝ => M * t ^ θ) (𝓝[>] 0) (𝓝 0) := by
+    have h := ((Real.continuousAt_rpow_const 0 θ (Or.inr hθ.le)).tendsto.const_mul M).mono_left
+      (nhdsWithin_le_nhds (s := Ioi 0))
+    rwa [Real.zero_rpow hθ.ne', mul_zero] at h
+  refine squeeze_zero' ?_ ?_ hlim
+  · filter_upwards [self_mem_nhdsWithin] with t ht using
+      kFunctional_nonneg ι₀ ι₁ t (le_of_lt ht) a
+  · filter_upwards [self_mem_nhdsWithin] with t ht using hM t ht
 
 /-- An element of finite `(θ,q)`-quasinorm has `K(t,a)/t → 0` as `t → ∞` (since
 `K(t,a)/t ≲ t^{θ-1} ‖a‖_{θ,q}`). The other hypothesis of the fundamental lemma

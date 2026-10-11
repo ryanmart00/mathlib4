@@ -290,17 +290,28 @@ theorem InterpolationCouple.min_one_div_mul_kFunctional_le {s t : ℝ} (hs : 0 <
     exact min_le_right _ _
   nlinarith [QuasinormedAddCommGroup.norm_nonneg a₀, QuasinormedAddCommGroup.norm_nonneg a₁]
 
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- Triebel's Lemma (§1.3.1): `K(t,a)` is concave in `t` (for `t ≥ 0`), being an infimum of the
+affine functions `t ↦ ‖a₀‖ + t‖a₁‖`. Needed for reiteration / the K-L-method equivalence. -/
+theorem InterpolationCouple.kFunctional_concaveOn (a : InterpolationCouple.sum ι₀ ι₁) :
+    ConcaveOn ℝ (Set.Ici (0 : ℝ)) (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) := by
+  refine ⟨convex_Ici 0, fun x hx y hy α β hα hβ hαβ => ?_⟩
+  -- Triebel: `K(·,a)` is the infimum of the affine functions `t ↦ ‖a₀‖ + t‖a₁‖`, so
+  -- `α K(x,a) + β K(y,a) ≤ K(αx + βy, a)`.
+  simp only [smul_eq_mul]
+  apply le_csInf (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ _ a)
+  rintro r ⟨a₀, a₁, ha, rfl⟩
+  have hx' : InterpolationCouple.KFunctional ι₀ ι₁ x a ≤ ‖a₀‖ + x * ‖a₁‖ :=
+    csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ x hx a) ⟨a₀, a₁, ha, rfl⟩
+  have hy' : InterpolationCouple.KFunctional ι₀ ι₁ y a ≤ ‖a₀‖ + y * ‖a₁‖ :=
+    csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ y hy a) ⟨a₀, a₁, ha, rfl⟩
+  have h₀ : ‖a₀‖ = α * ‖a₀‖ + β * ‖a₀‖ := by rw [← add_mul, hαβ, one_mul]
+  nlinarith [mul_le_mul_of_nonneg_left hx' hα, mul_le_mul_of_nonneg_left hy' hβ]
+
 /-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
 proof deferred. -/
 theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :
     ContinuousOn (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) (Set.Ici 0) := by
-  sorry
-
-/-- Triebel's Lemma (§1.3.1): `K(t,a)` is concave in `t` (for `t ≥ 0`). STATEMENT ONLY — proof
-deferred (not needed for the `(A₀,A₁)_{θ,q}` Banach/type-θ theorem specifically; needed later
-for reiteration / K-L-method equivalence). -/
-theorem InterpolationCouple.kFunctional_concaveOn (a : InterpolationCouple.sum ι₀ ι₁) :
-    ConcaveOn ℝ (Set.Ici (0 : ℝ)) (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) := by
   sorry
 
 /-- The key transformation/naturality property used to show `(A₀,A₁)_{θ,q}` is an exact

@@ -505,7 +505,7 @@ omit [T2Space 𝒜] in
 /-- An element of finite `(θ,q)`-quasinorm has `K(t,a)/t → 0` as `t → ∞` (since
 `K(t,a)/t ≲ t^{θ-1} ‖a‖_{θ,q}`). The other hypothesis of the fundamental lemma
 `exists_jFunctional_le_kFunctional`. -/
-theorem tendsto_kFunctional_div_atTop {θ : ℝ} (_hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
+theorem tendsto_kFunctional_div_atTop {θ : ℝ} (hθ1 : θ < 1) {q : ℝ≥0∞}
     (hq : 0 < q) {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
     Tendsto (fun t => KFunctional ι₀ ι₁ t a / t) atTop (𝓝 0) := by
   -- B–L (proof of Theorem 3.3.1): by (6), `K(t,a)/t ≤ M t^{θ-1} → 0` as `t → ∞`.

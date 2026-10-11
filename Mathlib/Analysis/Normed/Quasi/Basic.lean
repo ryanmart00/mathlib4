@@ -199,7 +199,7 @@ noncomputable def quasiTriangleConst (E : Type*) [Norm E] [Add E] : ℝ :=
 /-- Any explicit constant `C ≥ 1` in the quasi-triangle inequality bounds `quasiTriangleConst`. -/
 theorem quasiTriangleConst_le {E : Type*} [Norm E] [Add E] {C : ℝ} (hC : 1 ≤ C)
     (h : ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)) : quasiTriangleConst E ≤ C :=
-  sorry
+  csInf_le ⟨1, fun _ hx => hx.1⟩ ⟨hC, h⟩
 
 variable {E : Type*} [QuasinormedAddCommGroup E]
 

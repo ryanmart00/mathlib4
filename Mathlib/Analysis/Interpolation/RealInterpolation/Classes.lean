@@ -81,8 +81,13 @@ theorem isOfClassK_one_ι₁ : IsOfClassK ι₀ ι₁ 1 ι₁ := by
   simpa using kFunctional_mk_le ι₀ ι₁ ht.le 0 x
 
 /-- `A₁` is of class `𝒥(1; Ā)` (`‖b‖_{A₁} ≤ t⁻¹ J(t, b)`). -/
-theorem isOfClassJ_one_ι₁ : IsOfClassJ ι₀ ι₁ 1 ι₁ :=
-  sorry
+theorem isOfClassJ_one_ι₁ : IsOfClassJ ι₀ ι₁ 1 ι₁ := by
+  refine ⟨1, fun b => ⟨(b : A₀ × A₁).2, ?_, fun t ht => ?_⟩⟩
+  · obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+    rw [meetToSum_apply, sumToAmbient_inl₀]
+    exact ((mem_meet_iff ι₀ ι₁ a₀ a₁).mp hb).symm
+  · rw [Real.rpow_neg_one, one_mul, ← div_eq_inv_mul, le_div_iff₀ ht, mul_comm]
+    exact le_max_right _ _
 
 namespace RealInterpolationSpace
 

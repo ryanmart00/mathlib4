@@ -67,8 +67,12 @@ theorem isOfClassK_zero_ι₀ : IsOfClassK ι₀ ι₁ 0 ι₀ := by
   simpa using kFunctional_mk_le ι₀ ι₁ ht.le x 0
 
 /-- `A₀` is of class `𝒥(0; Ā)` (`‖b‖_{A₀} ≤ J(t, b)`). -/
-theorem isOfClassJ_zero_ι₀ : IsOfClassJ ι₀ ι₁ 0 ι₀ :=
-  sorry
+theorem isOfClassJ_zero_ι₀ : IsOfClassJ ι₀ ι₁ 0 ι₀ := by
+  refine ⟨1, fun b => ⟨(b : A₀ × A₁).1, ?_, fun t ht => ?_⟩⟩
+  · obtain ⟨⟨a₀, a₁⟩, hb⟩ := b
+    rw [meetToSum_apply, sumToAmbient_inl₀]
+  · rw [neg_zero, Real.rpow_zero, one_mul, one_mul]
+    exact le_max_left _ _
 
 /-- `A₁` is of class `𝒦(1; Ā)` (`K(t, a) ≤ t ‖a‖_{A₁}`). -/
 theorem isOfClassK_one_ι₁ : IsOfClassK ι₀ ι₁ 1 ι₁ :=

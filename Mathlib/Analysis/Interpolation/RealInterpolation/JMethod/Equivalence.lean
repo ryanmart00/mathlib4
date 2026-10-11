@@ -158,7 +158,7 @@ theorem jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace A₀]
             Real.enorm_of_nonneg (mul_nonneg (by positivity) (hh ν))]
           refine ENNReal.ofReal_le_ofReal ?_
           have h3 := hJ ν
-          rw [show (3 : ℝ) * (1 + 1 : ℝ) = 6 by norm_num] at h3
+          rw [show (3 : ℝ) * (1 + 1) = 6 by norm_num] at h3
           calc ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν)
               ≤ ((2 : ℝ) ^ ν) ^ (-θ) * (6 * C * KFunctional ι₀ ι₁ (2 ^ ν) a) :=
                 mul_le_mul_of_nonneg_left h3 (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _)
@@ -219,7 +219,7 @@ private theorem tsum_mul_rpow_le {ι : Type*} (φ W : ι → ℝ≥0∞) {p : �
   have hpq : p.HolderConjugate q := Real.HolderConjugate.conjExponent hp
   have hp0 : 0 < p := hpq.pos
   have hq0 : 0 < q := hpq.symm.pos
-  have hsum : (1 / q + 1 / p : ℝ) = 1 := by
+  have hsum : 1 / q + 1 / p = 1 := by
     rw [one_div, one_div, add_comm]
     exact hpq.inv_add_inv_eq_one
   -- `φ W = φ^{1/q} (φ^{1/p} W)`, then Hölder with exponents `q, p`
@@ -266,7 +266,7 @@ private theorem tsum_conv_rpow_le (φ W : ℤ → ℝ≥0∞) {p : ℝ} (hp : 1 
     _ = (∑' k, φ k) ^ p * ∑' μ, W μ ^ p := by
         rw [ENNReal.tsum_mul_left, hswap (fun μ => W μ ^ p), ← mul_assoc]
         congr 1
-        conv_rhs => rw [show p = (p - 1 + 1 : ℝ) by ring]
+        conv_rhs => rw [show p = (p - 1) + 1 by ring]
         rw [ENNReal.rpow_add_of_nonneg _ _ (by linarith) zero_le_one, ENNReal.rpow_one]
 
 /-- B–L, proof of Theorem 3.11.3: for `t > 0` and `a = ∑ᵥ uᵥ` in `A₀ + A₁`,

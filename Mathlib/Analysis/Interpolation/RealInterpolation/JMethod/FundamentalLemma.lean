@@ -66,7 +66,7 @@ theorem exists_jFunctional_le_kFunctional {a : sum ι₀ ι₁}
   -- B–L (1): for every `ν` there is a decomposition `a = a₀,ᵥ + a₁,ᵥ` with
   -- `‖a₀,ᵥ‖ + 2^ν ‖a₁,ᵥ‖ ≤ (1 + ε) K(2^ν, a)`.
   have hdec (ν : ℤ) : ∃ x : A₀ × A₁, (Submodule.Quotient.mk x : sum ι₀ ι₁) = a ∧
-      (‖x.1‖ + 2 ^ ν * ‖x.2‖ : ℝ) ≤ (1 + ε) * KFunctional ι₀ ι₁ (2 ^ ν) a := by
+      ‖x.1‖ + 2 ^ ν * ‖x.2‖ ≤ (1 + ε) * KFunctional ι₀ ι₁ (2 ^ ν) a := by
     have h2ν : (0 : ℝ) < 2 ^ ν := zpow_pos two_pos ν
     rcases eq_or_ne a 0 with rfl | ha
     · exact ⟨0, rfl, by simpa using mul_nonneg (by linarith) (hK _ h2ν.le)⟩
@@ -185,7 +185,7 @@ theorem exists_jFunctional_le_kFunctional {a : sum ι₀ ι₁}
       calc 2 ^ ν * ‖(x (ν - 1)).2 - (x ν).2‖
           ≤ 2 ^ ν * (C₁ * (‖(x (ν - 1)).2‖ + ‖(x ν).2‖)) :=
             mul_le_mul_of_nonneg_left h (zpow_pos two_pos ν).le
-        _ = C₁ * (2 * (2 ^ (ν - 1) * ‖(x (ν - 1)).2‖) + 2 ^ ν * ‖(x ν).2‖ : ℝ) := by
+        _ = C₁ * (2 * (2 ^ (ν - 1) * ‖(x (ν - 1)).2‖) + 2 ^ ν * ‖(x ν).2‖) := by
             rw [h2]
             ring
         _ ≤ C₁ * (2 * F + F) :=

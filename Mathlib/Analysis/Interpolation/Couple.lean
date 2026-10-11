@@ -362,23 +362,21 @@ theorem InterpolationCouple.sumToAmbient_injective (ι₀ : A₀ →L[𝕜] 𝒜
     Function.Injective (InterpolationCouple.sumToAmbient ι₀ ι₁) :=
   LinearMap.ker_eq_bot.mp (Submodule.ker_liftQ_eq_bot _ _ _ le_rfl)
 
-/-- Scoped notation `ι₀ ∩ ι₁` for `InterpolationCouple.meet` and `ι₀ + ι₁` for
-`InterpolationCouple.sum`, matching Triebel's own `A₀ ∩ A₁` / `A₀ + A₁` literally. Scoped (needs
-`open scoped InterpolationCouple`) so it doesn't shadow `Set`/`Submodule`'s `∩`/`+` elsewhere.
+/-- Scoped notation `ι₀ ∩ᵢ ι₁` for `InterpolationCouple.meet` and `ι₀ +ᵢ ι₁` for
+`InterpolationCouple.sum`, after Triebel's `A₀ ∩ A₁` / `A₀ + A₁` (Bergh–Löfström's `Δ(Ā)`,
+`Σ(Ā)`). The subscript `ᵢ` ("interpolation") keeps the tokens distinct from the core `∩` and `+`:
+an overloaded `+` makes plain arithmetic such as `1 + 1` ambiguous wherever the notation is open.
+(Mathlib's sum of two submodules of one module is `p ⊔ q`; ours is a separate quotient type with
+its own quasi-norm, merely isomorphic to `range ι₀ ⊔ range ι₁ ≤ 𝒜`.)
 
 NOTE for later: this notation currently takes the *embedding maps* `ι₀, ι₁` as arguments, not the
 Banach spaces `A₀, A₁` themselves, since nothing yet determines a canonical embedding from a type
 alone. Once canonical embeddings exist for concrete spaces (e.g. `Lp` spaces embedding into `𝒟'`
 or `𝒮'`), it will likely read better for this notation to apply directly to `A₀, A₁` (with the
 embedding found automatically) rather than to `ι₀, ι₁` explicitly — deliberately not acted on
-yet, flagged here for when that machinery exists.
+yet, flagged here for when that machinery exists. -/
+scoped[InterpolationCouple] infixl:70 " ∩ᵢ " => InterpolationCouple.meet
 
-Both are declared with `infixl` at the precedences of the core `∩` (70) and `+` (65), so they
-parse exactly like the operators they overload; Lean then chooses between the overloads by
-elaboration. (A bare `notation:65 ι₀ " + " ι₁` would parse its right argument at precedence `0`,
-swallowing e.g. `b ≤ c` in `a + b ≤ c`, and win over the core `+` by longest match.) -/
-scoped[InterpolationCouple] infixl:70 " ∩ " => InterpolationCouple.meet
-
-/-- Scoped notation `ι₀ + ι₁` for the sum space `InterpolationCouple.sum ι₀ ι₁`; see the
-`ι₀ ∩ ι₁` notation above. -/
-scoped[InterpolationCouple] infixl:65 " + " => InterpolationCouple.sum
+/-- Scoped notation `ι₀ +ᵢ ι₁` for the sum space `InterpolationCouple.sum ι₀ ι₁`; see the
+`ι₀ ∩ᵢ ι₁` notation above. -/
+scoped[InterpolationCouple] infixl:65 " +ᵢ " => InterpolationCouple.sum

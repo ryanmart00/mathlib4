@@ -208,7 +208,12 @@ theorem exists_realInterpolationENorm_le_mul_jInterpolationENorm {θ : ℝ} (hθ
 `A₀ + A₁`. -/
 theorem jInterpolationSubmodule_eq_realInterpolationSubmodule [CompleteSpace A₀]
     [CompleteSpace A₁] {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞} (hq : 0 < q) :
-    jInterpolationSubmodule ι₀ ι₁ θ q = realInterpolationSubmodule ι₀ ι₁ θ q :=
-  sorry
+    jInterpolationSubmodule ι₀ ι₁ θ q = realInterpolationSubmodule ι₀ ι₁ θ q := by
+  obtain ⟨CJ, hCJ, hJ⟩ := exists_jInterpolationENorm_le_mul_realInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq
+  obtain ⟨CK, hCK, hK⟩ := exists_realInterpolationENorm_le_mul_jInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq
+  ext a
+  change jInterpolationENorm ι₀ ι₁ θ q a < ⊤ ↔ realInterpolationENorm ι₀ ι₁ θ q a < ⊤
+  exact ⟨fun h => (hK a).trans_lt (ENNReal.mul_lt_top hCK.lt_top h),
+    fun h => (hJ a).trans_lt (ENNReal.mul_lt_top hCJ.lt_top h)⟩
 
 end InterpolationCouple

@@ -225,9 +225,9 @@ false. Mirrors `MeasureTheory.Lp`'s own `[Fact (1 ≤ p)]`-gated `NormedAddCommG
 spirit —
 `LorentzSpace` itself stays defined for every `p, q` regardless.
 
-The four bundled topology fields are given explicitly (mirroring `AddGroupFilterBasis.ofQuasiNorm`'s
-own docstring pattern, `Normed/Quasi/Basic.lean`) via the local `hB` computed once below, rather than relying
-on the class's own default mechanism (which hit an unrelated elaboration issue — an "unknown
+The four bundled topology fields are given explicitly (mirroring
+`AddGroupFilterBasis.ofQuasiNorm`'s own docstring pattern, `Normed/Quasi/Basic.lean`) via the local
+`hB` computed once below, rather than relying on the class's own default mechanism (which hit an unrelated elaboration issue — an "unknown
 identifier" error referencing earlier fields — not investigated further since this direct route
 works). See the module docstring's "elaboration-performance lesson" for why `hB` needs an explicit
 type ascription and `let` rather than `have`. -/

@@ -11,8 +11,6 @@ import Mathlib.MeasureTheory.Integral.Hardy
 /-!
 # Real interpolation of the couple `(Lʳ, L^∞)`
 
-DRAFT — statements only.
-
 Triebel §1.18.6, Theorem 1, in the quasi-Banach form (Krée; Bergh–Löfström §5.3): for
 `0 < r < ∞`, the couple `(Lʳ, L^∞)`, realized as `InterpolationCat.lorentz 𝕜 μ E r r ⊤ ⊤`
 (`L_{r,r} = Lʳ` and `L_{∞,∞} = L^∞` by `LorentzSpace.eq_Lp`), has
@@ -46,82 +44,6 @@ section Rearrangement
 
 variable {α : Type*} [MeasurableSpace α] {μ : Measure α}
 variable {E : Type*} [NormedAddCommGroup E]
-
-/-- A pointwise smaller function has a smaller rearrangement. -/
-theorem decreasingRearrangement_mono {f g : α → E} (h : ∀ x, ‖g x‖ₑ ≤ ‖f x‖ₑ) (t : ℝ≥0∞) :
-    decreasingRearrangement μ g t ≤ decreasingRearrangement μ f t := by
-  refine sInf_le_sInf fun σ (hσ : distributionFunction μ f σ ≤ t) => ?_
-  exact (measure_mono fun x (hx : σ < ‖g x‖ₑ) => hx.trans_le (h x)).trans hσ
-
-/-- The infimum defining `f*(t)` is attained when finite: `ϱ(f, f*(t)) ≤ t`. -/
-theorem distributionFunction_decreasingRearrangement_le (f : α → E) (t : ℝ≥0∞)
-    (h : decreasingRearrangement μ f t ≠ ⊤) :
-    distributionFunction μ f (decreasingRearrangement μ f t) ≤ t := by
-  by_contra hc
-  exact lt_irrefl _ ((lt_decreasingRearrangement_iff μ f t h).mpr (not_le.mp hc))
-
-/-- `‖f‖_{L_{∞,∞}} = f*(0)`, the essential supremum of `‖f‖`. -/
-theorem lorentzNorm_top_top (f : α → E) :
-    lorentzNorm μ ⊤ ⊤ f = decreasingRearrangement μ f 0 := by
-  simp only [lorentzNorm, ↓reduceIte, ENNReal.inv_top, ENNReal.toReal_zero, ENNReal.rpow_zero,
-    one_mul]
-  refine le_antisymm (iSup_le fun t => decreasingRearrangement_antitone f zero_le)
-    (le_iSup_of_le 0 le_rfl)
-
-/-- `(∫₀ᵀ f*ʳ)^{1/r}` dominates `T^{1/r} f*(T)`, since `f*` is antitone. -/
-theorem rpow_mul_decreasingRearrangement_le {r : ℝ} (hr : 0 < r) (f : α → E) (T : ℝ) :
-    ENNReal.ofReal T ^ r⁻¹ * decreasingRearrangement μ f (ENNReal.ofReal T) ≤
-      (∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r) ^ r⁻¹ := by
-  have hle : ENNReal.ofReal T * decreasingRearrangement μ f (ENNReal.ofReal T) ^ r ≤
-      ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r := by
-    calc ENNReal.ofReal T * decreasingRearrangement μ f (ENNReal.ofReal T) ^ r
-        = ∫⁻ _ in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal T) ^ r := by
-          rw [setLIntegral_const, Real.volume_Ioc, sub_zero, mul_comm]
-      _ ≤ _ := by
-          refine setLIntegral_mono' measurableSet_Ioc fun s hs => ?_
-          gcongr
-          exact decreasingRearrangement_antitone f (ENNReal.ofReal_le_ofReal hs.2)
-  calc ENNReal.ofReal T ^ r⁻¹ * decreasingRearrangement μ f (ENNReal.ofReal T)
-      = (ENNReal.ofReal T * decreasingRearrangement μ f (ENNReal.ofReal T) ^ r) ^ r⁻¹ := by
-        rw [ENNReal.mul_rpow_of_nonneg _ _ (inv_nonneg.mpr hr.le), ← ENNReal.rpow_mul,
-          mul_inv_cancel₀ hr.ne', ENNReal.rpow_one]
-    _ ≤ _ := by gcongr
-
-/-- The large part `f · 1_{‖f‖ > f*(T)}` of the level-`f*(T)` split of `f` has
-`∫ ‖·‖ʳ ≤ ∫₀ᵀ f*ʳ`: its rearrangement is at most `f*` and vanishes after `T`. -/
-theorem lintegral_indicator_lt_decreasingRearrangement_le {r : ℝ} (hr : 0 < r) {f : α → E}
-    (hf : StronglyMeasurable f) (T : ℝ)
-    (hlev : decreasingRearrangement μ f (ENNReal.ofReal T) ≠ ⊤) :
-    ∫⁻ x, ‖{x | decreasingRearrangement μ f (ENNReal.ofReal T) < ‖f x‖ₑ}.indicator f x‖ₑ ^ r ∂μ ≤
-      ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r := by
-  set lev := decreasingRearrangement μ f (ENNReal.ofReal T)
-  set S := {x | lev < ‖f x‖ₑ}
-  have hS : MeasurableSet S := measurableSet_lt measurable_const hf.enorm
-  set g := S.indicator f
-  have hg : AEStronglyMeasurable g μ := (hf.indicator hS).aestronglyMeasurable
-  have hgf : ∀ x, ‖g x‖ₑ ≤ ‖f x‖ₑ := fun x => by
-    by_cases hx : x ∈ S <;> simp [g, hx]
-  rw [← lintegral_decreasingRearrangement_rpow μ hg hr]
-  calc ∫⁻ s in Ioi 0, decreasingRearrangement μ g (ENNReal.ofReal s) ^ r
-      ≤ ∫⁻ s in Ioi 0, (Ioc 0 T).indicator
-          (fun s => decreasingRearrangement μ f (ENNReal.ofReal s) ^ r) s := by
-        refine setLIntegral_mono' measurableSet_Ioi fun s hs => ?_
-        by_cases hsT : s ≤ T
-        · rw [indicator_of_mem (show s ∈ Ioc 0 T from ⟨hs, hsT⟩)]
-          gcongr
-          exact decreasingRearrangement_mono hgf _
-        · have hg0 : decreasingRearrangement μ g (ENNReal.ofReal s) = 0 := by
-            refine le_antisymm (sInf_le ?_) zero_le
-            change μ {x | 0 < ‖g x‖ₑ} ≤ ENNReal.ofReal s
-            calc μ {x | 0 < ‖g x‖ₑ} ≤ μ S := measure_mono fun x hx => by
-                  by_contra hxS
-                  simp [g, hxS] at hx
-              _ ≤ ENNReal.ofReal T := distributionFunction_decreasingRearrangement_le f _ hlev
-              _ ≤ ENNReal.ofReal s := ENNReal.ofReal_le_ofReal (le_of_not_ge hsT)
-          rw [hg0, ENNReal.zero_rpow_of_pos hr]
-          exact zero_le
-    _ = ∫⁻ s in Ioc 0 T, decreasingRearrangement μ f (ENNReal.ofReal s) ^ r := by
-        rw [setLIntegral_indicator measurableSet_Ioc, inter_eq_left.mpr Ioc_subset_Ioi_self]
 
 /-- The level-`f*(T)` split: if `(∫₀ᵀ f*ʳ)^{1/r} < ∞`, then `f = a₀ + a₁` with `a₀ ∈ Lʳ`,
 `a₁ ∈ L^∞`, `‖a₀‖_r ≤ (∫₀ᵀ f*ʳ)^{1/r}` and `T^{1/r} ‖a₁‖_∞ ≤ (∫₀ᵀ f*ʳ)^{1/r}`. Here

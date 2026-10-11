@@ -530,8 +530,68 @@ theorem realInterpolationENorm_le_of_le {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 
     {q r : ℝ≥0∞} (hq : 0 < q) (hqr : q ≤ r) (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ r a ≤
       (realInterpolationConst θ q)⁻¹ ^ (1 - q.toReal / r.toReal) *
-        realInterpolationENorm ι₀ ι₁ θ q a :=
-  sorry
+        realInterpolationENorm ι₀ ι₁ θ q a := by
+  set c := realInterpolationConst θ q
+  have hc0 : c ≠ 0 := (realInterpolationConst_pos θ q).ne'
+  have hct : c ≠ ⊤ := (realInterpolationConst_lt_top hθ0 hθ1 q).ne
+  set φ : ℝ → ℝ≥0∞ := fun t => ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a)
+  set Ntop := realInterpolationENorm ι₀ ι₁ θ ⊤ a
+  set Nq := realInterpolationENorm ι₀ ι₁ θ q a
+  have hφNtop (t : ℝ) (ht : 0 < t) : φ t ≤ Ntop := by
+    simp only [Ntop, realInterpolationENorm, ite_true]
+    exact le_iSup (fun t : Ioi (0 : ℝ) => φ t) ⟨t, ht⟩
+  -- B–L Theorem 3.1.2 (6): `‖a‖_{θ,∞} ≤ c_{θ,q}⁻¹ ‖a‖_{θ,q}`
+  have h6 : Ntop ≤ c⁻¹ * Nq := by
+    simp only [Ntop, realInterpolationENorm, ite_true]
+    refine iSup_le fun t => ?_
+    rw [← ENNReal.div_eq_inv_mul]
+    exact (ENNReal.le_div_iff_mul_le (Or.inl hc0) (Or.inl hct)).mpr
+      (ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le ι₀ ι₁ θ hq a t.2)
+  rcases eq_or_ne r ⊤ with rfl | hr
+  · simpa using h6
+  rcases eq_or_ne Nq ⊤ with hNq | hNq
+  · rw [hNq, ENNReal.mul_top (ENNReal.rpow_pos (ENNReal.inv_pos.2 hct)
+      (ENNReal.inv_ne_top.2 hc0)).ne']
+    exact le_top
+  have hNtop : Ntop ≠ ⊤ :=
+    ne_top_of_le_ne_top (ENNReal.mul_ne_top (ENNReal.inv_ne_top.2 hc0) hNq) h6
+  have hq' : q ≠ ⊤ := ne_top_of_le_ne_top hr hqr
+  have hq0 : 0 < q.toReal := ENNReal.toReal_pos hq.ne' hq'
+  have hqr' : q.toReal ≤ r.toReal := ENNReal.toReal_mono hr hqr
+  have hr0 : 0 < r.toReal := hq0.trans_le hqr'
+  set s := q.toReal / r.toReal with hs
+  have hs0 : 0 ≤ s := by positivity
+  have hs1 : 0 ≤ 1 - s := sub_nonneg.2 (div_le_one_of_le₀ hqr' hr0.le)
+  -- B–L: `‖a‖_{θ,r}^r = ∫ φ^{r-q} φ^q dt/t ≤ ‖a‖_{θ,∞}^{r-q} ‖a‖_{θ,q}^q`
+  have hint : ∫⁻ t in Ioi (0 : ℝ), φ t ^ r.toReal * ENNReal.ofReal t⁻¹ ≤
+      Ntop ^ (r.toReal - q.toReal) * Nq ^ q.toReal := by
+    have hNq' : Nq ^ q.toReal = ∫⁻ t in Ioi (0 : ℝ), φ t ^ q.toReal * ENNReal.ofReal t⁻¹ := by
+      simp only [Nq, realInterpolationENorm, hq', ite_false]
+      rw [← ENNReal.rpow_mul, ENNReal.toReal_inv, inv_mul_cancel₀ hq0.ne', ENNReal.rpow_one]
+    rw [hNq', ← lintegral_const_mul' _ _
+      (ENNReal.rpow_ne_top_of_nonneg (sub_nonneg.2 hqr') hNtop)]
+    refine setLIntegral_mono' measurableSet_Ioi fun t ht => ?_
+    rw [← mul_assoc]
+    gcongr ?_ * _
+    calc φ t ^ r.toReal = φ t ^ (r.toReal - q.toReal) * φ t ^ q.toReal := by
+          rw [← ENNReal.rpow_add_of_nonneg _ _ (sub_nonneg.2 hqr') hq0.le, sub_add_cancel]
+      _ ≤ Ntop ^ (r.toReal - q.toReal) * φ t ^ q.toReal := by
+          gcongr
+          exact hφNtop t ht
+  -- B–L: `‖a‖_{θ,r} ≤ ‖a‖_{θ,∞}^{1-q/r} ‖a‖_{θ,q}^{q/r}`, then (6)
+  calc realInterpolationENorm ι₀ ι₁ θ r a
+      = (∫⁻ t in Ioi (0 : ℝ), φ t ^ r.toReal * ENNReal.ofReal t⁻¹) ^ r⁻¹.toReal := by
+        simp only [realInterpolationENorm, hr, ite_false, φ]
+    _ ≤ (Ntop ^ (r.toReal - q.toReal) * Nq ^ q.toReal) ^ r⁻¹.toReal :=
+        ENNReal.rpow_le_rpow hint ENNReal.toReal_nonneg
+    _ = Ntop ^ (1 - s) * Nq ^ s := by
+        rw [ENNReal.mul_rpow_of_nonneg _ _ ENNReal.toReal_nonneg, ← ENNReal.rpow_mul,
+          ← ENNReal.rpow_mul, ENNReal.toReal_inv, hs, ← div_eq_mul_inv, ← div_eq_mul_inv,
+          sub_div, div_self hr0.ne']
+    _ ≤ (c⁻¹ * Nq) ^ (1 - s) * Nq ^ s := by gcongr
+    _ = c⁻¹ ^ (1 - s) * Nq := by
+        rw [ENNReal.mul_rpow_of_nonneg _ _ hs1, mul_assoc,
+          ← ENNReal.rpow_add_of_nonneg _ _ hs1 hs0, sub_add_cancel, ENNReal.rpow_one]
 
 omit [T2Space 𝒜] in
 /-- Existential form of `realInterpolationENorm_le_of_le` (Bergh–Löfström Theorem 3.4.1 (b)). -/

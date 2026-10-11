@@ -3,6 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
+import Mathlib.Analysis.Normed.Operator.Basic
 import Mathlib.Analysis.Normed.Quasi.NormedSpace
 import Mathlib.Topology.Algebra.Module.Equiv
 
@@ -22,6 +23,7 @@ on both ends, so it is not available here.
 * `QuasinormedAddCommGroup.exists_forall_norm_map_le_mul_norm`: continuous linear maps are
   bounded.
 * `QuasinormedAddCommGroup.le_opQuasiNorm`: `‖f x‖ ≤ ‖f‖ₒₚ * ‖x‖`.
+* `QuasinormedAddCommGroup.opQuasiNorm_eq_opNorm` (`simp`): on normed spaces, `‖f‖ₒₚ = ‖f‖`.
 
 ## Notation
 * `‖f‖ₒₚ` (scoped in `QuasinormedAddCommGroup`): the operator quasi-norm `opQuasiNorm f` (a
@@ -108,8 +110,15 @@ Written `‖f‖ₒₚ` (scoped notation). It is deliberately a plain function w
 `Norm (E →L[𝕜] F)` instance: for genuinely normed `E, F` (quasi-normed through the bridge
 instances) such an instance would be a diamond with Mathlib's `ContinuousLinearMap.hasOpNorm`.
 The two have the same formula, but agree only after unfolding `opQuasiNorm`/`opNorm`, not at
-instance-reducible transparency. -/
-noncomputable def opQuasiNorm (f : E →L[𝕜] F) : ℝ :=
+instance-reducible transparency.
+
+It takes only the classes its formula needs (`Norm` on both ends, plus what `→L[𝕜]` needs), not
+`QuasinormedAddCommGroup`: on a product `E × G` of normed spaces the two quasi-normed instances
+(`instProd` and the bridge from `NormedAddCommGroup`) agree on `Norm` but not on
+`quasiTriangleConst`, so this keeps `opQuasiNorm_eq_opNorm` applicable there. -/
+noncomputable def opQuasiNorm {𝕜 E F : Type*} [Semiring 𝕜]
+    [Norm E] [AddCommMonoid E] [TopologicalSpace E] [Module 𝕜 E]
+    [Norm F] [AddCommMonoid F] [TopologicalSpace F] [Module 𝕜 F] (f : E →L[𝕜] F) : ℝ :=
   sInf {C : ℝ | 0 ≤ C ∧ ∀ x, ‖f x‖ ≤ C * ‖x‖}
 
 @[inherit_doc] scoped notation "‖" f "‖ₒₚ" => opQuasiNorm f
@@ -148,3 +157,11 @@ theorem le_opQuasiNorm (f : E →L[𝕜] F) (x : E) : ‖f x‖ ≤ ‖f‖ₒ�
     linarith
 
 end QuasinormedAddCommGroup
+
+open scoped QuasinormedAddCommGroup in
+/-- On genuinely normed spaces the operator quasi-norm is Mathlib's operator norm. -/
+@[simp]
+theorem QuasinormedAddCommGroup.opQuasiNorm_eq_opNorm {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    (f : E →L[𝕜] F) : ‖f‖ₒₚ = ‖f‖ :=
+  rfl

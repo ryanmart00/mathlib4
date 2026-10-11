@@ -352,7 +352,38 @@ theorem exists_lorentz_interpolation {p₀ r₀ p₁ r₁ q₀ s₀ q₁ s₁ : 
             LorentzSpace.toL0 ν F 𝕜 q r (S f) =
               LorentzSpace.toL0 ν F 𝕜 q₀ s₀ (T.f₀ f₀) + LorentzSpace.toL0 ν F 𝕜 q₁ s₁ (T.f₁ f₁)) ∧
         ∀ f, ‖S f‖ ≤ C * M₀ ^ (1 - θ) * M₁ ^ θ * ‖f‖ := by
-  sorry
+  -- B–L: "follows at once from Theorem 5.3.1": identify both ends of `Φ(T)`, `Φ = (·)_{θ,r}`
+  obtain ⟨eX, hX⟩ := nonempty_iso_realInterpolation_lorentz 𝕜 μ E hp₀ hp₁ hp₀₁ hr₀ hr₁ θ r p hp
+  obtain ⟨eY, hY⟩ := nonempty_iso_realInterpolation_lorentz 𝕜 ν F hq₀ hq₁ hq₀₁ hs₀ hs₁ θ r q hq
+  set Nx := QuasinormedAddCommGroup.opQuasiNorm eX.inv.hom
+  set Ny := QuasinormedAddCommGroup.opQuasiNorm eY.hom.hom
+  refine ⟨Ny * Nx, fun T M₀ M₁ hM₀ hM₁ h₀ h₁ => ⟨eY.hom.hom.comp
+    (((realInterpolationFunctor 𝕜 θ r).map T).hom.comp eX.inv.hom),
+    fun f f₀ f₁ hf => ?_, fun f => ?_⟩⟩
+  · -- `f = f₀ + f₁` in `L⁰` pins down the element of the sum space
+    have hinv : eX.hom.hom (eX.inv.hom f) = f := ConcreteCategory.congr_hom eX.inv_hom_id f
+    have hx : (realInterpolationFunctor 𝕜 θ r).toSum _ (eX.inv.hom f) =
+        Submodule.Quotient.mk ((f₀, f₁) :
+          (lorentz 𝕜 μ E p₀ r₀ p₁ r₁).A₀ × (lorentz 𝕜 μ E p₀ r₀ p₁ r₁).A₁) :=
+      InterpolationCouple.sumToAmbient_injective _ _ ((hX _).trans ((congrArg _ hinv).trans hf))
+    -- naturality of `toSum`: `Φ(T)` acts on the sum space as `T.sumMap`
+    have hT := DFunLike.congr_fun ((realInterpolationFunctor 𝕜 θ r).map_toSum T) (eX.inv.hom f)
+    simp only [ContinuousLinearMap.comp_apply] at hT
+    exact (hY _).symm.trans ((congrArg (lorentzSumToL0 𝕜 ν F q₀ s₀ q₁ s₁) hT).trans
+      (congrArg (fun b => lorentzSumToL0 𝕜 ν F q₀ s₀ q₁ s₁ (T.sumMap b)) hx))
+  · have hMθ : 0 ≤ M₀ ^ (1 - θ) * M₁ ^ θ :=
+      mul_nonneg (Real.rpow_nonneg hM₀.le _) (Real.rpow_nonneg hM₁.le _)
+    calc ‖eY.hom.hom (((realInterpolationFunctor 𝕜 θ r).map T).hom (eX.inv.hom f))‖
+        ≤ Ny * ‖((realInterpolationFunctor 𝕜 θ r).map T).hom (eX.inv.hom f)‖ :=
+          QuasinormedAddCommGroup.le_opQuasiNorm _ _
+      _ ≤ Ny * (M₀ ^ (1 - θ) * M₁ ^ θ * ‖eX.inv.hom f‖) :=
+          mul_le_mul_of_nonneg_left (norm_realInterpolationFunctor_map_le θ r T hM₀ hM₁ h₀ h₁ _)
+            (QuasinormedAddCommGroup.opQuasiNorm_nonneg _)
+      _ ≤ Ny * (M₀ ^ (1 - θ) * M₁ ^ θ * (Nx * ‖f‖)) :=
+          mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left
+            (QuasinormedAddCommGroup.le_opQuasiNorm _ _) hMθ)
+            (QuasinormedAddCommGroup.opQuasiNorm_nonneg _)
+      _ = Ny * Nx * M₀ ^ (1 - θ) * M₁ ^ θ * ‖f‖ := by ring
 
 /-- **The Marcinkiewicz interpolation theorem**, strong-type form (Bergh–Löfström Theorem 5.3.2,
 (5)): if `T` is of weak type `(p₀, q₀)` and `(p₁, q₁)`, i.e. maps `L^{pᵢ}(μ) → L_{qᵢ,∞}(ν)` with

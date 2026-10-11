@@ -196,14 +196,14 @@ theorem jInterpolationENorm_meetToSum_le (θ : ℝ) (q : ℝ≥0∞) (b : meet �
   simp
 
 /-- Two-sided geometric series over `ℤ`. -/
-private theorem summable_pow_natAbs {r : ℝ} (h0 : 0 ≤ r) (h1 : r < 1) :
+theorem summable_pow_natAbs {r : ℝ} (h0 : 0 ≤ r) (h1 : r < 1) :
     Summable fun ν : ℤ => r ^ ν.natAbs :=
   Summable.of_nat_of_neg (by simpa using summable_geometric_of_lt_one h0 h1)
     (by simpa using summable_geometric_of_lt_one h0 h1)
 
 /-- The weight comparison behind the sum bound: with `r = 2^ν`,
 `min(1, r⁻¹) r^θ = min(r^θ, r^{θ-1}) ≤ (2^{-δ})^{|ν|}` whenever `δ ≤ θ` and `δ ≤ 1 - θ`. -/
-private theorem min_one_inv_mul_rpow_le {θ δ : ℝ} (hδθ : δ ≤ θ) (hδ1 : δ ≤ 1 - θ) (ν : ℤ) :
+theorem min_one_inv_mul_rpow_le {θ δ : ℝ} (hδθ : δ ≤ θ) (hδ1 : δ ≤ 1 - θ) (ν : ℤ) :
     min 1 ((2 : ℝ) ^ ν)⁻¹ * ((2 : ℝ) ^ ν) ^ θ ≤ ((2 : ℝ) ^ (-δ)) ^ ν.natAbs := by
   have hr : 0 < (2 : ℝ) ^ ν := zpow_pos two_pos ν
   rw [Real.rpow_pow_comm zero_le_two]

@@ -455,7 +455,7 @@ omit [T2Space 𝒜] in
 /-- The consequence of `ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le` used in
 Bergh–Löfström's proof of Theorem 3.3.1: `K(t,a) ≤ M t^θ` for an element of finite
 `(θ,q)`-quasinorm. -/
-private theorem exists_kFunctional_le_mul_rpow (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
+theorem exists_kFunctional_le_mul_rpow (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
     {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
     ∃ M : ℝ, ∀ t : ℝ, 0 < t → KFunctional ι₀ ι₁ t a ≤ M * t ^ θ := by
   set c := realInterpolationConst θ q

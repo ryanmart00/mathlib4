@@ -774,57 +774,34 @@ theorem nonempty_iso_realInterpolationFunctor_reiteration (A : InterpolationCat.
     A.ι₀ A.ι₁ κ₀ κ₁ hne hθ hq hX₀.1 hX₁.1
   obtain ⟨C2, hC2, hR2⟩ := InterpolationCouple.exists_realInterpolationENorm_le_of_isOfClassJ
     A.ι₀ A.ι₁ κ₀ κ₁ hθ₀ hθ₁ hne hη0 hη1 hθ hq hX₀.2 hX₁.2
-  choose bmap hbamb hbnorm using hR1
-  set RX := InterpolationCouple.RealInterpolationSpace κ₀ κ₁ η q
-  set RA := InterpolationCouple.RealInterpolationSpace A.ι₀ A.ι₁ θ q
-  have hambX := InterpolationCouple.sumToAmbient_injective κ₀ κ₁
-  have hambA := InterpolationCouple.sumToAmbient_injective A.ι₀ A.ι₁
-  -- `X̄_{η,q} → Ā_{θ,q}`: the element with the same image in the ambient space
-  let φ : RX →ₗ[𝕜] RA :=
-    { toFun := fun z => ⟨bmap z, (hbnorm z).trans_lt (ENNReal.mul_lt_top hC1.lt_top z.2)⟩
-      map_add' := fun z w => Subtype.ext (hambA (by
-        change InterpolationCouple.sumToAmbient A.ι₀ A.ι₁ (bmap ((z : _) + (w : _))) =
-          InterpolationCouple.sumToAmbient A.ι₀ A.ι₁ (bmap z + bmap w)
-        rw [hbamb, map_add, map_add, hbamb, hbamb]))
-      map_smul' := fun c z => Subtype.ext (hambA (by
-        change InterpolationCouple.sumToAmbient A.ι₀ A.ι₁ (bmap (c • (z : _))) =
-          InterpolationCouple.sumToAmbient A.ι₀ A.ι₁ (c • bmap z)
-        rw [hbamb, map_smul, map_smul, hbamb])) }
-  have hφ (z : RX) : ((φ z : RA) : InterpolationCouple.sum A.ι₀ A.ι₁) = bmap z := rfl
-  have hinj : Function.Injective φ := by
-    intro z w h
-    have h' := congrArg (fun y : RA => InterpolationCouple.sumToAmbient A.ι₀ A.ι₁
-      (y : InterpolationCouple.sum A.ι₀ A.ι₁)) h
-    simp only [hφ, hbamb] at h'
-    exact Subtype.ext (hambX h')
-  have hsurj : Function.Surjective φ := by
-    intro y
-    obtain ⟨a, ha, han⟩ := hR2 y y.2.ne
-    refine ⟨⟨a, han.trans_lt (ENNReal.mul_lt_top hC2.lt_top y.2)⟩, Subtype.ext (hambA ?_)⟩
-    change InterpolationCouple.sumToAmbient A.ι₀ A.ι₁ (bmap a) = _
-    rw [hbamb, ha]
-  have hφb (z : RX) : ‖φ z‖ ≤ C1.toReal * ‖z‖ := by
-    rw [InterpolationCouple.RealInterpolationSpace.norm_def,
-      InterpolationCouple.RealInterpolationSpace.norm_def, hφ, ← ENNReal.toReal_mul]
-    exact ENNReal.toReal_mono (ENNReal.mul_ne_top hC1 z.2.ne) (hbnorm z)
-  have hψb (z : RX) : ‖z‖ ≤ C2.toReal * ‖φ z‖ := by
-    obtain ⟨a, ha, han⟩ := hR2 (φ z) (φ z).2.ne
-    have haz : a = (z : InterpolationCouple.sum κ₀ κ₁) := hambX (by rw [ha, hφ, hbamb])
-    rw [InterpolationCouple.RealInterpolationSpace.norm_def,
-      InterpolationCouple.RealInterpolationSpace.norm_def, ← ENNReal.toReal_mul, ← haz]
-    exact ENNReal.toReal_mono (ENNReal.mul_ne_top hC2 (φ z).2.ne) han
-  let e := LinearEquiv.ofBijective φ ⟨hinj, hsurj⟩
-  let eL : RX ≃L[𝕜] RA :=
-    { e with
-      continuous_toFun := QuasinormedAddCommGroup.continuous_of_bound φ.toAddMonoidHom _ hφb
-      continuous_invFun := QuasinormedAddCommGroup.continuous_of_bound
-        e.symm.toLinearMap.toAddMonoidHom C2.toReal fun y => by
-          have := hψb (e.symm y)
-          rwa [show φ (e.symm y) = y from e.apply_symm_apply y] at this }
+  -- `X̄_{η,q} ≅ Ā_{θ,q}` for the K-method: the same subspace of the ambient space, with
+  -- equivalent quasinorms
+  obtain ⟨e, he⟩ := QuasiBanachCat.exists_iso_of_bounded_correspondence
+    (X := (kInterpolationFunctor 𝕜 η q).obj Xb) (Y := (kInterpolationFunctor 𝕜 θ q).obj A)
+    ((InterpolationCouple.sumToAmbient κ₀ κ₁).toLinearMap ∘ₗ
+      (InterpolationCouple.RealInterpolationSpace.toSum κ₀ κ₁ η q).toLinearMap)
+    ((InterpolationCouple.sumToAmbient A.ι₀ A.ι₁).toLinearMap ∘ₗ
+      (InterpolationCouple.RealInterpolationSpace.toSum A.ι₀ A.ι₁ θ q).toLinearMap)
+    (fun x y h => InterpolationCouple.RealInterpolationSpace.toSum_injective κ₀ κ₁
+      (InterpolationCouple.sumToAmbient_injective _ _ h))
+    (fun x y h => InterpolationCouple.RealInterpolationSpace.toSum_injective A.ι₀ A.ι₁
+      (InterpolationCouple.sumToAmbient_injective _ _ h)) (C₁ := C1.toReal) (C₂ := C2.toReal)
+    (fun (z : InterpolationCouple.RealInterpolationSpace κ₀ κ₁ η q) => by
+      obtain ⟨b, hb, hbn⟩ := hR1 z
+      refine ⟨⟨b, hbn.trans_lt (ENNReal.mul_lt_top hC1.lt_top z.2)⟩, hb, ?_⟩
+      change (InterpolationCouple.realInterpolationENorm A.ι₀ A.ι₁ θ q b).toReal ≤
+        C1.toReal * (InterpolationCouple.realInterpolationENorm κ₀ κ₁ η q z).toReal
+      rw [← ENNReal.toReal_mul]
+      exact ENNReal.toReal_mono (ENNReal.mul_ne_top hC1 z.2.ne) hbn)
+    (fun (y : InterpolationCouple.RealInterpolationSpace A.ι₀ A.ι₁ θ q) => by
+      obtain ⟨a, ha, han⟩ := hR2 y y.2.ne
+      refine ⟨⟨a, han.trans_lt (ENNReal.mul_lt_top hC2.lt_top y.2)⟩, ha, ?_⟩
+      change (InterpolationCouple.realInterpolationENorm κ₀ κ₁ η q a).toReal ≤
+        C2.toReal * (InterpolationCouple.realInterpolationENorm A.ι₀ A.ι₁ θ q y).toReal
+      rw [← ENNReal.toReal_mul]
+      exact ENNReal.toReal_mono (ENNReal.mul_ne_top hC2 y.2.ne) han)
   -- transport along the canonical identifications with the K-method on both sides
-  refine ⟨(realInterpolationFunctorEquivK η q).iso Xb ≪≫
-    QuasiBanachCat.ofIso (X := (kInterpolationFunctor 𝕜 η q).obj Xb)
-      (Y := (kInterpolationFunctor 𝕜 θ q).obj A) eL ≪≫
+  refine ⟨(realInterpolationFunctorEquivK η q).iso Xb ≪≫ e ≪≫
     ((realInterpolationFunctorEquivK θ q).iso A).symm, fun x => ?_⟩
   have h1 := DFunLike.congr_fun
     (InterpolationFunctor.Equiv.toSum_comp_inv (realInterpolationFunctorEquivK θ q) A)
@@ -834,7 +811,7 @@ theorem nonempty_iso_realInterpolationFunctor_reiteration (A : InterpolationCat.
   simp only [Iso.trans_hom, Iso.symm_hom, QuasiBanachCat.hom_comp,
     ContinuousLinearMap.comp_apply]
   rw [h1, ← h2]
-  exact hbamb _
+  exact he _
 
 /-- The canonical real interpolation space `Ā_{θ,q}` is of class `𝒦(θ; Ā)` (transported from
 `RealInterpolationSpace.isOfClassK` along `realInterpolationFunctorEquivK`). -/

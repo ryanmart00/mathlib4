@@ -501,13 +501,23 @@ theorem tendsto_kFunctional_nhdsGT_zero {θ : ℝ} (hθ : 0 < θ) {q : ℝ≥0�
       kFunctional_nonneg ι₀ ι₁ t (le_of_lt ht) a
   · filter_upwards [self_mem_nhdsWithin] with t ht using hM t ht
 
+omit [T2Space 𝒜] in
 /-- An element of finite `(θ,q)`-quasinorm has `K(t,a)/t → 0` as `t → ∞` (since
 `K(t,a)/t ≲ t^{θ-1} ‖a‖_{θ,q}`). The other hypothesis of the fundamental lemma
 `exists_jFunctional_le_kFunctional`. -/
-theorem tendsto_kFunctional_div_atTop {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
+theorem tendsto_kFunctional_div_atTop {θ : ℝ} (_hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞}
     (hq : 0 < q) {a : sum ι₀ ι₁} (ha : realInterpolationENorm ι₀ ι₁ θ q a ≠ ⊤) :
-    Tendsto (fun t => KFunctional ι₀ ι₁ t a / t) atTop (𝓝 0) :=
-  sorry
+    Tendsto (fun t => KFunctional ι₀ ι₁ t a / t) atTop (𝓝 0) := by
+  -- B–L (proof of Theorem 3.3.1): by (6), `K(t,a)/t ≤ M t^{θ-1} → 0` as `t → ∞`.
+  obtain ⟨M, hM⟩ := exists_kFunctional_le_mul_rpow ι₀ ι₁ θ hq ha
+  have hlim : Tendsto (fun t : ℝ => M * t ^ (-(1 - θ))) atTop (𝓝 0) := by
+    simpa using (tendsto_rpow_neg_atTop (by linarith : 0 < 1 - θ)).const_mul M
+  refine squeeze_zero' ?_ ?_ hlim
+  · filter_upwards [eventually_gt_atTop 0] with t ht using
+      div_nonneg (kFunctional_nonneg ι₀ ι₁ t ht.le a) ht.le
+  · filter_upwards [eventually_gt_atTop 0] with t ht
+    rw [div_le_iff₀ ht, mul_assoc, ← Real.rpow_add_one ht.ne', neg_sub, sub_add_cancel]
+    exact hM t ht
 
 /-! ### The space -/
 

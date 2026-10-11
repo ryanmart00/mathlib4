@@ -95,7 +95,59 @@ theorem LorentzSpace.exists_lorentzNorm_le_of_le {p : ℝ≥0∞} (hp0 : 0 < p) 
     {q r : ℝ≥0∞} (hq : 0 < q) (hqr : q ≤ r) :
     ∃ C : ℝ≥0, ∀ f : α → E, AEStronglyMeasurable f μ →
       lorentzNorm μ p r f ≤ C * lorentzNorm μ p q f := by
-  sorry
+  -- B–L Theorem 5.2.1: `L_{p,·} = (Lˢ, L^∞)_{θ,·}` for `s < p`, `s ≤ q`, `1/p = (1-θ)/s`
+  set s := min p q / 2
+  have hs0 : 0 < s := ENNReal.half_pos (lt_min hp0 hq).ne'
+  have hsp : s < p :=
+    (ENNReal.div_le_div_right (min_le_left p q) 2).trans_lt (ENNReal.half_lt_self hp0.ne' hp)
+  have hsq : s ≤ q := ENNReal.half_le_self.trans (min_le_right p q)
+  have hst : s ≠ ⊤ := ne_top_of_lt hsp
+  have hs' : 0 < s.toReal := ENNReal.toReal_pos hs0.ne' hst
+  have hsp' : s.toReal < p.toReal := ENNReal.toReal_strict_mono hp hsp
+  set θ := 1 - s.toReal / p.toReal with hθ
+  have hθ0 : 0 < θ := by rw [hθ, sub_pos, div_lt_one (hs'.trans hsp')]; exact hsp'
+  have hθ1 : θ < 1 := by rw [hθ]; linarith [div_pos hs' (hs'.trans hsp')]
+  have hpθ : p⁻¹ = ENNReal.ofReal (1 - θ) * s⁻¹ := by
+    rw [hθ, sub_sub_cancel, ENNReal.ofReal_div_of_pos (hs'.trans hsp'), ENNReal.ofReal_toReal hst,
+      ENNReal.ofReal_toReal hp, div_eq_mul_inv, mul_comm s, mul_assoc,
+      ENNReal.mul_inv_cancel hs0.ne' hst, mul_one]
+  have : Fact (0 < s) := ⟨hs0⟩
+  have : Fact (0 < θ) := ⟨hθ0⟩
+  have : Fact (θ < 1) := ⟨hθ1⟩
+  have : Fact (0 < q) := ⟨hq⟩
+  have : Fact (0 < r) := ⟨hq.trans_le hqr⟩
+  obtain ⟨A, hA⟩ := InterpolationCat.lorentzNorm_le_realInterpolationENorm ℝ μ ℝ s hst θ r p hpθ
+  obtain ⟨B, hB⟩ := InterpolationCat.realInterpolationENorm_le_lorentzNorm ℝ μ ℝ s hst θ q hsq p hpθ
+  -- B–L Theorem 3.4.1 (b): `(Lˢ, L^∞)_{θ,q} ⊆ (Lˢ, L^∞)_{θ,r}`
+  obtain ⟨c, hc, hmono⟩ := InterpolationCouple.exists_realInterpolationENorm_le_of_le
+    (InterpolationCat.lorentz ℝ μ ℝ s s ⊤ ⊤).ι₀ (InterpolationCat.lorentz ℝ μ ℝ s s ⊤ ⊤).ι₁
+    hθ0 hθ1 hq hqr
+  refine ⟨max 1 (A * c.toNNReal * B), fun f hf => ?_⟩
+  -- reduce to `‖f‖ : α → ℝ`, as an element `F` of `L⁰`
+  have hnorm (p q : ℝ≥0∞) : lorentzNorm μ p q (fun x => ‖f x‖) = lorentzNorm μ p q f := by
+    simp only [lorentzNorm, decreasingRearrangement, distributionFunction, enorm_norm]
+  set F : α →ₘ[μ] ℝ := AEEqFun.mk (fun x => ‖f x‖) hf.norm
+  have hF (p q : ℝ≥0∞) : lorentzNorm μ p q F = lorentzNorm μ p q f := by
+    rw [lorentzNorm_congr_ae p q (AEEqFun.coeFn_mk _ _), hnorm]
+  rcases eq_or_ne (lorentzNorm μ p q f) ⊤ with htop | hfin
+  · rw [htop, ENNReal.mul_top (by simp)]
+    exact le_top
+  obtain ⟨a, ha⟩ := InterpolationCat.exists_lorentzSumToL0_eq ℝ μ ℝ s hst θ q hsq p hpθ
+    (⟨F, show lorentzNorm μ p q F < ⊤ by rw [hF]; exact hfin.lt_top⟩ : LorentzSpace ℝ p q μ)
+  have haF (p' q' : ℝ≥0∞) : lorentzNorm μ p' q' (InterpolationCat.lorentzSumToL0 ℝ μ ℝ s s ⊤ ⊤ a) =
+      lorentzNorm μ p' q' f := by
+    rw [ha]
+    exact hF p' q'
+  calc lorentzNorm μ p r f
+      = lorentzNorm μ p r (InterpolationCat.lorentzSumToL0 ℝ μ ℝ s s ⊤ ⊤ a) := (haF p r).symm
+    _ ≤ A * InterpolationCouple.realInterpolationENorm _ _ θ r a := hA a
+    _ ≤ A * (c * InterpolationCouple.realInterpolationENorm _ _ θ q a) := by gcongr; exact hmono a
+    _ ≤ A * (c * (B * lorentzNorm μ p q f)) := by gcongr; rw [← haF p q]; exact hB a
+    _ = (A * c * B) * lorentzNorm μ p q f := by ring
+    _ ≤ (max 1 (A * c.toNNReal * B) : ℝ≥0) * lorentzNorm μ p q f := by
+        gcongr
+        push_cast [ENNReal.coe_toNNReal hc]
+        exact le_max_right _ _
 
 end WeakLp
 

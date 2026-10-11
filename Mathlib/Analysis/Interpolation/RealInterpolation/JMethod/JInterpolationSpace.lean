@@ -153,7 +153,7 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < θ)] [Fact (θ < 1
         · rintro ε hε
           exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩ }
 
-theorem norm_smul [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (c : 𝕜)
+theorem norm_smul (c : 𝕜)
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖c • a‖ = ‖c‖ * ‖a‖ := by
   rw [norm_def, norm_def]
   change (jInterpolationENorm ι₀ ι₁ θ q (c • (a : sum ι₀ ι₁))).toReal = _

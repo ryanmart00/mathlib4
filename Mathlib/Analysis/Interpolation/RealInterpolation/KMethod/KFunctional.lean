@@ -6,7 +6,7 @@ Authors: Ryan Martinez
 import Mathlib.Analysis.Interpolation.Couple
 import Mathlib.Analysis.Interpolation.InterpolationCat
 import Mathlib.Analysis.Interpolation.TrivialFunctors
-import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Convex.Continuous
 import Mathlib.CategoryTheory.Iso
 
 /-!
@@ -308,11 +308,27 @@ theorem InterpolationCouple.kFunctional_concaveOn (a : InterpolationCouple.sum �
   have h₀ : ‖a₀‖ = α * ‖a₀‖ + β * ‖a₀‖ := by rw [← add_mul, hαβ, one_mul]
   nlinarith [mul_le_mul_of_nonneg_left hx' hα, mul_le_mul_of_nonneg_left hy' hβ]
 
-/-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
-proof deferred. -/
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). On `(0, ∞)` this is
+Triebel's argument (monotone and concave); at `t = 0`, where concavity alone does not suffice,
+`K(0,a) ≤ K(t,a) ≤ ‖a₀‖ + t‖a₁‖` for a near-optimal decomposition `a = a₀ + a₁`. -/
 theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :
     ContinuousOn (fun t => InterpolationCouple.KFunctional ι₀ ι₁ t a) (Set.Ici 0) := by
-  sorry
+  -- Triebel: a monotone increasing concave function is continuous (on `(0, ∞)`).
+  refine (InterpolationCouple.kFunctional_concaveOn ι₀ ι₁ a).continuousOn_Ici ?_
+  -- At `t = 0`: `K(0,a) ≤ K(t,a) ≤ ‖a₀‖ + t‖a₁‖` for any decomposition `a = a₀ + a₁`.
+  refine tendsto_order.2 ⟨fun b hb => ?_, fun b hb => ?_⟩
+  · filter_upwards [self_mem_nhdsWithin] with t ht
+    exact hb.trans_le (InterpolationCouple.kFunctional_mono ι₀ ι₁ le_rfl ht a)
+  · obtain ⟨r, ⟨a₀, a₁, ha, rfl⟩, hr⟩ := exists_lt_of_csInf_lt
+      (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ 0 a) hb
+    have hlim : Filter.Tendsto (fun t : ℝ => ‖a₀‖ + t * ‖a₁‖) (nhdsWithin 0 (Set.Ici 0))
+        (nhds (‖a₀‖ + 0 * ‖a₁‖)) :=
+      ((continuous_const.add (continuous_id.mul continuous_const)).tendsto 0).mono_left
+        nhdsWithin_le_nhds
+    filter_upwards [hlim.eventually_lt_const hr, self_mem_nhdsWithin] with t h ht
+    exact (csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ t ht a)
+      ⟨a₀, a₁, ha, rfl⟩).trans_lt h
 
 /-- The key transformation/naturality property used to show `(A₀,A₁)_{θ,q}` is an exact
 interpolation functor of type `θ` (Triebel §1.3.3 proof, step 4): a morphism `T : C ⟶ D` scales

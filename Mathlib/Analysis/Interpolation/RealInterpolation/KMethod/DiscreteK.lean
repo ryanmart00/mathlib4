@@ -12,8 +12,9 @@ import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 Bergh–Löfström Lemma 3.1.3 (Triebel §1.7, part (a)): the `(θ,q)` K-quasinorm of `a ∈ A₀ + A₁`
 is equivalent to the `ℓ^q(ℤ)` quasinorm of the sequence `ν ↦ 2^{-νθ} K(2^ν, a)`. On each dyadic
 interval `2^ν ≤ t ≤ 2^{ν+1}` one has `K(2^ν, a) ≤ K(t, a) ≤ 2 K(2^ν, a)`, and
-`∫_{2^ν}^{2^{ν+1}} dt/t = log 2`, whence the constants `2^{-θ} (log 2)^{1/q}` and `2 (log 2)^{1/q}` (read as `1` when
-`q = ∞`, since then `q⁻¹.toReal = 0`).
+`∫_{2^ν}^{2^{ν+1}} dt/t = log 2`, whence the constants `2^{-θ} (log 2)^{1/q}` and
+`2 (log 2)^{1/q}` (the factor `(log 2)^{1/q}` reads as `1` when `q = ∞`, since then
+`q⁻¹.toReal = 0`).
 
 The discrete form is what the equivalence theorem `K = J` (`JMethod/Equivalence.lean`) compares
 with the discrete J-method.

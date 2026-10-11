@@ -34,7 +34,7 @@ equivalent quasinorms.
 * `jInterpolationSubmodule_eq_realInterpolationSubmodule`: the two spaces coincide.
 -/
 
-open Filter
+open Filter MeasureTheory
 open scoped ENNReal Topology
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -122,8 +122,71 @@ theorem jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace A₀]
     jInterpolationENorm ι₀ ι₁ θ q a ≤
       ENNReal.ofReal (6 * max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
           (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) * 2 ^ θ) *
-        (ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal)⁻¹ * realInterpolationENorm ι₀ ι₁ θ q a :=
-  sorry
+        (ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal)⁻¹ * realInterpolationENorm ι₀ ι₁ θ q a := by
+  set C := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁))
+  have hCpos : 0 < C :=
+    QuasinormedAddCommGroup.quasiTriangleConst_pos.trans_le (le_max_left _ _)
+  have hC : 0 ≤ C := hCpos.le
+  set L := ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal
+  have hL0 : L ≠ 0 := (ENNReal.rpow_pos (ENNReal.ofReal_pos.mpr (Real.log_pos one_lt_two))
+    ENNReal.ofReal_ne_top).ne'
+  have hLtop : L ≠ ⊤ :=
+    ENNReal.rpow_ne_top_of_nonneg ENNReal.toReal_nonneg ENNReal.ofReal_ne_top
+  rcases eq_or_ne (realInterpolationENorm ι₀ ι₁ θ q a) ⊤ with ha | ha
+  · -- nothing to prove if `‖a‖_K = ∞`
+    rw [ha, ENNReal.mul_top (mul_ne_zero (ENNReal.ofReal_pos.mpr
+        (mul_pos (mul_pos (by norm_num) hCpos) (Real.rpow_pos_of_pos two_pos θ))).ne'
+      (ENNReal.inv_ne_zero.mpr hLtop))]
+    exact le_top
+  -- B–L: the fundamental lemma (with `ε = 1`) gives `a = ∑ uᵥ` with `J(2^ν, uᵥ) ≤ 6 C K(2^ν, a)`
+  obtain ⟨u, hu, hJ⟩ := exists_hasSum_jFunctional_le_kFunctional ι₀ ι₁ hθ0 hθ1 hq ha one_pos
+  -- thus `‖(2^{-νθ} J(2^ν, uᵥ))‖_{ℓ^q} ≤ 6 C ‖(2^{-νθ} K(2^ν, a))‖_{ℓ^q}`
+  have hseq : jSequenceENorm ι₀ ι₁ θ q u ≤
+      ENNReal.ofReal (6 * C) * kSequenceENorm ι₀ ι₁ θ q a := by
+    set h : ℤ → ℝ := fun ν => ((2 : ℝ) ^ ν) ^ (-θ) * KFunctional ι₀ ι₁ (2 ^ ν) a
+    have hh (ν : ℤ) : 0 ≤ h ν := mul_nonneg (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _)
+      (kFunctional_nonneg ι₀ ι₁ _ (zpow_nonneg zero_le_two _) a)
+    have hk : kSequenceENorm ι₀ ι₁ θ q a = eLpNorm h q Measure.count :=
+      eLpNorm_congr_enorm_ae Measurable.of_discrete.aestronglyMeasurable
+        Measurable.of_discrete.aestronglyMeasurable (Eventually.of_forall fun ν => by
+          rw [enorm_eq_self, Real.enorm_of_nonneg (hh ν)])
+    calc jSequenceENorm ι₀ ι₁ θ q u ≤ eLpNorm ((6 * C) • h) q Measure.count := by
+          refine eLpNorm_mono_enorm Measurable.of_discrete.aestronglyMeasurable fun ν => ?_
+          rw [enorm_eq_self, Pi.smul_apply, smul_eq_mul,
+            Real.enorm_of_nonneg (mul_nonneg (by positivity) (hh ν))]
+          refine ENNReal.ofReal_le_ofReal ?_
+          have h3 := hJ ν
+          rw [show (3 : ℝ) * (1 + 1 : ℝ) = 6 by norm_num] at h3
+          calc ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν)
+              ≤ ((2 : ℝ) ^ ν) ^ (-θ) * (6 * C * KFunctional ι₀ ι₁ (2 ^ ν) a) :=
+                mul_le_mul_of_nonneg_left h3 (Real.rpow_nonneg (zpow_nonneg zero_le_two _) _)
+            _ = 6 * C * h ν := by ring
+      _ = ENNReal.ofReal (6 * C) * kSequenceENorm ι₀ ι₁ θ q a := by
+          rw [eLpNorm_const_smul, hk, Real.enorm_of_nonneg (by positivity)]
+  -- and by B–L Lemma 3.1.3, `‖(2^{-νθ} K(2^ν, a))‖_{ℓ^q} ≤ 2^θ (log 2)^{-1/q} ‖a‖_K`
+  have hdisc := ofReal_mul_kSequenceENorm_le_realInterpolationENorm ι₀ ι₁ hθ0.le hq a
+  have h2θ : ENNReal.ofReal ((2 : ℝ) ^ (-θ)) * ENNReal.ofReal ((2 : ℝ) ^ θ) = 1 := by
+    rw [← ENNReal.ofReal_mul (by positivity), ← Real.rpow_add two_pos, neg_add_cancel,
+      Real.rpow_zero, ENNReal.ofReal_one]
+  have hk : kSequenceENorm ι₀ ι₁ θ q a ≤
+      ENNReal.ofReal ((2 : ℝ) ^ θ) * L⁻¹ * realInterpolationENorm ι₀ ι₁ θ q a := by
+    calc kSequenceENorm ι₀ ι₁ θ q a
+        = ENNReal.ofReal ((2 : ℝ) ^ θ) * L⁻¹ *
+            (ENNReal.ofReal ((2 : ℝ) ^ (-θ)) * L * kSequenceENorm ι₀ ι₁ θ q a) := by
+          rw [show ENNReal.ofReal ((2 : ℝ) ^ θ) * L⁻¹ *
+              (ENNReal.ofReal ((2 : ℝ) ^ (-θ)) * L * kSequenceENorm ι₀ ι₁ θ q a) =
+              (ENNReal.ofReal ((2 : ℝ) ^ (-θ)) * ENNReal.ofReal ((2 : ℝ) ^ θ)) * (L⁻¹ * L) *
+                kSequenceENorm ι₀ ι₁ θ q a by ring,
+            h2θ, ENNReal.inv_mul_cancel hL0 hLtop, one_mul, one_mul]
+      _ ≤ _ := by gcongr
+  calc jInterpolationENorm ι₀ ι₁ θ q a ≤ jSequenceENorm ι₀ ι₁ θ q u :=
+        jInterpolationENorm_le ι₀ ι₁ θ q u hu
+    _ ≤ ENNReal.ofReal (6 * C) * kSequenceENorm ι₀ ι₁ θ q a := hseq
+    _ ≤ ENNReal.ofReal (6 * C) *
+          (ENNReal.ofReal ((2 : ℝ) ^ θ) * L⁻¹ * realInterpolationENorm ι₀ ι₁ θ q a) := by
+        gcongr
+    _ = _ := by rw [ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 6 * C)]; ring
 
 /-- `K ⊂ J` with an unspecified constant: `‖a‖_{θ,q;J} ≤ C ‖a‖_{θ,q;K}`. -/
 theorem exists_jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace A₀]

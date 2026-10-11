@@ -377,6 +377,7 @@ theorem realInterpolationENorm_meetToSum_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 
             ENNReal.mul_rpow_of_nonneg _ _ hr', ← ENNReal.rpow_mul, ENNReal.toReal_inv,
             mul_inv_cancel₀ hr.ne', ENNReal.rpow_one, mul_comm]
 
+omit [T2Space 𝒜] in
 /-- Pointwise control of the K-functional by the `(θ,q)`-quasinorm (Bergh–Löfström Theorem 3.1.2,
 formula (6)): `c_{θ,q} t^{-θ} K(t,a) ≤ ‖a‖_{θ,q}` for all `t > 0`, where
 `c_{θ,q} = realInterpolationConst θ q` is the `(θ,q)`-quasinorm of `t ↦ min 1 t` (B–L's
@@ -385,8 +386,70 @@ formula (6)): `c_{θ,q} t^{-θ} K(t,a) ≤ ‖a‖_{θ,q}` for all `t > 0`, wher
 theorem ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le (θ : ℝ) {q : ℝ≥0∞}
     (hq : 0 < q) (a : sum ι₀ ι₁) {t : ℝ} (ht : 0 < t) :
     ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) * realInterpolationConst θ q ≤
-      realInterpolationENorm ι₀ ι₁ θ q a :=
-  sorry
+      realInterpolationENorm ι₀ ι₁ θ q a := by
+  have htθ : 0 ≤ t ^ (-θ) := Real.rpow_nonneg ht.le _
+  -- B–L: by Lemma 3.1.1 (1), `min(1, u/t) K(t,a) ≤ K(u,a)`; multiply by `u^{-θ}`.
+  have hpt (u : ℝ) (hu : 0 < u) :
+      ENNReal.ofReal (KFunctional ι₀ ι₁ t a) * ENNReal.ofReal (u ^ (-θ) * min 1 (u / t)) ≤
+        ENNReal.ofReal (u ^ (-θ) * KFunctional ι₀ ι₁ u a) := by
+    have hu' : 0 ≤ u ^ (-θ) := Real.rpow_nonneg hu.le _
+    rw [← ENNReal.ofReal_mul (kFunctional_nonneg ι₀ ι₁ t ht.le a)]
+    apply ENNReal.ofReal_le_ofReal
+    calc KFunctional ι₀ ι₁ t a * (u ^ (-θ) * min 1 (u / t))
+        = u ^ (-θ) * (min 1 (u / t) * KFunctional ι₀ ι₁ t a) := by ring
+      _ ≤ u ^ (-θ) * KFunctional ι₀ ι₁ u a :=
+          mul_le_mul_of_nonneg_left (min_one_div_mul_kFunctional_le ι₀ ι₁ ht hu.le a) hu'
+  -- B–L (7): `Φ_{θ,q}(min(1, u/t)) = t^{-θ} Φ_{θ,q}(min(1, u))`, pointwise under `u = t v`.
+  have hscale (v : ℝ) (hv : 0 < v) :
+      (t * v) ^ (-θ) * min 1 (t * v / t) = t ^ (-θ) * (v ^ (-θ) * min 1 v) := by
+    rw [Real.mul_rpow ht.le hv.le, mul_div_cancel_left₀ v ht.ne']
+    ring
+  rw [ENNReal.ofReal_mul htθ]
+  unfold realInterpolationENorm realInterpolationConst
+  split_ifs with htop
+  · -- `q = ∞`
+    rw [ENNReal.mul_iSup]
+    refine iSup_le fun v => le_iSup_of_le ⟨t * v, mul_pos ht v.2⟩ ?_
+    have h := hpt (t * v) (mul_pos ht v.2)
+    rw [hscale v v.2, ENNReal.ofReal_mul htθ] at h
+    calc ENNReal.ofReal (t ^ (-θ)) * ENNReal.ofReal (KFunctional ι₀ ι₁ t a) *
+          ENNReal.ofReal ((v : ℝ) ^ (-θ) * min 1 (v : ℝ))
+        = ENNReal.ofReal (KFunctional ι₀ ι₁ t a) * (ENNReal.ofReal (t ^ (-θ)) *
+          ENNReal.ofReal ((v : ℝ) ^ (-θ) * min 1 (v : ℝ))) := by ring
+      _ ≤ _ := h
+  · -- `q < ∞`
+    have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    have hr' : 0 ≤ q⁻¹.toReal := ENNReal.toReal_nonneg
+    -- B–L (7) for the integral, by the dilation invariance of `dt/t`
+    have hΦ : (∫⁻ u in Ioi (0 : ℝ),
+          ENNReal.ofReal (u ^ (-θ) * min 1 (u / t)) ^ q.toReal * ENNReal.ofReal u⁻¹) =
+        ENNReal.ofReal (t ^ (-θ)) ^ q.toReal * ∫⁻ v in Ioi (0 : ℝ),
+          ENNReal.ofReal (v ^ (-θ) * min 1 v) ^ q.toReal * ENNReal.ofReal v⁻¹ := by
+      rw [← lintegral_Ioi_comp_mul_left_div_self ht
+          (F := fun u => ENNReal.ofReal (u ^ (-θ) * min 1 (u / t)) ^ q.toReal) (by fun_prop),
+        ← lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr.le ENNReal.ofReal_ne_top)]
+      refine setLIntegral_congr_fun measurableSet_Ioi fun v hv => ?_
+      rw [hscale v hv, ENNReal.ofReal_mul htθ, ENNReal.mul_rpow_of_nonneg _ _ hr.le, mul_assoc]
+    -- B–L: apply `Φ_{θ,q}` to the pointwise inequality.
+    calc ENNReal.ofReal (t ^ (-θ)) * ENNReal.ofReal (KFunctional ι₀ ι₁ t a) *
+          (∫⁻ v in Ioi (0 : ℝ),
+            ENNReal.ofReal (v ^ (-θ) * min 1 v) ^ q.toReal * ENNReal.ofReal v⁻¹) ^ q⁻¹.toReal
+        = (ENNReal.ofReal (KFunctional ι₀ ι₁ t a) ^ q.toReal * ∫⁻ u in Ioi (0 : ℝ),
+            ENNReal.ofReal (u ^ (-θ) * min 1 (u / t)) ^ q.toReal * ENNReal.ofReal u⁻¹)
+              ^ q⁻¹.toReal := by
+          rw [hΦ, ENNReal.mul_rpow_of_nonneg _ _ hr', ENNReal.mul_rpow_of_nonneg _ _ hr',
+            ← ENNReal.rpow_mul, ← ENNReal.rpow_mul, ENNReal.toReal_inv, mul_inv_cancel₀ hr.ne',
+            ENNReal.rpow_one, ENNReal.rpow_one]
+          ring
+      _ ≤ (∫⁻ u in Ioi (0 : ℝ), ENNReal.ofReal (u ^ (-θ) * KFunctional ι₀ ι₁ u a) ^ q.toReal *
+            ENNReal.ofReal u⁻¹) ^ q⁻¹.toReal := by
+          refine ENNReal.rpow_le_rpow ?_ hr'
+          rw [← lintegral_const_mul' _ _
+            (ENNReal.rpow_ne_top_of_nonneg hr.le ENNReal.ofReal_ne_top)]
+          refine setLIntegral_mono' measurableSet_Ioi fun u hu => ?_
+          rw [← mul_assoc, ← ENNReal.mul_rpow_of_nonneg _ _ hr.le]
+          gcongr
+          exact hpt u hu
 
 /-- An element of finite `(θ,q)`-quasinorm has `K(t,a) → 0` as `t → 0⁺` (since
 `K(t,a) ≲ t^θ ‖a‖_{θ,q}`). One of the two hypotheses of the fundamental lemma

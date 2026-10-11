@@ -49,7 +49,7 @@ The space `(A₀,A₁)_{θ,q}` itself, with its quasi-Banach structure, is built
 -/
 
 open MeasureTheory Set
-open scoped ENNReal
+open scoped ENNReal QuasinormedAddCommGroup
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -624,8 +624,7 @@ specific to interpolation theory, so may be worth upstreaming separately later. 
 theorem InterpolationCat.Hom.realInterpolationENorm_sumMap_le {C D : InterpolationCat 𝕜}
     (T : InterpolationCat.Hom C D) (θ : ℝ) (_hθ0 : 0 < θ) (_hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q)
     (M₀ M₁ : ℝ) (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.realInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap a) ≤
       ENNReal.ofReal (M₀ ^ (1 - θ) * M₁ ^ θ) *
@@ -771,10 +770,8 @@ between the two `RealInterpolationSpace`s. STATEMENT ONLY — proof deferred. -/
 theorem InterpolationCat.Hom.realInterpolationENorm_iso_le {C D : InterpolationCat 𝕜} (e : C ≅ D)
     (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q)
     (M₀ M₁ N₀ N₁ : ℝ) (hM₀ : 0 < M₀) (hM₁ : 0 < M₁) (hN₀ : 0 < N₀) (hN₁ : 0 < N₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₁ ≤ M₁)
-    (g₀ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₀ ≤ N₀)
-    (g₁ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₁ ≤ N₁)
+    (h₀ : ‖e.hom.f₀‖ₒₚ ≤ M₀) (h₁ : ‖e.hom.f₁‖ₒₚ ≤ M₁)
+    (g₀ : ‖e.inv.f₀‖ₒₚ ≤ N₀) (g₁ : ‖e.inv.f₁‖ₒₚ ≤ N₁)
     (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.realInterpolationENorm D.ι₀ D.ι₁ θ q (e.hom.sumMap a) ≤
       ENNReal.ofReal (M₀ ^ (1 - θ) * M₁ ^ θ) *

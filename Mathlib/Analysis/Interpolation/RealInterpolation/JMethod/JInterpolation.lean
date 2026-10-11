@@ -44,7 +44,7 @@ The space itself, as a quasi-normed space with its sandwich and morphism maps, i
 -/
 
 open MeasureTheory
-open scoped ENNReal
+open scoped ENNReal QuasinormedAddCommGroup
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -317,15 +317,14 @@ theorem jInterpolationENorm_eq_zero_iff (θ : ℝ) (hθ0 : 0 < θ) (hθ1 : θ < 
 end InterpolationCouple
 
 open InterpolationCouple in
-/-- A morphism of couples `T` with `opQuasiNorm T.f₀ ≤ M₀`, `opQuasiNorm T.f₁ ≤ M₁` satisfies
+/-- A morphism of couples `T` with `‖T.f₀‖ₒₚ ≤ M₀`, `‖T.f₁‖ₒₚ ≤ M₁` satisfies
 `‖T a‖_J ≤ 2 M₀^{1-θ} M₁^θ ‖a‖_J` (`θ ≥ 0`). Proof: map a representation by `T.meetMap`, use
 `Hom.jFunctional_meetMap_le`, and shift the index by the `k ∈ ℤ` with
 `2^k ≤ M₁/M₀ < 2^{k+1}`; the mismatch costs `max(1, (M₁/M₀)/2^k) ≤ 2`. -/
 theorem InterpolationCat.Hom.jInterpolationENorm_sumMap_le {C D : InterpolationCat 𝕜}
     (T : InterpolationCat.Hom C D) (θ : ℝ) (hθ : 0 ≤ θ) (q : ℝ≥0∞)
     (M₀ M₁ : ℝ) (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.jInterpolationENorm D.ι₀ D.ι₁ θ q (T.sumMap a) ≤
       ENNReal.ofReal (2 * (M₀ ^ (1 - θ) * M₁ ^ θ)) *

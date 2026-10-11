@@ -10,18 +10,22 @@ import Mathlib.Topology.Algebra.Module.Equiv
 # The operator quasi-norm
 
 Every continuous linear map between quasi-normed spaces is bounded
-(`exists_forall_norm_map_le_mul_norm`), so it has an operator quasi-norm `opQuasiNorm f`, the
+(`exists_forall_norm_map_le_mul_norm`), so it has an operator quasi-norm `‖f‖ₒₚ`, the
 least `C ≥ 0` with `‖f x‖ ≤ C ‖x‖`. Mathlib's `ContinuousLinearMap.opNorm` needs seminormed groups
 on both ends, so it is not available here.
 
 ## Main definitions
-* `QuasinormedAddCommGroup.opQuasiNorm`.
+* `QuasinormedAddCommGroup.opQuasiNorm`, with scoped notation `‖f‖ₒₚ`.
 
 ## Main results
 * `QuasinormedAddCommGroup.rescale_to_shell`: rescaling into a norm shell.
 * `QuasinormedAddCommGroup.exists_forall_norm_map_le_mul_norm`: continuous linear maps are
   bounded.
-* `QuasinormedAddCommGroup.le_opQuasiNorm`: `‖f x‖ ≤ opQuasiNorm f * ‖x‖`.
+* `QuasinormedAddCommGroup.le_opQuasiNorm`: `‖f x‖ ≤ ‖f‖ₒₚ * ‖x‖`.
+
+## Notation
+* `‖f‖ₒₚ` (scoped in `QuasinormedAddCommGroup`): the operator quasi-norm `opQuasiNorm f` (a
+  notation rather than a `Norm` instance, to avoid a diamond; see `opQuasiNorm`).
 -/
 
 namespace QuasinormedAddCommGroup
@@ -98,34 +102,42 @@ theorem exists_forall_norm_map_le_mul_norm (f : E →L[𝕜] F) :
 /-- The operator quasi-norm of a continuous linear map between quasi-normed spaces —
 `sInf {C ≥ 0 | ∀ x, ‖f x‖ ≤ C * ‖x‖}`, the natural substitute for Mathlib's own operator norm
 (`ContinuousLinearMap.opNorm`), which needs genuine `SeminormedAddCommGroup` on both ends and so
-isn't available once a leg is only `QuasinormedAddCommGroup`. -/
+isn't available once a leg is only `QuasinormedAddCommGroup`.
+
+Written `‖f‖ₒₚ` (scoped notation). It is deliberately a plain function with a notation, not a
+`Norm (E →L[𝕜] F)` instance: for genuinely normed `E, F` (quasi-normed through the bridge
+instances) such an instance would be a diamond with Mathlib's `ContinuousLinearMap.hasOpNorm`.
+The two have the same formula, but agree only after unfolding `opQuasiNorm`/`opNorm`, not at
+instance-reducible transparency. -/
 noncomputable def opQuasiNorm (f : E →L[𝕜] F) : ℝ :=
   sInf {C : ℝ | 0 ≤ C ∧ ∀ x, ‖f x‖ ≤ C * ‖x‖}
+
+@[inherit_doc] scoped notation "‖" f "‖ₒₚ" => opQuasiNorm f
 
 theorem opQuasiNorm_nonempty (f : E →L[𝕜] F) :
     {C : ℝ | 0 ≤ C ∧ ∀ x, ‖f x‖ ≤ C * ‖x‖}.Nonempty :=
   let ⟨C, hC, hCf⟩ := exists_forall_norm_map_le_mul_norm f; ⟨C, hC.le, hCf⟩
 
-theorem opQuasiNorm_nonneg (f : E →L[𝕜] F) : 0 ≤ opQuasiNorm f :=
+theorem opQuasiNorm_nonneg (f : E →L[𝕜] F) : 0 ≤ ‖f‖ₒₚ :=
   le_csInf (opQuasiNorm_nonempty f) (fun _ hC => hC.1)
 
 /-- The defining property of `opQuasiNorm`: it is an actual upper bound, not just an infimum of
 candidate bounds. Proved via the standard ε-approximation of an infimum
 (`Real.lt_sInf_add_pos`), using `ε / (‖x‖ + 1)` (rather than `ε / ‖x‖`) as the slack so the same
 argument covers `x = 0` without a separate case split on `‖x‖`. -/
-theorem le_opQuasiNorm (f : E →L[𝕜] F) (x : E) : ‖f x‖ ≤ opQuasiNorm f * ‖x‖ := by
+theorem le_opQuasiNorm (f : E →L[𝕜] F) (x : E) : ‖f x‖ ≤ ‖f‖ₒₚ * ‖x‖ := by
   apply le_of_forall_pos_le_add
   intro ε hε
   have hxpos : (0 : ℝ) < ‖x‖ + 1 := by
     have := QuasinormedAddCommGroup.norm_nonneg x; linarith
   obtain ⟨C, hCmem, hClt⟩ := Real.lt_sInf_add_pos (opQuasiNorm_nonempty f) (div_pos hε hxpos)
   have hbound : ‖f x‖ ≤ C * ‖x‖ := hCmem.2 x
-  have hCx : C * ‖x‖ < (opQuasiNorm f + ε / (‖x‖ + 1)) * ‖x‖ ∨ ‖x‖ = 0 := by
+  have hCx : C * ‖x‖ < (‖f‖ₒₚ + ε / (‖x‖ + 1)) * ‖x‖ ∨ ‖x‖ = 0 := by
     rcases eq_or_lt_of_le (QuasinormedAddCommGroup.norm_nonneg x) with h | h
     · right; exact h.symm
     · left; exact mul_lt_mul_of_pos_right hClt h
   rcases hCx with hCx | hx0
-  · have hεx : (opQuasiNorm f + ε / (‖x‖ + 1)) * ‖x‖ ≤ opQuasiNorm f * ‖x‖ + ε := by
+  · have hεx : (‖f‖ₒₚ + ε / (‖x‖ + 1)) * ‖x‖ ≤ ‖f‖ₒₚ * ‖x‖ + ε := by
       have : ε / (‖x‖ + 1) * ‖x‖ ≤ ε := by
         rw [div_mul_eq_mul_div, div_le_iff₀ hxpos]
         nlinarith [QuasinormedAddCommGroup.norm_nonneg x]

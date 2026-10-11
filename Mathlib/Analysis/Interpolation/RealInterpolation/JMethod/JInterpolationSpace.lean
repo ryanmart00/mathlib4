@@ -29,7 +29,7 @@ the J-method is bundled as an `InterpolationFunctor`.
 * `InterpolationCat.Hom.norm_jInterpolationMap_le`: `‖T a‖ ≤ 2 M₀^{1-θ} M₁^θ ‖a‖`.
 -/
 
-open scoped ENNReal
+open scoped ENNReal QuasinormedAddCommGroup
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -244,8 +244,7 @@ noncomputable def jInterpolationMapₗ (T : C ⟶ D) :
 
 omit [Fact (θ < 1)] [Fact (0 < q)] in
 theorem norm_jInterpolationMapₗ_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : JInterpolationSpace C.ι₀ C.ι₁ θ q) :
     ‖T.jInterpolationMapₗ θ q a‖ ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * ‖a‖ := by
   have ha : jInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
@@ -296,8 +295,7 @@ theorem jInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
 /-- The discrete J-method is of type `θ` up to the factor `2`: if `‖T.f₀‖ ≤ M₀` and
 `‖T.f₁‖ ≤ M₁`, the induced map has quasinorm at most `2 M₀^{1-θ} M₁^θ`. -/
 theorem norm_jInterpolationMap_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : JInterpolationSpace C.ι₀ C.ι₁ θ q) :
     ‖T.jInterpolationMap θ q a‖ ≤ 2 * (M₀ ^ (1 - θ) * M₁ ^ θ) * ‖a‖ :=
   T.norm_jInterpolationMapₗ_le θ q hM₀ hM₁ h₀ h₁ a

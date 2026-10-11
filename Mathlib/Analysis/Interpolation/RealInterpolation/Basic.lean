@@ -31,7 +31,7 @@ J-method) gets its own equivalence theorem, in parallel.
 universe v u
 
 open CategoryTheory
-open scoped ENNReal
+open scoped ENNReal QuasinormedAddCommGroup
 
 variable (𝕜 : Type u) [NontriviallyNormedField 𝕜]
 
@@ -53,8 +53,7 @@ noncomputable def realInterpolationFunctorEquivK :
 /-- The real interpolation functor is exact of type `θ` (Triebel §1.3.3). -/
 theorem norm_realInterpolationFunctor_map_le {C D : InterpolationCat.{v, u} 𝕜} (T : C ⟶ D)
     {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : (realInterpolationFunctor 𝕜 θ q).obj C) :
     ‖((realInterpolationFunctor 𝕜 θ q).map T).hom a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
   have key : ∀ (F : InterpolationFunctor.{v, u} 𝕜), F = kInterpolationFunctor 𝕜 θ q →

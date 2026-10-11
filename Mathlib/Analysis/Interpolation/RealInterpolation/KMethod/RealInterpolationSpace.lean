@@ -34,7 +34,7 @@ The bundled form, the K-method as an `InterpolationFunctor`, is in
 -/
 
 open Filter MeasureTheory Set
-open scoped ENNReal Topology
+open scoped ENNReal Topology QuasinormedAddCommGroup
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -881,8 +881,7 @@ noncomputable def realInterpolationMapₗ (T : C ⟶ D) :
             (ENNReal.mul_lt_top ENNReal.ofReal_lt_top ha))
 
 theorem norm_realInterpolationMapₗ_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : RealInterpolationSpace C.ι₀ C.ι₁ θ q) :
     ‖T.realInterpolationMapₗ θ q a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ := by
   have ha : realInterpolationENorm C.ι₀ C.ι₁ θ q (a : sum C.ι₀ C.ι₁) < ⊤ := a.2
@@ -934,8 +933,7 @@ theorem realInterpolationMap_comp (φ : C ⟶ D) (ψ : D ⟶ E) :
 /-- The K-method is exact of type `θ` (Triebel §1.3.3): if `‖T.f₀‖ ≤ M₀` and `‖T.f₁‖ ≤ M₁`, then
 the induced map has quasinorm at most `M₀^{1-θ} M₁^θ`. -/
 theorem norm_realInterpolationMap_le (T : C ⟶ D) {M₀ M₁ : ℝ} (hM₀ : 0 < M₀) (hM₁ : 0 < M₁)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : RealInterpolationSpace C.ι₀ C.ι₁ θ q) :
     ‖T.realInterpolationMap θ q a‖ ≤ M₀ ^ (1 - θ) * M₁ ^ θ * ‖a‖ :=
   T.norm_realInterpolationMapₗ_le θ q hM₀ hM₁ h₀ h₁ a

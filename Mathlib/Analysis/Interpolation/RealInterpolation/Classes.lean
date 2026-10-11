@@ -29,7 +29,7 @@ injective `sumToAmbient`. So the class conditions also assert `X ⊂ A₀ + A₁
   3.2.2 / 3.11.2).
 -/
 
-open scoped ENNReal
+open scoped ENNReal QuasinormedAddCommGroup
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
@@ -98,7 +98,7 @@ variable {Y : Type*} [QuasinormedAddCommGroup Y] [QuasiNormedSpace 𝕜 Y]
 theorem IsOfClassK.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassK ι₀ ι₁ θ κ)
     {κ' : Y →L[𝕜] 𝒜} (S : Y →L[𝕜] X) (hS : κ.comp S = κ') : IsOfClassK ι₀ ι₁ θ κ' := by
   obtain ⟨C, hC⟩ := h
-  refine ⟨max C 0 * QuasinormedAddCommGroup.opQuasiNorm S, fun y => ?_⟩
+  refine ⟨max C 0 * ‖S‖ₒₚ, fun y => ?_⟩
   obtain ⟨b, hb, hK⟩ := hC (S y)
   refine ⟨b, by rw [hb, ← hS, ContinuousLinearMap.comp_apply], fun t ht => ?_⟩
   have hp : 0 ≤ max C 0 * t ^ θ := mul_nonneg (le_max_right _ _) (Real.rpow_nonneg ht.le _)
@@ -107,7 +107,7 @@ theorem IsOfClassK.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassK �
         gcongr
         · exact QuasinormedAddCommGroup.norm_nonneg _
         · exact le_max_left _ _
-    _ ≤ max C 0 * t ^ θ * (QuasinormedAddCommGroup.opQuasiNorm S * ‖y‖) :=
+    _ ≤ max C 0 * t ^ θ * (‖S‖ₒₚ * ‖y‖) :=
         mul_le_mul_of_nonneg_left (QuasinormedAddCommGroup.le_opQuasiNorm S y) hp
     _ = _ := by ring
 
@@ -116,7 +116,7 @@ theorem IsOfClassK.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassK �
 theorem IsOfClassJ.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassJ ι₀ ι₁ θ κ)
     {κ' : Y →L[𝕜] 𝒜} (T : X →L[𝕜] Y) (hT : κ'.comp T = κ) : IsOfClassJ ι₀ ι₁ θ κ' := by
   obtain ⟨C, hC⟩ := h
-  set M := QuasinormedAddCommGroup.opQuasiNorm T
+  set M := ‖T‖ₒₚ
   refine ⟨M * max C 0, fun b => ?_⟩
   obtain ⟨x, hx, hJ⟩ := hC b
   refine ⟨T x, by rw [← hx, ← hT, ContinuousLinearMap.comp_apply], fun t ht => ?_⟩

@@ -20,6 +20,8 @@ interpolation): the spaces `(A₀,A₁)_{θ,q}` (§1.3.2) are defined by prescri
 `K(t,a)` as `t → 0` and `t → ∞`.
 -/
 
+open scoped QuasinormedAddCommGroup
+
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
   [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
@@ -334,14 +336,14 @@ theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.su
 interpolation functor of type `θ` (Triebel §1.3.3 proof, step 4): a morphism `T : C ⟶ D` scales
 the K-functional by bounds on its operator quasi-norms on each leg.
 
-Stated with arbitrary upper bounds `M₀, M₁` on `opQuasiNorm T.f₀`/`opQuasiNorm T.f₁` (rather than
-the exact quasi-norms themselves) precisely to sidestep the `opQuasiNorm T.f₀ = 0` edge case
+Stated with arbitrary upper bounds `M₀, M₁` on `‖T.f₀‖ₒₚ`/`‖T.f₁‖ₒₚ` (rather than
+the exact quasi-norms themselves) precisely to sidestep the `‖T.f₀‖ₒₚ = 0` edge case
 flagged when this was statement-only: with the exact quasi-norm plugged in, `t * ‖T.f₁‖ / 0`
 evaluates to `0` under Lean's `x / 0 = 0` convention, making the RHS `0` and the claimed
 inequality false whenever `T.f₀ = 0` and `T.sumMap a ≠ 0`. The proof below only ever uses
 `‖T.f₀ a₀‖ ≤ M₀ * ‖a₀‖`/`‖T.f₁ a₁‖ ≤ M₁ * ‖a₁‖`, never that `M₀, M₁` are the *tightest* such
 bounds, so this version is strictly more general (recovers the exact-quasi-norm statement by
-taking `M₀ := opQuasiNorm T.f₀` whenever that is positive) and avoids the degenerate case by
+taking `M₀ := ‖T.f₀‖ₒₚ` whenever that is positive) and avoids the degenerate case by
 letting the caller pick `M₀ > 0` freely (e.g. `M₀ := 1` when `T.f₀ = 0`). Signed off by Ryan.
 
 Uses `QuasinormedAddCommGroup.opQuasiNorm` rather than Mathlib's own operator norm, which needs
@@ -350,8 +352,7 @@ genuine `SeminormedAddCommGroup` on both ends and so isn't available for merely-
 theorem InterpolationCat.Hom.kFunctional_sumMap_le {C D : InterpolationCat 𝕜}
     (T : InterpolationCat.Hom C D) (t : ℝ) (ht : 0 ≤ t)
     (M₀ M₁ : ℝ) (hM₀ : 0 < M₀)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (T.sumMap a) ≤
       M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) a := by
@@ -396,10 +397,8 @@ functoriality (`sumMap_id`/`sumMap_comp`, `TrivialFunctors.lean`). STATEMENT ONL
 deferred. -/
 theorem InterpolationCat.Hom.kFunctional_iso_le {C D : InterpolationCat 𝕜} (e : C ≅ D)
     (M₀ M₁ N₀ N₁ : ℝ) (hM₀ : 0 < M₀) (hN₀ : 0 < N₀)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm e.hom.f₁ ≤ M₁)
-    (g₀ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₀ ≤ N₀)
-    (g₁ : QuasinormedAddCommGroup.opQuasiNorm e.inv.f₁ ≤ N₁)
+    (h₀ : ‖e.hom.f₀‖ₒₚ ≤ M₀) (h₁ : ‖e.hom.f₁‖ₒₚ ≤ M₁)
+    (g₀ : ‖e.inv.f₀‖ₒₚ ≤ N₀) (g₁ : ‖e.inv.f₁‖ₒₚ ≤ N₁)
     (t : ℝ) (ht : 0 ≤ t) (a : InterpolationCouple.sum C.ι₀ C.ι₁) :
     InterpolationCouple.KFunctional D.ι₀ D.ι₁ t (e.hom.sumMap a) ≤
       M₀ * InterpolationCouple.KFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) a ∧

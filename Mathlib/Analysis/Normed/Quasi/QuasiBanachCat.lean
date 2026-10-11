@@ -38,6 +38,7 @@ universe v u
 variable (𝕜 : Type u) [NontriviallyNormedField 𝕜]
 
 open CategoryTheory ConcreteCategory
+open scoped QuasinormedAddCommGroup
 
 /-- The category of quasi-Banach spaces over `𝕜` (the quasi-Banach analogue of Triebel's ℭ₁). -/
 structure QuasiBanachCat where
@@ -141,11 +142,11 @@ theorem continuousLinearEquivOfIso_apply {X Y : QuasiBanachCat 𝕜} (e : X ≅ 
 /-- The quasinorm comparison carried by an iso in `QuasiBanachCat` (one direction; the other is
 `norm_le_hom`). -/
 theorem norm_hom_le {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
-    ‖e.hom x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.hom.hom * ‖x‖ :=
+    ‖e.hom x‖ ≤ ‖e.hom.hom‖ₒₚ * ‖x‖ :=
   QuasinormedAddCommGroup.le_opQuasiNorm e.hom.hom x
 
 theorem norm_le_hom {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
-    ‖x‖ ≤ QuasinormedAddCommGroup.opQuasiNorm e.inv.hom * ‖e.hom x‖ := by
+    ‖x‖ ≤ ‖e.inv.hom‖ₒₚ * ‖e.hom x‖ := by
   have h := QuasinormedAddCommGroup.le_opQuasiNorm e.inv.hom (e.hom x)
   rwa [show e.inv.hom (e.hom x) = x from ConcreteCategory.congr_hom e.hom_inv_id x] at h
 

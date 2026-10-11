@@ -31,7 +31,7 @@ the reiteration theorem (`InterpolationCat.nonempty_iso_realInterpolationFunctor
 -/
 
 open MeasureTheory CategoryTheory
-open scoped ENNReal NNReal
+open scoped ENNReal NNReal QuasinormedAddCommGroup
 
 section WeakLp
 
@@ -343,8 +343,7 @@ theorem exists_lorentz_interpolation {p₀ r₀ p₁ r₁ q₀ s₀ q₁ s₁ : 
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹)
     (hq : q⁻¹ = ENNReal.ofReal (1 - θ) * q₀⁻¹ + ENNReal.ofReal θ * q₁⁻¹) :
     ∃ C : ℝ, ∀ (T : lorentzCouple 𝕜 μ E p₀ r₀ p₁ r₁ ⟶ lorentzCouple 𝕜 ν F q₀ s₀ q₁ s₁) {M₀ M₁ : ℝ},
-      0 < M₀ → 0 < M₁ → QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀ →
-      QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁ →
+      0 < M₀ → 0 < M₁ → ‖T.f₀‖ₒₚ ≤ M₀ → ‖T.f₁‖ₒₚ ≤ M₁ →
       ∃ S : LorentzSpace E p r μ →L[𝕜] LorentzSpace F q r ν,
         (∀ (f : LorentzSpace E p r μ) (f₀ : LorentzSpace E p₀ r₀ μ) (f₁ : LorentzSpace E p₁ r₁ μ),
           LorentzSpace.toL0 μ E 𝕜 p r f =
@@ -355,8 +354,8 @@ theorem exists_lorentz_interpolation {p₀ r₀ p₁ r₁ q₀ s₀ q₁ s₁ : 
   -- B–L: "follows at once from Theorem 5.3.1": identify both ends of `Φ(T)`, `Φ = (·)_{θ,r}`
   obtain ⟨eX, hX⟩ := nonempty_iso_realInterpolation_lorentz 𝕜 μ E hp₀ hp₁ hp₀₁ hr₀ hr₁ θ r p hp
   obtain ⟨eY, hY⟩ := nonempty_iso_realInterpolation_lorentz 𝕜 ν F hq₀ hq₁ hq₀₁ hs₀ hs₁ θ r q hq
-  set Nx := QuasinormedAddCommGroup.opQuasiNorm eX.inv.hom
-  set Ny := QuasinormedAddCommGroup.opQuasiNorm eY.hom.hom
+  set Nx := ‖eX.inv.hom‖ₒₚ
+  set Ny := ‖eY.hom.hom‖ₒₚ
   refine ⟨Ny * Nx, fun T M₀ M₁ hM₀ hM₁ h₀ h₁ => ⟨eY.hom.hom.comp
     (((realInterpolationFunctor 𝕜 θ r).map T).hom.comp eX.inv.hom),
     fun f f₀ f₁ hf => ?_, fun f => ?_⟩⟩
@@ -398,8 +397,7 @@ theorem exists_lp_interpolation {p₀ p₁ q₀ q₁ : ℝ≥0∞} [Fact (0 < p�
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹)
     (hq : q⁻¹ = ENNReal.ofReal (1 - θ) * q₀⁻¹ + ENNReal.ofReal θ * q₁⁻¹) (hpq : p ≤ q) :
     ∃ C : ℝ, ∀ (T : lorentzCouple 𝕜 μ E p₀ p₀ p₁ p₁ ⟶ lorentzCouple 𝕜 ν F q₀ ⊤ q₁ ⊤) {M₀ M₁ : ℝ},
-      0 < M₀ → 0 < M₁ → QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀ →
-      QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁ →
+      0 < M₀ → 0 < M₁ → ‖T.f₀‖ₒₚ ≤ M₀ → ‖T.f₁‖ₒₚ ≤ M₁ →
       ∃ S : LorentzSpace E p p μ →L[𝕜] LorentzSpace F q q ν,
         (∀ (f : LorentzSpace E p p μ) (f₀ : LorentzSpace E p₀ p₀ μ) (f₁ : LorentzSpace E p₁ p₁ μ),
           LorentzSpace.toL0 μ E 𝕜 p p f =

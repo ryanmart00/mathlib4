@@ -32,6 +32,8 @@ components; `J(1, b)` is exactly the meet's own quasi-norm (`jFunctional_one`).
   `Hom.kFunctional_sumMap_le`.
 -/
 
+open scoped QuasinormedAddCommGroup
+
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {𝒜 : Type*} [AddCommGroup 𝒜] [Module 𝕜 𝒜] [TopologicalSpace 𝒜]
   [IsTopologicalAddGroup 𝒜] [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜]
@@ -169,13 +171,12 @@ theorem InterpolationCouple.kFunctional_meetToSum_le_jFunctional {s t : ℝ} (hs
           mul_le_mul_of_nonneg_left (le_max_right _ _) (div_nonneg ht hs.le)
 
 /-- Naturality of `J` (the analogue of `Hom.kFunctional_sumMap_le`): a morphism `T : C ⟶ D` with
-`opQuasiNorm T.f₀ ≤ M₀`, `opQuasiNorm T.f₁ ≤ M₁` satisfies
+`‖T.f₀‖ₒₚ ≤ M₀`, `‖T.f₁‖ₒₚ ≤ M₁` satisfies
 `J_D(t, T b) ≤ M₀ · J_C(t M₁ / M₀, b)`. As there, `M₀ > 0` is a free upper bound rather than the
 exact operator quasi-norm, to avoid the `x / 0 = 0` degenerate case. -/
 theorem InterpolationCat.Hom.jFunctional_meetMap_le {C D : InterpolationCat 𝕜}
     (T : InterpolationCat.Hom C D) (t : ℝ) (M₀ M₁ : ℝ) (hM₀ : 0 < M₀)
-    (h₀ : QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀)
-    (h₁ : QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁)
+    (h₀ : ‖T.f₀‖ₒₚ ≤ M₀) (h₁ : ‖T.f₁‖ₒₚ ≤ M₁)
     (b : InterpolationCouple.meet C.ι₀ C.ι₁) :
     InterpolationCouple.JFunctional D.ι₀ D.ι₁ t (T.meetMap b) ≤
       M₀ * InterpolationCouple.JFunctional C.ι₀ C.ι₁ (t * M₁ / M₀) b := by

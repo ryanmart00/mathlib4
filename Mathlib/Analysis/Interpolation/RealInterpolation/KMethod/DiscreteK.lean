@@ -171,7 +171,45 @@ theorem ofReal_mul_kSequenceENorm_le_realInterpolationENorm {θ : ℝ} (hθ : 0 
 theorem realInterpolationENorm_le_mul_kSequenceENorm {θ : ℝ} (hθ : 0 ≤ θ) {q : ℝ≥0∞}
     (hq : 0 < q) (a : sum ι₀ ι₁) :
     realInterpolationENorm ι₀ ι₁ θ q a ≤
-      2 * ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal * kSequenceENorm ι₀ ι₁ θ q a :=
-  sorry
+      2 * ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal * kSequenceENorm ι₀ ι₁ θ q a := by
+  set α : ℤ → ℝ≥0∞ := fun ν =>
+    ENNReal.ofReal (((2 : ℝ) ^ ν) ^ (-θ) * KFunctional ι₀ ι₁ (2 ^ ν) a)
+  have h2α (ν : ℤ) {t : ℝ} (ht : t ∈ Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1))) :
+      ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) ≤ 2 * α ν := by
+    rw [← ENNReal.ofReal_ofNat 2, ← ENNReal.ofReal_mul zero_le_two]
+    exact ENNReal.ofReal_le_ofReal (rpow_neg_mul_kFunctional_bounds_of_mem_Ico ι₀ ι₁ hθ a ν ht).2
+  unfold kSequenceENorm realInterpolationENorm
+  split_ifs with htop
+  · -- `q = ∞`: each `t` lies in some dyadic interval `[2^ν, 2^{ν+1})`
+    subst htop
+    rw [eLpNorm_exponent_top Measurable.of_discrete.aestronglyMeasurable, eLpNormEssSup,
+      essSup_count_eq_ciSup (OrderTop.bddAbove _)]
+    simp only [ENNReal.inv_top, ENNReal.toReal_zero, ENNReal.rpow_zero, mul_one, enorm_eq_self]
+    refine iSup_le fun t => ?_
+    obtain ⟨ν, hν⟩ := exists_mem_Ico_zpow (mem_Ioi.mp t.2) one_lt_two
+    exact (h2α ν hν).trans (mul_le_mul_right (le_iSup α ν) 2)
+  · -- `q < ∞`: B–L, each piece `∫_{2^ν}^{2^{ν+1}} (t^{-θ} K(t, a))^q dt/t` is at most
+    -- `(2 · 2^{-νθ} αᵥ)^q log 2`
+    have hr : 0 < q.toReal := ENNReal.toReal_pos hq.ne' htop
+    rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hq.ne' htop
+      Measurable.of_discrete.aestronglyMeasurable, lintegral_count]
+    simp only [enorm_eq_self]
+    rw [← ENNReal.rpow_le_rpow_iff hr]
+    simp only [ENNReal.mul_rpow_of_nonneg _ _ hr.le, ← ENNReal.rpow_mul, ENNReal.toReal_inv,
+      one_div, inv_mul_cancel₀ hr.ne', ENNReal.rpow_one]
+    rw [lintegral_Ioi_eq_tsum, ← ENNReal.tsum_mul_left]
+    refine ENNReal.tsum_le_tsum fun ν => ?_
+    calc ∫⁻ t in Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1)),
+          ENNReal.ofReal (t ^ (-θ) * KFunctional ι₀ ι₁ t a) ^ q.toReal * ENNReal.ofReal t⁻¹
+        ≤ ∫⁻ t in Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1)),
+            (2 * α ν) ^ q.toReal * ENNReal.ofReal t⁻¹ := by
+          refine setLIntegral_mono' measurableSet_Ico fun t ht => ?_
+          gcongr
+          exact h2α ν ht
+      _ = 2 ^ q.toReal * ENNReal.ofReal (Real.log 2) * α ν ^ q.toReal := by
+          rw [lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hr.le
+              (ENNReal.mul_ne_top ENNReal.ofNat_ne_top ENNReal.ofReal_ne_top)),
+            lintegral_Ico_zpow_inv, ENNReal.mul_rpow_of_nonneg _ _ hr.le]
+          ring
 
 end InterpolationCouple

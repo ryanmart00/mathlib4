@@ -371,7 +371,14 @@ Banach spaces `A₀, A₁` themselves, since nothing yet determines a canonical 
 alone. Once canonical embeddings exist for concrete spaces (e.g. `Lp` spaces embedding into `𝒟'`
 or `𝒮'`), it will likely read better for this notation to apply directly to `A₀, A₁` (with the
 embedding found automatically) rather than to `ι₀, ι₁` explicitly — deliberately not acted on
-yet, flagged here for when that machinery exists. -/
-scoped[InterpolationCouple] notation:70 ι₀ " ∩ " ι₁ => InterpolationCouple.meet ι₀ ι₁
+yet, flagged here for when that machinery exists.
 
-scoped[InterpolationCouple] notation:65 ι₀ " + " ι₁ => InterpolationCouple.sum ι₀ ι₁
+Both are declared with `infixl` at the precedences of the core `∩` (70) and `+` (65), so they
+parse exactly like the operators they overload; Lean then chooses between the overloads by
+elaboration. (A bare `notation:65 ι₀ " + " ι₁` would parse its right argument at precedence `0`,
+swallowing e.g. `b ≤ c` in `a + b ≤ c`, and win over the core `+` by longest match.) -/
+scoped[InterpolationCouple] infixl:70 " ∩ " => InterpolationCouple.meet
+
+/-- Scoped notation `ι₀ + ι₁` for the sum space `InterpolationCouple.sum ι₀ ι₁`; see the
+`ι₀ ∩ ι₁` notation above. -/
+scoped[InterpolationCouple] infixl:65 " + " => InterpolationCouple.sum

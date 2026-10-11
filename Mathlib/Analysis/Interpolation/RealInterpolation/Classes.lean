@@ -94,11 +94,39 @@ namespace RealInterpolationSpace
 variable [CompleteSpace A₀] [CompleteSpace A₁]
 variable (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
 
+omit [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `(A₀, A₁)_{θ,q}` is of class `𝒦(θ; Ā)`: `K(t, a) ≤ C t^θ ‖a‖_{θ,q}` (B–L Theorem 3.1.2 (6) /
 3.11.2 (3); here `ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le`). -/
 theorem isOfClassK :
-    IsOfClassK ι₀ ι₁ θ ((sumToAmbient ι₀ ι₁).comp (RealInterpolationSpace.toSum ι₀ ι₁ θ q)) :=
-  sorry
+    IsOfClassK ι₀ ι₁ θ ((sumToAmbient ι₀ ι₁).comp (RealInterpolationSpace.toSum ι₀ ι₁ θ q)) := by
+  have hθ0 : 0 < θ := Fact.out
+  have hθ1 : θ < 1 := Fact.out
+  have hq : 0 < q := Fact.out
+  set c := realInterpolationConst θ q
+  have hc0 : c ≠ 0 := (realInterpolationConst_pos θ q).ne'
+  have hctop : c ≠ ⊤ := (realInterpolationConst_lt_top hθ0 hθ1 q).ne
+  have hcR : 0 < c.toReal := ENNReal.toReal_pos hc0 hctop
+  refine ⟨c.toReal⁻¹, fun x => ⟨(x : sum ι₀ ι₁), rfl, fun t ht => ?_⟩⟩
+  -- B–L Theorem 3.1.2 (6): `t^{-θ} K(t, x) c ≤ ‖x‖_{θ,q}`
+  have h6 := ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le ι₀ ι₁ θ hq
+    (x : sum ι₀ ι₁) ht
+  have hfin : realInterpolationENorm ι₀ ι₁ θ q (x : sum ι₀ ι₁) ≠ ⊤ :=
+    (show realInterpolationENorm ι₀ ι₁ θ q (x : sum ι₀ ι₁) < ⊤ from x.2).ne
+  have hpos : 0 ≤ t ^ (-θ) * KFunctional ι₀ ι₁ t (x : sum ι₀ ι₁) :=
+    mul_nonneg (Real.rpow_nonneg ht.le _) (kFunctional_nonneg ι₀ ι₁ t ht.le _)
+  have h6' := ENNReal.toReal_mono hfin h6
+  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hpos] at h6'
+  rw [norm_def]
+  have hsplit : KFunctional ι₀ ι₁ t (x : sum ι₀ ι₁) =
+      t ^ θ * (t ^ (-θ) * KFunctional ι₀ ι₁ t (x : sum ι₀ ι₁)) := by
+    rw [← mul_assoc, ← Real.rpow_add ht, add_neg_cancel, Real.rpow_zero, one_mul]
+  rw [hsplit]
+  calc t ^ θ * (t ^ (-θ) * KFunctional ι₀ ι₁ t (x : sum ι₀ ι₁))
+      ≤ t ^ θ * ((realInterpolationENorm ι₀ ι₁ θ q (x : sum ι₀ ι₁)).toReal / c.toReal) := by
+        gcongr
+        rw [le_div_iff₀ hcR]
+        exact h6'
+    _ = _ := by ring
 
 /-- `(A₀, A₁)_{θ,q}` is of class `𝒥(θ; Ā)`: `‖b‖_{θ,q} ≤ C t^{-θ} J(t, b)` for `b ∈ A₀ ∩ A₁`
 (B–L Theorem 3.2.2 (6) / 3.11.2 (4); for the K-quasinorm this follows from

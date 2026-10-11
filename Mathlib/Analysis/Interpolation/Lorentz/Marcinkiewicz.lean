@@ -44,7 +44,44 @@ variable {E : Type*} [NormedAddCommGroup E]
 `‖f‖_{L_{p,∞}} = sup_σ σ ϱ(f,σ)^{1/p}` for `0 < p < ∞`. -/
 theorem lorentzNorm_top_eq_iSup {p : ℝ≥0∞} (hp0 : 0 < p) (hp : p ≠ ⊤) (f : α → E) :
     lorentzNorm μ p ⊤ f = ⨆ σ : ℝ≥0∞, σ * distributionFunction μ f σ ^ p⁻¹.toReal := by
-  sorry
+  simp only [lorentzNorm, ↓reduceIte]
+  set a := p⁻¹.toReal
+  have ha0 : 0 < a :=
+    ENNReal.toReal_pos (ENNReal.inv_ne_zero.2 hp) (ENNReal.inv_ne_top.2 hp0.ne')
+  apply le_antisymm
+  · -- `t^{1/p} f*(t) ≤ sup_σ σ ϱ(σ)^{1/p}`: every `σ < f*(t)` has `t < ϱ(σ)`
+    refine iSup_le fun t => ?_
+    rcases eq_or_ne t 0 with rfl | ht0
+    · simp [ENNReal.zero_rpow_of_pos ha0]
+    have hta0 : (t : ℝ≥0∞) ^ a ≠ 0 :=
+      (ENNReal.rpow_pos (ENNReal.coe_pos.2 (pos_iff_ne_zero.2 ht0)) ENNReal.coe_ne_top).ne'
+    have htat : (t : ℝ≥0∞) ^ a ≠ ⊤ := ENNReal.rpow_ne_top_of_nonneg ha0.le ENNReal.coe_ne_top
+    rw [mul_comm, ← ENNReal.le_div_iff_mul_le (Or.inl hta0) (Or.inl htat)]
+    refine le_of_forall_lt_imp_le_of_dense fun σ hσ => ?_
+    have hσt : t < distributionFunction μ f σ :=
+      (lt_decreasingRearrangement_iff μ f t (ne_top_of_lt hσ)).1 hσ
+    rw [ENNReal.le_div_iff_mul_le (Or.inl hta0) (Or.inl htat)]
+    calc σ * (t : ℝ≥0∞) ^ a ≤ σ * distributionFunction μ f σ ^ a := by gcongr
+      _ ≤ _ := le_iSup (fun σ => σ * distributionFunction μ f σ ^ a) σ
+  · -- `σ ϱ(σ)^{1/p} ≤ sup_t t^{1/p} f*(t)`: every `t < ϱ(σ)` has `σ < f*(t)`
+    refine iSup_le fun σ => ?_
+    rcases eq_or_ne σ ⊤ with rfl | hσt
+    · simp [distributionFunction, ENNReal.zero_rpow_of_pos ha0]
+    rcases eq_or_ne σ 0 with rfl | hσ0
+    · simp
+    set L := ⨆ t : ℝ≥0, (t : ℝ≥0∞) ^ a * decreasingRearrangement μ f t
+    rw [mul_comm, ← ENNReal.le_div_iff_mul_le (Or.inl hσ0) (Or.inl hσt),
+      ← ENNReal.rpow_inv_rpow ha0.ne' (L / σ)]
+    refine ENNReal.rpow_le_rpow (le_of_forall_lt_imp_le_of_dense fun t ht => ?_) ha0.le
+    have hσlt : σ < decreasingRearrangement μ f t :=
+      (lt_decreasingRearrangement_iff μ f t hσt).2 ht
+    rw [← ENNReal.rpow_rpow_inv ha0.ne' t]
+    refine ENNReal.rpow_le_rpow ?_ (inv_nonneg.2 ha0.le)
+    rw [ENNReal.le_div_iff_mul_le (Or.inl hσ0) (Or.inl hσt)]
+    calc t ^ a * σ ≤ t ^ a * decreasingRearrangement μ f t := by gcongr
+      _ ≤ L := by
+        lift t to ℝ≥0 using ne_top_of_lt ht
+        exact le_iSup (fun t : ℝ≥0 => (t : ℝ≥0∞) ^ a * decreasingRearrangement μ f t) t
 
 variable [SigmaFinite μ]
 

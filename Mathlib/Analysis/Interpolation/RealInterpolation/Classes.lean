@@ -3,8 +3,7 @@ Copyright (c) 2026 Ryan Martinez. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Ryan Martinez
 -/
-import Mathlib.Analysis.Interpolation.RealInterpolation.JMethod.JFunctional
-import Mathlib.Analysis.Interpolation.RealInterpolation.KMethod.RealInterpolationSpace
+import Mathlib.Analysis.Interpolation.RealInterpolation.JMethod.Equivalence
 
 /-!
 # Spaces of class `𝒦(θ)`, `𝒥(θ)` and `𝒞(θ)`
@@ -55,9 +54,17 @@ def IsOfClassJ (θ : ℝ) (κ : X →L[𝕜] 𝒜) : Prop :=
   ∃ C : ℝ, ∀ b : meet ι₀ ι₁, ∃ x : X, κ x = sumToAmbient ι₀ ι₁ (meetToSum ι₀ ι₁ b) ∧
     ∀ t : ℝ, 0 < t → ‖x‖ ≤ C * t ^ (-θ) * JFunctional ι₀ ι₁ t b
 
+omit [T2Space 𝒜] in
+/-- `K(t, b) ≤ ‖a₀‖ + t ‖a₁‖` for any decomposition `b = [(a₀, a₁)]`. -/
+private theorem kFunctional_mk_le {t : ℝ} (ht : 0 ≤ t) (a₀ : A₀) (a₁ : A₁) :
+    KFunctional ι₀ ι₁ t (Submodule.Quotient.mk (a₀, a₁)) ≤ ‖a₀‖ + t * ‖a₁‖ :=
+  csInf_le (kFunctional_set_boundedBelow ι₀ ι₁ t ht _) ⟨a₀, a₁, rfl, rfl⟩
+
 /-- `A₀` is of class `𝒦(0; Ā)` (B–L, after Definition 3.5.1: `K(t, a) ≤ ‖a‖_{A₀}`). -/
-theorem isOfClassK_zero_ι₀ : IsOfClassK ι₀ ι₁ 0 ι₀ :=
-  sorry
+theorem isOfClassK_zero_ι₀ : IsOfClassK ι₀ ι₁ 0 ι₀ := by
+  refine ⟨1, fun x => ⟨inl₀ ι₀ ι₁ x, sumToAmbient_inl₀ ι₀ ι₁ x, fun t ht => ?_⟩⟩
+  rw [Real.rpow_zero, one_mul, one_mul, inl₀_eq_mk]
+  simpa using kFunctional_mk_le ι₀ ι₁ ht.le x 0
 
 /-- `A₀` is of class `𝒥(0; Ā)` (`‖b‖_{A₀} ≤ J(t, b)`). -/
 theorem isOfClassJ_zero_ι₀ : IsOfClassJ ι₀ ι₁ 0 ι₀ :=

@@ -36,7 +36,41 @@ This is what makes the discrete J-method of real interpolation work for quasi-Ba
 * `QuasinormedAddCommGroup.aokiRolewiczNorm_add_rpow_le`, `aokiRolewiczNorm_le_norm`,
   `norm_le_aokiRolewiczNorm`: the `ρ`-norm and its equivalence with `‖·‖`.
 * `QuasinormedAddCommGroup.summable_of_summable_norm_rpow`, `norm_tsum_le_rpow`: series.
+* `AokiRolewicz.apply_sum_le_rpow`: the finite-sum bound for an arbitrary quasi-norm *function*
+  `N` on an additive monoid (Bergh–Löfström Lemma 3.10.2 is stated in this generality), with any
+  admissible constant `C ≥ 1`. It is applied, e.g., to the K-functional `K(t, ·)`, which is not
+  the norm of a `QuasinormedAddCommGroup` instance; choosing `C` large makes `ρ` small.
 -/
+
+/-! ### Aoki–Rolewicz for a quasi-norm function -/
+
+namespace AokiRolewicz
+
+/-- The Aoki–Rolewicz exponent `ρ = 1 / (1 + log₂ C)` for a quasi-triangle constant `C`. -/
+noncomputable def exponent (C : ℝ) : ℝ :=
+  (1 + Real.logb 2 C)⁻¹
+
+variable {E : Type*} [AddCommMonoid E] (N : E → ℝ) {C : ℝ}
+
+/-- A dyadic form of the quasi-triangle inequality `N(x + y) ≤ C (N x + N y)`: if
+`∑ 2^{-kᵢ} ≤ 1` and `(2C)^{kᵢ} N(xᵢ) ≤ M` for all `i`, then `N(∑ xᵢ) ≤ M`. -/
+theorem apply_sum_le_of_sum_inv_two_pow_le (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x)
+    (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*} (s : Finset ι) (x : ι → E)
+    (k : ι → ℕ) {M : ℝ} (hM : 0 ≤ M) (hk : ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ ≤ 1)
+    (hx : ∀ i ∈ s, (2 * C) ^ k i * N (x i) ≤ M) :
+    N (∑ i ∈ s, x i) ≤ M :=
+  sorry
+
+/-- **Aoki–Rolewicz** for a quasi-norm function (Bergh–Löfström Lemma 3.10.2): if
+`N ≥ 0` and `N(x + y) ≤ C (N x + N y)` with `C ≥ 1`, then with `ρ = exponent C`,
+`N(∑ xᵢ) ≤ 4^{1/ρ} (∑ N(xᵢ)^ρ)^{1/ρ}`. -/
+theorem apply_sum_le_rpow (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x)
+    (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*} (s : Finset ι) (x : ι → E) :
+    N (∑ i ∈ s, x i) ≤
+      (4 : ℝ) ^ (exponent C)⁻¹ * (∑ i ∈ s, N (x i) ^ exponent C) ^ (exponent C)⁻¹ :=
+  sorry
+
+end AokiRolewicz
 
 namespace QuasinormedAddCommGroup
 

@@ -61,7 +61,20 @@ theorem exists_hasSum_jFunctional_le_kFunctional [CompleteSpace A₀] [CompleteS
   sorry
 
 /-- `K ⊂ J` (B–L Theorem 3.11.3, via the fundamental lemma as in the proof of Theorem 3.3.1):
-`‖a‖_{θ,q;J} ≤ C ‖a‖_{θ,q;K}`. -/
+`‖a‖_{θ,q;J} ≤ 6 C 2^θ (log 2)^{-1/q} ‖a‖_{θ,q;K}`, with `C = max C₀ C₁` the larger
+quasi-triangle constant. The fundamental lemma with `ε = 1` gives `J(2^ν, uᵥ) ≤ 6 C K(2^ν, a)`, and
+`2^θ (log 2)^{-1/q}` is the inverse of the lower constant of the discrete K-method
+(`ofReal_mul_kSequenceENorm_le_realInterpolationENorm`). -/
+theorem jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace A₀]
+    [CompleteSpace A₁] {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞} (hq : 0 < q)
+    (a : sum ι₀ ι₁) :
+    jInterpolationENorm ι₀ ι₁ θ q a ≤
+      ENNReal.ofReal (6 * max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
+          (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) * 2 ^ θ) *
+        (ENNReal.ofReal (Real.log 2) ^ q⁻¹.toReal)⁻¹ * realInterpolationENorm ι₀ ι₁ θ q a :=
+  sorry
+
+/-- `K ⊂ J` with an unspecified constant: `‖a‖_{θ,q;J} ≤ C ‖a‖_{θ,q;K}`. -/
 theorem exists_jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace A₀]
     [CompleteSpace A₁] {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞} (hq : 0 < q) :
     ∃ C : ℝ≥0∞, C ≠ ⊤ ∧ ∀ a : sum ι₀ ι₁,

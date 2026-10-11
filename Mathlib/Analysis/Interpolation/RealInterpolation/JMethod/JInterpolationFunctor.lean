@@ -79,7 +79,7 @@ theorem toSum_comp_equivRealInterpolationSpace :
     (RealInterpolationSpace.toSum ι₀ ι₁ θ q).comp
         (equivRealInterpolationSpace ι₀ ι₁ θ q : JInterpolationSpace ι₀ ι₁ θ q →L[𝕜] _) =
       JInterpolationSpace.toSum ι₀ ι₁ θ q :=
-  sorry
+  rfl
 
 /-- The J-space is complete, transferred from the K-space along `equivRealInterpolationSpace`. -/
 instance instCompleteSpace : CompleteSpace (JInterpolationSpace ι₀ ι₁ θ q) :=

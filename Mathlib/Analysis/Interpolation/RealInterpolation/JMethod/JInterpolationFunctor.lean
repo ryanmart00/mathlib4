@@ -112,4 +112,11 @@ equivalence theorem, B–L Theorem 3.11.3), built with `InterpolationFunctor.Equ
 noncomputable def realInterpolationFunctorEquivJ :
     (realInterpolationFunctor 𝕜 θ q : InterpolationFunctor.{v, u} 𝕜).Equiv
       (jInterpolationFunctor 𝕜 θ q) :=
-  sorry
+  InterpolationFunctor.Equiv.mk'
+    (fun C => (realInterpolationFunctorEquivK θ q).iso C ≪≫
+      QuasiBanachCat.ofIso (X := (kInterpolationFunctor 𝕜 θ q).obj C)
+        (Y := (jInterpolationFunctor 𝕜 θ q).obj C)
+        (JInterpolationSpace.equivRealInterpolationSpace C.ι₀ C.ι₁ θ q).symm)
+    (fun C => by
+      rw [← InterpolationFunctor.Equiv.toSum_comp_hom (realInterpolationFunctorEquivK θ q) C]
+      rfl)

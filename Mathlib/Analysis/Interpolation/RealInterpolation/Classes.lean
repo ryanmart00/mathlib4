@@ -89,12 +89,34 @@ theorem isOfClassJ_one_ι₁ : IsOfClassJ ι₀ ι₁ 1 ι₁ := by
   · rw [Real.rpow_neg_one, one_mul, ← div_eq_inv_mul, le_div_iff₀ ht, mul_comm]
     exact le_max_right _ _
 
+/-- B–L Theorem 3.2.2, formula (6), for the discrete J-method: the one-term representation
+`b = u_ν` gives `‖b‖_{θ,q;J} ≤ 2^{-νθ} J(2^ν, b)`. -/
+theorem jInterpolationENorm_meetToSum_le_zpow (θ : ℝ) (q : ℝ≥0∞) (b : meet ι₀ ι₁) (ν : ℤ) :
+    jInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b) ≤
+      ENNReal.ofReal (((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) b) := by
+  set u : ℤ → meet ι₀ ι₁ := Pi.single ν b with hu_def
+  have hu : HasSum (fun μ => meetToSum ι₀ ι₁ (u μ)) (meetToSum ι₀ ι₁ b) := by
+    simpa [hu_def] using hasSum_single ν
+      (f := fun μ => meetToSum ι₀ ι₁ (u μ)) fun μ hμ => by simp [hu_def, hμ]
+  refine (jInterpolationENorm_le ι₀ ι₁ θ q _ hu).trans ?_
+  have hg : (fun μ : ℤ => ENNReal.ofReal (((2 : ℝ) ^ μ) ^ (-θ) *
+      JFunctional ι₀ ι₁ (2 ^ μ) (u μ))) =
+        ({ν} : Set ℤ).indicator fun _ =>
+          ENNReal.ofReal (((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) b) := by
+    funext μ
+    by_cases hμ : μ = ν
+    · subst hμ
+      simp [hu_def]
+    · simp [hu_def, hμ, jFunctional_zero]
+  rw [jSequenceENorm, hg]
+  refine (MeasureTheory.eLpNorm_indicator_const_le _ q
+    (measurableSet_singleton ν).nullMeasurableSet).trans ?_
+  simp
+
 namespace RealInterpolationSpace
 
-variable [CompleteSpace A₀] [CompleteSpace A₁]
 variable (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
 
-omit [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- `(A₀, A₁)_{θ,q}` is of class `𝒦(θ; Ā)`: `K(t, a) ≤ C t^θ ‖a‖_{θ,q}` (B–L Theorem 3.1.2 (6) /
 3.11.2 (3); here `ofReal_rpow_neg_mul_kFunctional_mul_realInterpolationConst_le`). -/
 theorem isOfClassK :
@@ -132,8 +154,51 @@ theorem isOfClassK :
 (B–L Theorem 3.2.2 (6) / 3.11.2 (4); for the K-quasinorm this follows from
 `K(s, b) ≤ min(1, s/t) J(t, b)` and the scaling identity, as for Theorem 3.1.2 (6)). -/
 theorem isOfClassJ :
-    IsOfClassJ ι₀ ι₁ θ ((sumToAmbient ι₀ ι₁).comp (RealInterpolationSpace.toSum ι₀ ι₁ θ q)) :=
-  sorry
+    IsOfClassJ ι₀ ι₁ θ ((sumToAmbient ι₀ ι₁).comp (RealInterpolationSpace.toSum ι₀ ι₁ θ q)) := by
+  have hθ0 : 0 < θ := Fact.out
+  have hθ1 : θ < 1 := Fact.out
+  have hq : 0 < q := Fact.out
+  -- B–L: from Theorem 3.2.2 (6) for the J-method and the equivalence theorem
+  obtain ⟨C, hC, hKJ⟩ :=
+    exists_realInterpolationENorm_le_mul_jInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq
+  refine ⟨C.toReal * 2 ^ θ, fun b => ⟨RealInterpolationSpace.fromMeet ι₀ ι₁ θ q b, ?_,
+    fun t ht => ?_⟩⟩
+  · simp only [ContinuousLinearMap.comp_apply]
+    rw [← ContinuousLinearMap.comp_apply (RealInterpolationSpace.toSum ι₀ ι₁ θ q),
+      toSum_comp_fromMeet]
+    rfl
+  obtain ⟨ν, hν⟩ := exists_mem_Ico_zpow ht one_lt_two
+  have h2ν : (0 : ℝ) < 2 ^ ν := zpow_pos two_pos ν
+  have hx : ((RealInterpolationSpace.fromMeet ι₀ ι₁ θ q b : RealInterpolationSpace ι₀ ι₁ θ q) :
+      sum ι₀ ι₁) = meetToSum ι₀ ι₁ b := by
+    rw [← toSum_apply, ← ContinuousLinearMap.comp_apply, toSum_comp_fromMeet]
+    rfl
+  have hJ0 : 0 ≤ JFunctional ι₀ ι₁ t b := jFunctional_nonneg ι₀ ι₁ t b
+  -- `2^{-νθ} J(2^ν, b) ≤ 2^θ t^{-θ} J(t, b)` for `2^ν ≤ t < 2^{ν+1}`
+  have hpow : ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) b ≤
+      2 ^ θ * t ^ (-θ) * JFunctional ι₀ ι₁ t b := by
+    have h1 : ((2 : ℝ) ^ ν) ^ (-θ) ≤ 2 ^ θ * t ^ (-θ) := by
+      have h2t : t ≤ 2 * 2 ^ ν := by
+        have := hν.2.le
+        rwa [zpow_add_one₀ two_ne_zero, mul_comm] at this
+      calc ((2 : ℝ) ^ ν) ^ (-θ) = 2 ^ θ * (2 * 2 ^ ν) ^ (-θ) := by
+            rw [Real.mul_rpow zero_le_two h2ν.le, ← mul_assoc, ← Real.rpow_add two_pos,
+              add_neg_cancel, Real.rpow_zero, one_mul]
+        _ ≤ 2 ^ θ * t ^ (-θ) := mul_le_mul_of_nonneg_left
+            (Real.rpow_le_rpow_of_nonpos ht h2t (neg_nonpos.mpr hθ0.le)) (by positivity)
+    exact mul_le_mul h1 (jFunctional_mono ι₀ ι₁ hν.1 b) (jFunctional_nonneg ι₀ ι₁ _ b)
+      (by positivity)
+  have hle : realInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b) ≤
+      C * ENNReal.ofReal (2 ^ θ * t ^ (-θ) * JFunctional ι₀ ι₁ t b) :=
+    (hKJ _).trans (mul_le_mul_right ((jInterpolationENorm_meetToSum_le_zpow ι₀ ι₁ θ q b ν).trans
+      (ENNReal.ofReal_le_ofReal hpow)) _)
+  rw [norm_def, hx]
+  calc (realInterpolationENorm ι₀ ι₁ θ q (meetToSum ι₀ ι₁ b)).toReal
+      ≤ (C * ENNReal.ofReal (2 ^ θ * t ^ (-θ) * JFunctional ι₀ ι₁ t b)).toReal :=
+        ENNReal.toReal_mono (ENNReal.mul_ne_top hC ENNReal.ofReal_ne_top) hle
+    _ = C.toReal * 2 ^ θ * t ^ (-θ) * JFunctional ι₀ ι₁ t b := by
+        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)]
+        ring
 
 end RealInterpolationSpace
 

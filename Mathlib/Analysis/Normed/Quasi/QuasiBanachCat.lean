@@ -149,4 +149,40 @@ theorem norm_le_hom {X Y : QuasiBanachCat 𝕜} (e : X ≅ Y) (x : X) :
   have h := QuasinormedAddCommGroup.le_opQuasiNorm e.inv.hom (e.hom x)
   rwa [show e.inv.hom (e.hom x) = x from ConcreteCategory.congr_hom e.hom_inv_id x] at h
 
+/-- An iso in `QuasiBanachCat` from a bounded correspondence: let `jX`, `jY` be injective linear
+maps of `X`, `Y` into a common module `Z` (e.g. an ambient space of functions). If every `x` has a
+`y` with the same image and `‖y‖ ≤ C₁ ‖x‖`, and every `y` has an `x` with the same image and
+`‖x‖ ≤ C₂ ‖y‖`, then `X ≅ Y` by an iso compatible with `jX`, `jY`. This is how "the same space
+with equivalent quasinorms" is turned into an isomorphism of quasi-Banach spaces. -/
+theorem exists_iso_of_bounded_correspondence {X Y : QuasiBanachCat.{v} 𝕜} {Z : Type*}
+    [AddCommGroup Z] [Module 𝕜 Z] (jX : X →ₗ[𝕜] Z) (jY : Y →ₗ[𝕜] Z)
+    (hjX : Function.Injective jX) (hjY : Function.Injective jY) {C₁ C₂ : ℝ}
+    (h₁ : ∀ x : X, ∃ y : Y, jY y = jX x ∧ ‖y‖ ≤ C₁ * ‖x‖)
+    (h₂ : ∀ y : Y, ∃ x : X, jX x = jY y ∧ ‖x‖ ≤ C₂ * ‖y‖) :
+    ∃ e : X ≅ Y, ∀ x, jY (e.hom x) = jX x := by
+  choose f hf hfb using h₁
+  -- `x ↦ f x`, the element with the same image, is linear because `jY` is injective
+  let φ : X →ₗ[𝕜] Y :=
+    { toFun := f
+      map_add' := fun a b => hjY (by rw [hf, map_add, map_add, hf, hf])
+      map_smul' := fun c a => hjY (by rw [hf, map_smul, map_smul, hf]; rfl) }
+  have hinj : Function.Injective φ := fun a b h => hjX (by
+    change f a = f b at h
+    rw [← hf a, ← hf b, h])
+  have hsurj : Function.Surjective φ := fun y => by
+    obtain ⟨x, hx, -⟩ := h₂ y
+    exact ⟨x, hjY ((hf x).trans hx)⟩
+  let e := LinearEquiv.ofBijective φ ⟨hinj, hsurj⟩
+  have hinv (y : Y) : ‖e.symm y‖ ≤ C₂ * ‖y‖ := by
+    obtain ⟨x, hx, hxb⟩ := h₂ y
+    have hy : φ (e.symm y) = y := e.apply_symm_apply y
+    have hxe : x = e.symm y := hjX (hx.trans ((congrArg jY hy).symm.trans (hf _)))
+    rwa [← hxe]
+  let eL : X ≃L[𝕜] Y :=
+    { e with
+      continuous_toFun := QuasinormedAddCommGroup.continuous_of_bound φ.toAddMonoidHom C₁ hfb
+      continuous_invFun :=
+        QuasinormedAddCommGroup.continuous_of_bound e.symm.toLinearMap.toAddMonoidHom C₂ hinv }
+  exact ⟨ofIso eL, hf⟩
+
 end QuasiBanachCat

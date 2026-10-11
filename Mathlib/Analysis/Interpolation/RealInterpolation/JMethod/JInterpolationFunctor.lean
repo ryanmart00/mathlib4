@@ -83,7 +83,8 @@ theorem toSum_comp_equivRealInterpolationSpace :
 
 /-- The J-space is complete, transferred from the K-space along `equivRealInterpolationSpace`. -/
 instance instCompleteSpace : CompleteSpace (JInterpolationSpace ι₀ ι₁ θ q) :=
-  sorry
+  (completeSpace_congr (e := (equivRealInterpolationSpace ι₀ ι₁ θ q).toLinearEquiv.toEquiv)
+    (equivRealInterpolationSpace ι₀ ι₁ θ q).isUniformEmbedding).mpr inferInstance
 
 end InterpolationCouple.JInterpolationSpace
 

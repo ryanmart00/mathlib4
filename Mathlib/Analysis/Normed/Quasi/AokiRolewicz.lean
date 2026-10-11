@@ -53,18 +53,19 @@ noncomputable def exponent (C : ℝ) : ℝ :=
 variable {E : Type*} [AddCommMonoid E] (N : E → ℝ) {C : ℝ}
 
 /-- A dyadic form of the quasi-triangle inequality `N(x + y) ≤ C (N x + N y)`: if
-`∑ 2^{-kᵢ} ≤ 1` and `(2C)^{kᵢ} N(xᵢ) ≤ M` for all `i`, then `N(∑ xᵢ) ≤ M`. -/
+`∑ 2^{-kᵢ} ≤ 1` and `(2C)^{kᵢ} N(xᵢ) ≤ M` for all `i`, then `N(∑ xᵢ) ≤ M`. Here `N` is a
+`C`-quasi-norm in Bergh–Löfström's sense: `N ≥ 0`, `N x = 0 ↔ x = 0`, quasi-triangle inequality. -/
 theorem apply_sum_le_of_sum_inv_two_pow_le (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x)
-    (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*} (s : Finset ι) (x : ι → E)
-    (k : ι → ℕ) {M : ℝ} (hM : 0 ≤ M) (hk : ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ ≤ 1)
-    (hx : ∀ i ∈ s, (2 * C) ^ k i * N (x i) ≤ M) :
+    (hNz : ∀ x, N x = 0 ↔ x = 0) (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*}
+    (s : Finset ι) (x : ι → E) (k : ι → ℕ) {M : ℝ} (hM : 0 ≤ M)
+    (hk : ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ ≤ 1) (hx : ∀ i ∈ s, (2 * C) ^ k i * N (x i) ≤ M) :
     N (∑ i ∈ s, x i) ≤ M :=
   sorry
 
-/-- **Aoki–Rolewicz** for a quasi-norm function (Bergh–Löfström Lemma 3.10.2): if
-`N ≥ 0` and `N(x + y) ≤ C (N x + N y)` with `C ≥ 1`, then with `ρ = exponent C`,
-`N(∑ xᵢ) ≤ 4^{1/ρ} (∑ N(xᵢ)^ρ)^{1/ρ}`. -/
-theorem apply_sum_le_rpow (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x)
+/-- **Aoki–Rolewicz** for a quasi-norm function (Bergh–Löfström Lemma 3.10.2): if `N` is a
+`C`-quasi-norm (`N ≥ 0`, `N x = 0 ↔ x = 0`, `N(x + y) ≤ C (N x + N y)` with `C ≥ 1`), then with
+`ρ = exponent C`, `N(∑ xᵢ) ≤ 4^{1/ρ} (∑ N(xᵢ)^ρ)^{1/ρ}`. -/
+theorem apply_sum_le_rpow (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x) (hNz : ∀ x, N x = 0 ↔ x = 0)
     (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*} (s : Finset ι) (x : ι → E) :
     N (∑ i ∈ s, x i) ≤
       (4 : ℝ) ^ (exponent C)⁻¹ * (∑ i ∈ s, N (x i) ^ exponent C) ^ (exponent C)⁻¹ :=

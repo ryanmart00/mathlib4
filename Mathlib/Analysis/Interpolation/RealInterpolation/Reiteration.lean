@@ -819,29 +819,11 @@ theorem isOfClassK_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (
     (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     InterpolationCouple.IsOfClassK A.ι₀ A.ι₁ θ
       ((InterpolationCouple.sumToAmbient A.ι₀ A.ι₁).comp
-        ((realInterpolationFunctor 𝕜 θ q).toSum A)) := by
-  obtain ⟨C, hC⟩ := InterpolationCouple.RealInterpolationSpace.isOfClassK A.ι₀ A.ι₁ θ q
-  set i := (realInterpolationFunctorEquivK θ q).iso A
-  refine ⟨max C 0 * QuasinormedAddCommGroup.opQuasiNorm i.hom.hom, fun x => ?_⟩
-  obtain ⟨b, hb, hK⟩ := hC (i.hom.hom x)
-  have hsum := DFunLike.congr_fun
-    (InterpolationFunctor.Equiv.toSum_comp_hom (realInterpolationFunctorEquivK θ q) A) x
-  simp only [ContinuousLinearMap.comp_apply] at hsum
-  refine ⟨b, ?_, fun t ht => ?_⟩
-  · rw [hb]
-    simp only [ContinuousLinearMap.comp_apply]
-    exact congrArg _ hsum
-  have hn := QuasinormedAddCommGroup.le_opQuasiNorm i.hom.hom x
-  have hp : 0 ≤ max C 0 * t ^ θ := mul_nonneg (le_max_right _ _) (Real.rpow_nonneg ht.le _)
-  calc InterpolationCouple.KFunctional A.ι₀ A.ι₁ t b
-      ≤ C * t ^ θ * ‖i.hom.hom x‖ := hK t ht
-    _ ≤ max C 0 * t ^ θ * ‖i.hom.hom x‖ := by
-        gcongr
-        · exact QuasinormedAddCommGroup.norm_nonneg _
-        · exact le_max_left _ _
-    _ ≤ max C 0 * t ^ θ * (QuasinormedAddCommGroup.opQuasiNorm i.hom.hom * ‖x‖) :=
-        mul_le_mul_of_nonneg_left hn hp
-    _ = _ := by ring
+        ((realInterpolationFunctor 𝕜 θ q).toSum A)) :=
+  (InterpolationCouple.RealInterpolationSpace.isOfClassK A.ι₀ A.ι₁ θ q).of_comp _ _
+    ((realInterpolationFunctorEquivK θ q).iso A).hom.hom <| ContinuousLinearMap.ext fun x =>
+      congrArg (InterpolationCouple.sumToAmbient A.ι₀ A.ι₁) (DFunLike.congr_fun
+        (InterpolationFunctor.Equiv.toSum_comp_hom (realInterpolationFunctorEquivK θ q) A) x)
 
 /-- The canonical real interpolation space `Ā_{θ,q}` is of class `𝒥(θ; Ā)` (transported from
 `RealInterpolationSpace.isOfClassJ` along `realInterpolationFunctorEquivK`). -/
@@ -849,24 +831,11 @@ theorem isOfClassJ_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (
     (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     InterpolationCouple.IsOfClassJ A.ι₀ A.ι₁ θ
       ((InterpolationCouple.sumToAmbient A.ι₀ A.ι₁).comp
-        ((realInterpolationFunctor 𝕜 θ q).toSum A)) := by
-  obtain ⟨C, hC⟩ := InterpolationCouple.RealInterpolationSpace.isOfClassJ A.ι₀ A.ι₁ θ q
-  set i := (realInterpolationFunctorEquivK θ q).iso A
-  set M := QuasinormedAddCommGroup.opQuasiNorm i.inv.hom
-  refine ⟨M * max C 0, fun b => ?_⟩
-  obtain ⟨y, hy, hJ⟩ := hC b
-  have hsum := DFunLike.congr_fun
-    (InterpolationFunctor.Equiv.toSum_comp_inv (realInterpolationFunctorEquivK θ q) A) y
-  refine ⟨i.inv.hom y, ?_, fun t ht => ?_⟩
-  · exact (congrArg (InterpolationCouple.sumToAmbient A.ι₀ A.ι₁) hsum).trans hy
-  have hn := QuasinormedAddCommGroup.le_opQuasiNorm i.inv.hom y
-  have hM := QuasinormedAddCommGroup.opQuasiNorm_nonneg i.inv.hom
-  calc ‖i.inv.hom y‖ ≤ M * ‖y‖ := hn
-    _ ≤ M * (max C 0 * t ^ (-θ) * InterpolationCouple.JFunctional A.ι₀ A.ι₁ t b) := by
-        refine mul_le_mul_of_nonneg_left ((hJ t ht).trans ?_) hM
-        exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right (le_max_left C 0)
-          (Real.rpow_nonneg ht.le _)) (InterpolationCouple.jFunctional_nonneg A.ι₀ A.ι₁ t b)
-    _ = _ := by ring
+        ((realInterpolationFunctor 𝕜 θ q).toSum A)) :=
+  (InterpolationCouple.RealInterpolationSpace.isOfClassJ A.ι₀ A.ι₁ θ q).of_comp _ _
+    ((realInterpolationFunctorEquivK θ q).iso A).inv.hom <| ContinuousLinearMap.ext fun y =>
+      congrArg (InterpolationCouple.sumToAmbient A.ι₀ A.ι₁) (DFunLike.congr_fun
+        (InterpolationFunctor.Equiv.toSum_comp_inv (realInterpolationFunctorEquivK θ q) A) y)
 
 variable (θ₀ : ℝ) (q₀ : ℝ≥0∞) [Fact (0 < θ₀)] [Fact (θ₀ < 1)] [Fact (0 < q₀)]
 variable (θ₁ : ℝ) (q₁ : ℝ≥0∞) [Fact (0 < θ₁)] [Fact (θ₁ < 1)] [Fact (0 < q₁)]

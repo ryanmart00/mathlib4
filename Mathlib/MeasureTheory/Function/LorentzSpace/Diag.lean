@@ -45,7 +45,8 @@ equality rather than mere equivalence of quasi-Banach spaces).
 * `lintegral_decreasingRearrangement_rpow`: `∫₀^∞ f*(t)^r dt = ∫_α ‖f‖^r dμ` for `0 < r`.
 * Further rearrangement facts: `decreasingRearrangement_mono`,
   `distributionFunction_decreasingRearrangement_le`,
-  `lorentzNorm_top_top` (`‖f‖_{L_{∞,∞}} = f*(0)`), `rpow_mul_decreasingRearrangement_le`, `lintegral_indicator_lt_decreasingRearrangement_le`.
+  `lorentzNorm_top_top` (`‖f‖_{L_{∞,∞}} = f*(0)`), `rpow_mul_decreasingRearrangement_le`,
+  `lintegral_indicator_lt_decreasingRearrangement_le`.
 -/
 
 open MeasureTheory Set Filter

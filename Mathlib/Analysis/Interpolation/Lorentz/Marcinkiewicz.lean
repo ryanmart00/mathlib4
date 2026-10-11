@@ -9,8 +9,6 @@ import Mathlib.Analysis.Interpolation.RealInterpolation.Reiteration
 /-!
 # Real interpolation of Lorentz spaces and the Marcinkiewicz interpolation theorem
 
-DRAFT — statements only, all proofs deferred (`sorry`).
-
 We identify the real interpolation spaces of a couple of Lorentz spaces (Bergh–Löfström
 Theorem 5.3.1; Triebel, *Interpolation Theory, Function Spaces, Differential Operators*,
 §1.18.6, Theorem 2), and deduce the Marcinkiewicz interpolation theorem (Bergh–Löfström
@@ -407,7 +405,44 @@ theorem exists_lp_interpolation {p₀ p₁ q₀ q₁ : ℝ≥0∞} [Fact (0 < p�
             LorentzSpace.toL0 ν F 𝕜 q q (S f) =
               LorentzSpace.toL0 ν F 𝕜 q₀ ⊤ (T.f₀ f₀) + LorentzSpace.toL0 ν F 𝕜 q₁ ⊤ (T.f₁ f₁)) ∧
         ∀ f, ‖S f‖ ≤ C * M₀ ^ (1 - θ) * M₁ ^ θ * ‖f‖ := by
-  sorry
+  have hp0 : 0 < p := Fact.out
+  have hθ0 : 0 < θ := Fact.out
+  have hθ1 : θ < 1 := Fact.out
+  -- `q < ∞`, since `q₀ ≠ q₁` are not both infinite
+  have hqtop : q ≠ ⊤ := by
+    intro h
+    have h0 : ENNReal.ofReal (1 - θ) * q₀⁻¹ + ENNReal.ofReal θ * q₁⁻¹ = 0 := by
+      rw [← hq, h, ENNReal.inv_top]
+    have h0' : q₀ = ⊤ ∧ q₁ = ⊤ := by
+      simpa [(ENNReal.ofReal_pos.2 (sub_pos.2 hθ1)).ne', (ENNReal.ofReal_pos.2 hθ0).ne'] using h0
+    exact hq₀₁ (h0'.1.trans h0'.2.symm)
+  -- B–L: Theorem 5.3.2 (4) with `r = p` gives `T : L^p → L_{q,p}`, ...
+  obtain ⟨C, hC⟩ := exists_lorentz_interpolation (𝕜 := 𝕜) (μ := μ) (ν := ν) (E := E) (F := F)
+    (Fact.out : 0 < p₀) (Fact.out : 0 < p₁) hp₀₁ id id hq₀ hq₁ hq₀₁ (fun _ => rfl)
+    (fun _ => rfl) θ p p q hp hq
+  -- ... and `L_{q,p} ⊆ L_{q,q}` since `p ≤ q`
+  obtain ⟨K, hK⟩ := LorentzSpace.exists_lorentzNorm_le_of_le ν (E := F) (Fact.out : 0 < q) hqtop
+    hp0 hpq
+  let ιₗ : LorentzSpace F q p ν →ₗ[𝕜] LorentzSpace F q q ν :=
+    { toFun := fun g => ⟨g.1, (hK _ (AEEqFun.aestronglyMeasurable _)).trans_lt
+        (ENNReal.mul_lt_top ENNReal.coe_lt_top g.2)⟩
+      map_add' := fun _ _ => rfl
+      map_smul' := fun _ _ => rfl }
+  have hι (g : LorentzSpace F q p ν) : ‖ιₗ g‖ ≤ K * ‖g‖ := by
+    have hg : lorentzNorm ν q p (g : β →ₘ[ν] F) < ⊤ := g.2
+    change (lorentzNorm ν q q (g : β →ₘ[ν] F)).toReal ≤
+      K * (lorentzNorm ν q p (g : β →ₘ[ν] F)).toReal
+    have := ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.coe_ne_top hg.ne)
+      (hK _ (AEEqFun.aestronglyMeasurable _))
+    rwa [ENNReal.toReal_mul, ENNReal.coe_toReal] at this
+  let ι : LorentzSpace F q p ν →L[𝕜] LorentzSpace F q q ν :=
+    ⟨ιₗ, QuasinormedAddCommGroup.continuous_of_bound ιₗ.toAddMonoidHom K hι⟩
+  refine ⟨K * C, fun T M₀ M₁ hM₀ hM₁ h₀ h₁ => ?_⟩
+  obtain ⟨S, hS, hSn⟩ := hC T hM₀ hM₁ h₀ h₁
+  refine ⟨ι.comp S, hS, fun f => ?_⟩
+  calc ‖ι (S f)‖ ≤ K * ‖S f‖ := hι _
+    _ ≤ K * (C * M₀ ^ (1 - θ) * M₁ ^ θ * ‖f‖) := mul_le_mul_of_nonneg_left (hSn f) K.2
+    _ = K * C * M₀ ^ (1 - θ) * M₁ ^ θ * ‖f‖ := by ring
 
 end InterpolationCat
 

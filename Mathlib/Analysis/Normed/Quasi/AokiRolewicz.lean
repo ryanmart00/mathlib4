@@ -201,8 +201,64 @@ theorem apply_sum_le_of_sum_inv_two_pow_le (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N 
 theorem apply_sum_le_rpow (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N x) (hNz : ∀ x, N x = 0 ↔ x = 0)
     (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*} (s : Finset ι) (x : ι → E) :
     N (∑ i ∈ s, x i) ≤
-      (4 : ℝ) ^ (exponent C)⁻¹ * (∑ i ∈ s, N (x i) ^ exponent C) ^ (exponent C)⁻¹ :=
-  sorry
+      (4 : ℝ) ^ (exponent C)⁻¹ * (∑ i ∈ s, N (x i) ^ exponent C) ^ (exponent C)⁻¹ := by
+  classical
+  set ρ := exponent C
+  have hρ : 0 < ρ := exponent_pos hC
+  set S := ∑ i ∈ s, N (x i) ^ ρ
+  have hp {i} : 0 ≤ N (x i) ^ ρ := Real.rpow_nonneg (hN0 _) _
+  have hS0 : 0 ≤ S := Finset.sum_nonneg fun i _ => hp
+  -- we prove the sharper bound with `2^{1/ρ}` (Bergh–Löfström's constant) in place of `4^{1/ρ}`
+  refine le_trans ?_ (mul_le_mul_of_nonneg_right
+    (Real.rpow_le_rpow (by norm_num) (by norm_num : (2 : ℝ) ≤ 4) (inv_pos.mpr hρ).le)
+    (by positivity))
+  have hN_pos {i} (hi : x i ≠ 0) : 0 < N (x i) :=
+    (hN0 _).lt_of_ne (Ne.symm fun h => hi ((hNz _).mp h))
+  -- B–L: terms with `aⱼ = 0` may be dropped
+  rw [← Finset.sum_filter_ne_zero]
+  rcases hS0.eq_or_lt with hS | hS
+  · have hx0 : ∀ i ∈ s, x i = 0 := fun i hi => by
+      have := (Finset.sum_eq_zero_iff_of_nonneg (fun j _ => hp)).mp hS.symm i hi
+      exact (hNz _).mp ((Real.rpow_eq_zero (hN0 _) hρ.ne').mp this)
+    rw [Finset.filter_false_of_mem fun i hi => not_not.mpr (hx0 i hi), Finset.sum_empty,
+      (hNz 0).mpr rfl]
+    positivity
+  -- B–L: choose `νⱼ` with `2^{-νⱼ} ≤ ‖aⱼ‖^ρ / M ≤ 2^{-νⱼ+1}`; then `∑ 2^{-νⱼ} ≤ 1`
+  have hex : ∀ i, i ∈ s ∧ x i ≠ 0 →
+      ∃ n : ℕ, (2 : ℝ) ^ n ≤ S / N (x i) ^ ρ ∧ S / N (x i) ^ ρ < 2 ^ (n + 1) := by
+    rintro i ⟨his, hi⟩
+    refine exists_nat_pow_near ?_ one_lt_two
+    rw [le_div_iff₀ (Real.rpow_pos_of_pos (hN_pos hi) ρ), one_mul]
+    exact Finset.single_le_sum (f := fun j => N (x j) ^ ρ) (fun j _ => hp) his
+  choose! n hn using hex
+  refine apply_sum_le_of_sum_inv_two_pow_le N hC hN0 hNz hN _ _ (fun i => n i + 1)
+    (by positivity) ?_ ?_
+  · calc ∑ i ∈ s with x i ≠ 0, ((2 : ℝ) ^ (n i + 1))⁻¹
+        ≤ ∑ i ∈ s with x i ≠ 0, N (x i) ^ ρ / S := by
+          refine Finset.sum_le_sum fun i hi => ?_
+          have hi' := Finset.mem_filter.mp hi
+          have ha := Real.rpow_pos_of_pos (hN_pos hi'.2) ρ
+          rw [inv_le_comm₀ (by positivity) (div_pos ha hS), inv_div]
+          exact (hn i hi').2.le
+      _ ≤ ∑ i ∈ s, N (x i) ^ ρ / S :=
+          Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+            fun _ _ _ => div_nonneg hp hS.le
+      _ = 1 := by rw [← Finset.sum_div, div_self hS.ne']
+  · -- B–L (5): each `2^{νⱼ} ‖aⱼ‖^ρ ≤ 2M`
+    intro i hi
+    have hi' := Finset.mem_filter.mp hi
+    have ha := hN_pos hi'.2
+    have hpow : (2 : ℝ) ^ (n i + 1) ≤ 2 * (S / N (x i) ^ ρ) := by
+      rw [pow_succ, mul_comm]
+      exact mul_le_mul_of_nonneg_left (hn i hi').1 zero_le_two
+    rw [two_mul_eq_two_rpow_inv_exponent hC, ← Real.rpow_natCast, ← Real.rpow_mul two_pos.le,
+      mul_comm ρ⁻¹, Real.rpow_mul two_pos.le, Real.rpow_natCast]
+    calc ((2 : ℝ) ^ (n i + 1)) ^ ρ⁻¹ * N (x i)
+        ≤ (2 * (S / N (x i) ^ ρ)) ^ ρ⁻¹ * N (x i) := by gcongr
+      _ = 2 ^ ρ⁻¹ * S ^ ρ⁻¹ := by
+          rw [Real.mul_rpow zero_le_two (by positivity), Real.div_rpow hS0 (by positivity),
+            Real.rpow_rpow_inv (hN0 _) hρ.ne']
+          field_simp
 
 end AokiRolewicz
 

@@ -519,6 +519,28 @@ theorem tendsto_kFunctional_div_atTop {θ : ℝ} (hθ1 : θ < 1) {q : ℝ≥0∞
     rw [div_le_iff₀ ht, mul_assoc, ← Real.rpow_add_one ht.ne', neg_sub, sub_add_cancel]
     exact hM t ht
 
+omit [T2Space 𝒜] in
+/-- The real interpolation spaces increase with the second parameter (Bergh–Löfström
+Theorem 3.4.1 (b)), with explicit constant: for `0 < θ < 1` and `0 < q ≤ r`,
+`‖a‖_{θ,r} ≤ c_{θ,q}^{-(1-q/r)} ‖a‖_{θ,q}`, where `c_{θ,q} = realInterpolationConst θ q`. B–L: by
+Theorem 3.1.2 (6), `‖a‖_{θ,∞} ≤ c_{θ,q}⁻¹ ‖a‖_{θ,q}`, and
+`‖a‖_{θ,r} ≤ ‖a‖_{θ,∞}^{1-q/r} ‖a‖_{θ,q}^{q/r}`. For `r = ∞` the exponent `1 - q.toReal / r.toReal`
+is `1`, by the `x / 0 = 0` convention. -/
+theorem realInterpolationENorm_le_of_le {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    {q r : ℝ≥0∞} (hq : 0 < q) (hqr : q ≤ r) (a : sum ι₀ ι₁) :
+    realInterpolationENorm ι₀ ι₁ θ r a ≤
+      (realInterpolationConst θ q)⁻¹ ^ (1 - q.toReal / r.toReal) *
+        realInterpolationENorm ι₀ ι₁ θ q a :=
+  sorry
+
+omit [T2Space 𝒜] in
+/-- Existential form of `realInterpolationENorm_le_of_le` (Bergh–Löfström Theorem 3.4.1 (b)). -/
+theorem exists_realInterpolationENorm_le_of_le {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1)
+    {q r : ℝ≥0∞} (hq : 0 < q) (hqr : q ≤ r) :
+    ∃ C : ℝ≥0∞, C ≠ ⊤ ∧ ∀ a : sum ι₀ ι₁,
+      realInterpolationENorm ι₀ ι₁ θ r a ≤ C * realInterpolationENorm ι₀ ι₁ θ q a :=
+  sorry
+
 /-! ### The space -/
 
 /-- The submodule of `A₀ + A₁` of elements of finite `(θ,q)`-quasinorm. Defined for every `θ, q`

@@ -643,58 +643,39 @@ theorem nonempty_iso_realInterpolation_lorentz_top (hr : r ≠ ⊤) (θ : ℝ) (
   obtain ⟨A, hA⟩ := lorentzNorm_le_realInterpolationENorm 𝕜 μ E r hr θ q p hp
   obtain ⟨B, hB⟩ := realInterpolationENorm_le_lorentzNorm 𝕜 μ E r hr θ q hrq p hp
   set C := lorentz 𝕜 μ E r r ⊤ ⊤ with hCdef
-  set R := InterpolationCouple.RealInterpolationSpace C.ι₀ C.ι₁ θ q
-  -- the K-space maps into `L_{p,q}` by `a ↦ lorentzSumToL0 a`
-  let φ : R →ₗ[𝕜] LorentzSpace E p q μ :=
-    { toFun := fun x => ⟨lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ (x : InterpolationCouple.sum C.ι₀ C.ι₁),
-        (hA x).trans_lt (ENNReal.mul_lt_top ENNReal.coe_lt_top x.2)⟩
-      map_add' := fun x y => Subtype.ext
-        (map_add (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤) (x : InterpolationCouple.sum C.ι₀ C.ι₁) y)
-      map_smul' := fun c x => Subtype.ext
-        (map_smul (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤) c (x : InterpolationCouple.sum C.ι₀ C.ι₁)) }
-  have hφ : ∀ x : R, ((φ x : LorentzSpace E p q μ) : α →ₘ[μ] E) =
-      lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ (x : InterpolationCouple.sum C.ι₀ C.ι₁) := fun _ => rfl
-  have hinj : Function.Injective φ := by
-    intro x y h
-    have h' := congrArg (fun z : LorentzSpace E p q μ => (z : α →ₘ[μ] E)) h
-    simp only [hφ] at h'
-    exact InterpolationCouple.RealInterpolationSpace.toSum_injective C.ι₀ C.ι₁
-      (InterpolationCouple.sumToAmbient_injective _ _ h')
-  have hsurj : Function.Surjective φ := by
-    intro g
-    obtain ⟨a, ha⟩ := exists_lorentzSumToL0_eq 𝕜 μ E r hr θ q hrq p hp g
-    have hfin : InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q a < ⊤ := by
-      refine (hB a).trans_lt (ENNReal.mul_lt_top ENNReal.coe_lt_top ?_)
-      rw [ha]
-      exact g.2
-    let x : R := ⟨a, hfin⟩
-    exact ⟨x, Subtype.ext ha⟩
-  have hφb : ∀ x : R, ‖φ x‖ ≤ (A : ℝ) * ‖x‖ := by
-    intro x
-    change (lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤
-      (x : InterpolationCouple.sum C.ι₀ C.ι₁))).toReal ≤
-      A * (InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q x).toReal
-    have := ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.coe_ne_top x.2.ne) (hA x)
-    rwa [ENNReal.toReal_mul, ENNReal.coe_toReal] at this
-  have hψb : ∀ x : R, ‖x‖ ≤ (B : ℝ) * ‖φ x‖ := by
-    intro x
-    change (InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q x).toReal ≤
-      B * (lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤
-        (x : InterpolationCouple.sum C.ι₀ C.ι₁))).toReal
-    have := ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.coe_ne_top (φ x).2.ne) (hB x)
-    rwa [ENNReal.toReal_mul, ENNReal.coe_toReal] at this
-  let e := LinearEquiv.ofBijective φ ⟨hinj, hsurj⟩
-  let eL : R ≃L[𝕜] LorentzSpace E p q μ :=
-    { e with
-      continuous_toFun := QuasinormedAddCommGroup.continuous_of_bound φ.toAddMonoidHom A hφb
-      continuous_invFun := QuasinormedAddCommGroup.continuous_of_bound
-        e.symm.toLinearMap.toAddMonoidHom B fun y => by
-          have := hψb (e.symm y)
-          rwa [show φ (e.symm y) = y from e.apply_symm_apply y] at this }
-  refine ⟨(realInterpolationFunctorEquivK θ q).iso C ≪≫
-    QuasiBanachCat.ofIso (X := (kInterpolationFunctor 𝕜 θ q).obj C)
-      (Y := QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ)) eL, fun x => ?_⟩
+  -- both sides sit in `L⁰(μ)`: the K-space via `lorentzSumToL0`, `L_{p,q}` via `toL0`
+  obtain ⟨e, he⟩ := QuasiBanachCat.exists_iso_of_bounded_correspondence
+    (X := (kInterpolationFunctor 𝕜 θ q).obj C) (Y := QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ))
+    ((lorentzSumToL0 𝕜 μ E r r ⊤ ⊤).toLinearMap ∘ₗ
+      (InterpolationCouple.RealInterpolationSpace.toSum C.ι₀ C.ι₁ θ q).toLinearMap)
+    (LorentzSpace.toL0ₗ μ E 𝕜 p q)
+    (fun x y h => InterpolationCouple.RealInterpolationSpace.toSum_injective C.ι₀ C.ι₁
+      (InterpolationCouple.sumToAmbient_injective _ _ h))
+    (LorentzSpace.toL0ₗ_injective μ p q) (C₁ := A) (C₂ := B)
+    (fun (x : InterpolationCouple.RealInterpolationSpace C.ι₀ C.ι₁ θ q) =>
+      ⟨⟨lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ (x : InterpolationCouple.sum C.ι₀ C.ι₁),
+      (hA x).trans_lt (ENNReal.mul_lt_top ENNReal.coe_lt_top x.2)⟩, rfl, by
+        change (lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤
+          (x : InterpolationCouple.sum C.ι₀ C.ι₁))).toReal ≤
+          A * (InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q x).toReal
+        have := ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.coe_ne_top x.2.ne) (hA x)
+        rwa [ENNReal.toReal_mul, ENNReal.coe_toReal] at this⟩)
+    (fun g => by
+      obtain ⟨a, ha⟩ := exists_lorentzSumToL0_eq 𝕜 μ E r hr θ q hrq p hp g
+      have hfin : InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q a < ⊤ := by
+        refine (hB a).trans_lt (ENNReal.mul_lt_top ENNReal.coe_lt_top ?_)
+        rw [ha]
+        exact g.2
+      refine ⟨⟨a, hfin⟩, ha, ?_⟩
+      change (InterpolationCouple.realInterpolationENorm C.ι₀ C.ι₁ θ q a).toReal ≤
+        B * (lorentzNorm μ p q (g : α →ₘ[μ] E)).toReal
+      have hg : lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a : α →ₘ[μ] E) ≠ ⊤ := by
+        rw [ha]
+        exact g.2.ne
+      have := ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.coe_ne_top hg) (hB a)
+      rwa [ENNReal.toReal_mul, ENNReal.coe_toReal, ha] at this)
+  refine ⟨(realInterpolationFunctorEquivK θ q).iso C ≪≫ e, fun x => ?_⟩
   rw [← InterpolationFunctor.Equiv.toSum_comp_hom (realInterpolationFunctorEquivK θ q) C]
-  rfl
+  exact (he _).symm
 
 end InterpolationCat

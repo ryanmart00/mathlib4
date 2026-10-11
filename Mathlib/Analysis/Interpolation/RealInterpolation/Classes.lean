@@ -75,8 +75,10 @@ theorem isOfClassJ_zero_ι₀ : IsOfClassJ ι₀ ι₁ 0 ι₀ := by
     exact le_max_left _ _
 
 /-- `A₁` is of class `𝒦(1; Ā)` (`K(t, a) ≤ t ‖a‖_{A₁}`). -/
-theorem isOfClassK_one_ι₁ : IsOfClassK ι₀ ι₁ 1 ι₁ :=
-  sorry
+theorem isOfClassK_one_ι₁ : IsOfClassK ι₀ ι₁ 1 ι₁ := by
+  refine ⟨1, fun x => ⟨inl₁ ι₀ ι₁ x, sumToAmbient_inl₁ ι₀ ι₁ x, fun t ht => ?_⟩⟩
+  rw [Real.rpow_one, one_mul, inl₁_eq_mk]
+  simpa using kFunctional_mk_le ι₀ ι₁ ht.le 0 x
 
 /-- `A₁` is of class `𝒥(1; Ā)` (`‖b‖_{A₁} ≤ t⁻¹ J(t, b)`). -/
 theorem isOfClassJ_one_ι₁ : IsOfClassJ ι₀ ι₁ 1 ι₁ :=

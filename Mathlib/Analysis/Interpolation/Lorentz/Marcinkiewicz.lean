@@ -157,6 +157,41 @@ variable (E : Type*) [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace 
 
 namespace InterpolationCat
 
+/-- B–L (proof of Theorem 5.3.1): for finite `s` with `0 < s < p` and `s ≤ q`, `L_{p,q}` is of
+class `𝒞(θ)` for the couple `(Lˢ, L^∞)`, where `1/p = (1-θ)/s`, i.e. `θ = 1 - s/p`. For finite `p`
+this is the base case `nonempty_iso_realInterpolation_lorentz_top` (B–L Theorem 5.2.1) and the
+class of `Ā_{θ,q}`; for `p = ∞` (so `q = ∞`), `θ = 1` and `L_{∞,∞} = L^∞` is the second leg. -/
+private theorem isOfClassK_and_isOfClassJ_toL0 {s : ℝ≥0∞} [Fact (0 < s)] (hst : s ≠ ⊤)
+    {p q : ℝ≥0∞} [Fact (0 < q)] (hsp : s < p) (hsq : s ≤ q) (hq : p = ⊤ → q = ⊤) :
+    InterpolationCouple.IsOfClassK (lorentz 𝕜 μ E s s ⊤ ⊤).ι₀ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₁
+        (1 - s.toReal / p.toReal) (LorentzSpace.toL0 μ E 𝕜 p q) ∧
+      InterpolationCouple.IsOfClassJ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₀ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₁
+        (1 - s.toReal / p.toReal) (LorentzSpace.toL0 μ E 𝕜 p q) := by
+  rcases eq_or_ne p ⊤ with rfl | hp
+  · obtain rfl := hq rfl
+    simp only [ENNReal.toReal_top, div_zero, sub_zero]
+    exact ⟨InterpolationCouple.isOfClassK_one_ι₁ _ _, InterpolationCouple.isOfClassJ_one_ι₁ _ _⟩
+  have hs0 : 0 < s := Fact.out
+  have hs' : 0 < s.toReal := ENNReal.toReal_pos hs0.ne' hst
+  have hsp' : s.toReal < p.toReal := ENNReal.toReal_strict_mono hp hsp
+  set θ := 1 - s.toReal / p.toReal with hθ
+  have : Fact (0 < θ) := ⟨by rw [hθ, sub_pos, div_lt_one (hs'.trans hsp')]; exact hsp'⟩
+  have : Fact (θ < 1) := ⟨by rw [hθ]; linarith [div_pos hs' (hs'.trans hsp')]⟩
+  have hpθ : p⁻¹ = ENNReal.ofReal (1 - θ) * s⁻¹ := by
+    rw [hθ, sub_sub_cancel, ENNReal.ofReal_div_of_pos (hs'.trans hsp'), ENNReal.ofReal_toReal hst,
+      ENNReal.ofReal_toReal hp, div_eq_mul_inv, mul_comm s, mul_assoc,
+      ENNReal.mul_inv_cancel hs0.ne' hst, mul_one]
+  -- B–L Theorem 5.2.1: `(Lˢ, L^∞)_{θ,q} ≅ L_{p,q}`, compatibly with `L⁰`
+  obtain ⟨e, he⟩ := nonempty_iso_realInterpolation_lorentz_top 𝕜 μ E s hst θ q hsq p hpθ
+  refine ⟨InterpolationCouple.IsOfClassK.of_comp _ _
+      (isOfClassK_realInterpolationFunctor _ θ q) e.inv.hom
+      (ContinuousLinearMap.ext fun y => ?_),
+    InterpolationCouple.IsOfClassJ.of_comp _ _
+      (isOfClassJ_realInterpolationFunctor _ θ q) e.hom.hom
+      (ContinuousLinearMap.ext fun x => (he x).symm)⟩
+  refine (he (e.inv.hom y)).trans ?_
+  exact congrArg _ (ConcreteCategory.congr_hom e.inv_hom_id y)
+
 /-- Real interpolation of Lorentz spaces (Bergh–Löfström Theorem 5.3.1; Triebel §1.18.6,
 Theorem 2): for `0 < p₀ ≠ p₁ ≤ ∞`, `0 < q₀, q₁, q ≤ ∞`, `0 < θ < 1` and
 `1/p = (1-θ)/p₀ + θ/p₁`, `(L_{p₀,q₀}, L_{p₁,q₁})_{θ,q} = L_{p,q}`, as an isomorphism of quasi-Banach
@@ -178,7 +213,84 @@ theorem nonempty_iso_realInterpolation_lorentz {p₀ q₀ p₁ q₁ : ℝ≥0∞
         QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ),
       ∀ x, lorentzSumToL0 𝕜 μ E p₀ q₀ p₁ q₁ ((realInterpolationFunctor 𝕜 θ q).toSum _ x) =
         LorentzSpace.toL0 μ E 𝕜 p q (e.hom.hom x) := by
-  sorry
+  have hq0 : 0 < q := Fact.out
+  have hq₀0 : 0 < q₀ := Fact.out
+  have hq₁0 : 0 < q₁ := Fact.out
+  have hθ0 : 0 < θ := Fact.out
+  have hθ1 : θ < 1 := Fact.out
+  -- B–L: pick `0 < s < min (p₀, p₁)`; the base case also needs `s ≤ min (q₀, q₁, q)`
+  set m := min (min p₀ p₁) (min (min q₀ q₁) q)
+  have hm0 : 0 < m := lt_min (lt_min hp₀ hp₁) (lt_min (lt_min hq₀0 hq₁0) hq0)
+  have hmt : m ≠ ⊤ := by
+    refine ne_top_of_le_ne_top ?_ (min_le_left _ _)
+    intro h
+    rw [min_eq_top] at h
+    exact hp₀₁ (h.1.trans h.2.symm)
+  set s := m / 2
+  have hs0 : 0 < s := ENNReal.half_pos hm0.ne'
+  have hsm : s < m := ENNReal.half_lt_self hm0.ne' hmt
+  have hst : s ≠ ⊤ := ne_top_of_lt hsm
+  have hsp₀ : s < p₀ := hsm.trans_le ((min_le_left _ _).trans (min_le_left _ _))
+  have hsp₁ : s < p₁ := hsm.trans_le ((min_le_left _ _).trans (min_le_right _ _))
+  have hsq₀ : s ≤ q₀ :=
+    hsm.le.trans ((min_le_right _ _).trans ((min_le_left _ _).trans (min_le_left _ _)))
+  have hsq₁ : s ≤ q₁ :=
+    hsm.le.trans ((min_le_right _ _).trans ((min_le_left _ _).trans (min_le_right _ _)))
+  have hsq : s ≤ q := hsm.le.trans ((min_le_right _ _).trans (min_le_right _ _))
+  have : Fact (0 < s) := ⟨hs0⟩
+  have hs' : 0 < s.toReal := ENNReal.toReal_pos hs0.ne' hst
+  -- `1/pᵢ = (1-θᵢ)/s` with `θᵢ = 1 - s/pᵢ ∈ (0, 1]`
+  have hinv (p' : ℝ≥0∞) (hsp : s < p') :
+      p'⁻¹ = ENNReal.ofReal (s.toReal / p'.toReal) * s⁻¹ := by
+    rcases eq_or_ne p' ⊤ with rfl | hp'
+    · simp
+    rw [ENNReal.ofReal_div_of_pos (ENNReal.toReal_pos (hs0.trans hsp).ne' hp'),
+      ENNReal.ofReal_toReal hst, ENNReal.ofReal_toReal hp', div_eq_mul_inv, mul_comm s, mul_assoc,
+      ENNReal.mul_inv_cancel hs0.ne' hst, mul_one]
+  have hθi (p' : ℝ≥0∞) (hsp : s < p') :
+      1 - s.toReal / p'.toReal ∈ Set.Icc (0 : ℝ) 1 ∧ 0 < 1 - s.toReal / p'.toReal := by
+    have hpos : 0 < 1 - s.toReal / p'.toReal := by
+      rcases eq_or_ne p' ⊤ with rfl | hp'
+      · simp
+      have hsp' := ENNReal.toReal_strict_mono hp' hsp
+      rw [sub_pos, div_lt_one (hs'.trans hsp')]
+      exact hsp'
+    exact ⟨⟨hpos.le, sub_le_self _ (div_nonneg hs'.le ENNReal.toReal_nonneg)⟩, hpos⟩
+  set θ₀ := 1 - s.toReal / p₀.toReal with hθ₀
+  set θ₁ := 1 - s.toReal / p₁.toReal with hθ₁
+  have hne : θ₀ ≠ θ₁ := by
+    intro h
+    refine hp₀₁ (inv_inj.mp ?_)
+    rw [hinv p₀ hsp₀, hinv p₁ hsp₁,
+      show s.toReal / p₀.toReal = s.toReal / p₁.toReal by rw [hθ₀, hθ₁] at h; linarith]
+  -- the reiterated parameter `θ' = (1-θ)θ₀ + θθ₁`, with `1/p = (1-θ')/s`
+  set θ' := (1 - θ) * θ₀ + θ * θ₁ with hθ'
+  have hd₀ : 0 ≤ (1 - θ) * (s.toReal / p₀.toReal) :=
+    mul_nonneg (by linarith) (div_nonneg hs'.le ENNReal.toReal_nonneg)
+  have hd₁ : 0 ≤ θ * (s.toReal / p₁.toReal) :=
+    mul_nonneg hθ0.le (div_nonneg hs'.le ENNReal.toReal_nonneg)
+  have hpθ' : p⁻¹ = ENNReal.ofReal (1 - θ') * s⁻¹ := by
+    rw [hp, hinv p₀ hsp₀, hinv p₁ hsp₁, ← mul_assoc, ← mul_assoc,
+      ← ENNReal.ofReal_mul (sub_nonneg.2 hθ1.le), ← ENNReal.ofReal_mul hθ0.le, ← add_mul,
+      ← ENNReal.ofReal_add hd₀ hd₁, hθ', hθ₀, hθ₁]
+    ring_nf
+  have : Fact (0 < θ') :=
+    ⟨add_pos (mul_pos (by linarith) (hθi p₀ hsp₀).2) (mul_pos hθ0 (hθi p₁ hsp₁).2)⟩
+  have : Fact (θ' < 1) := ⟨by
+    have h₀ := (hθi p₀ hsp₀).1.2
+    have h₁ := (hθi p₁ hsp₁).1.2
+    rcases lt_or_gt_of_ne hne with h | h <;> nlinarith⟩
+  -- both legs are of class `𝒞(θᵢ)` for `Ā = (Lˢ, L^∞)`
+  obtain ⟨hK₀, hJ₀⟩ := isOfClassK_and_isOfClassJ_toL0 𝕜 μ E hst hsp₀ hsq₀ hq₀
+  obtain ⟨hK₁, hJ₁⟩ := isOfClassK_and_isOfClassJ_toL0 𝕜 μ E hst hsp₁ hsq₁ hq₁
+  -- B–L Theorem 3.5.3 (reiteration): `(L_{p₀,q₀}, L_{p₁,q₁})_{θ,q} ≅ Ā_{θ',q}`
+  obtain ⟨e₁, he₁⟩ := nonempty_iso_realInterpolationFunctor_reiteration (lorentz 𝕜 μ E s s ⊤ ⊤)
+    (LorentzSpace.toL0 μ E 𝕜 p₀ q₀) (LorentzSpace.toL0 μ E 𝕜 p₁ q₁)
+    (LorentzSpace.toL0ₗ_injective μ p₀ q₀) (LorentzSpace.toL0ₗ_injective μ p₁ q₁)
+    (hθi p₀ hsp₀).1 (hθi p₁ hsp₁).1 hne ⟨hK₀, hJ₀⟩ ⟨hK₁, hJ₁⟩ θ θ' hθ' q
+  -- B–L Theorem 5.2.1 once more: `Ā_{θ',q} ≅ L_{p,q}`
+  obtain ⟨e₂, he₂⟩ := nonempty_iso_realInterpolation_lorentz_top 𝕜 μ E s hst θ' q hsq p hpθ'
+  exact ⟨e₁ ≪≫ e₂, fun x => (he₁ x).symm.trans (he₂ (e₁.hom.hom x))⟩
 
 /-- Interpolating two weak-`Lᵖ` spaces gives `Lᵖ`: `(L_{p₀,∞}, L_{p₁,∞})_{θ,p} = L_{p,p}` for
 `p₀ ≠ p₁`, `1/p = (1-θ)/p₀ + θ/p₁`. The right side is `Lᵖ(μ)` by `LorentzSpace.eq_Lp`; it is stated

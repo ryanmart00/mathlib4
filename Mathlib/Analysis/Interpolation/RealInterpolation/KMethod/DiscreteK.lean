@@ -87,7 +87,7 @@ private theorem rpow_neg_mul_kFunctional_bounds_of_mem_Ico {θ : ℝ} (hθ : 0 �
       _ = _ := by ring
 
 /-- `∫_{2^ν}^{2^{ν+1}} dt/t = log 2`. -/
-private theorem lintegral_Ico_zpow_inv (ν : ℤ) :
+theorem lintegral_Ico_zpow_inv (ν : ℤ) :
     ∫⁻ t in Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1)), ENNReal.ofReal t⁻¹ =
       ENNReal.ofReal (Real.log 2) := by
   have h2ν : (0 : ℝ) < 2 ^ ν := zpow_pos two_pos ν
@@ -102,7 +102,7 @@ private theorem lintegral_Ico_zpow_inv (ν : ℤ) :
     mul_div_cancel_left₀ _ h2ν.ne']
 
 /-- `(0, ∞)` is the union of the dyadic intervals `[2^ν, 2^{ν+1})`. -/
-private theorem iUnion_Ico_zpow_two :
+theorem iUnion_Ico_zpow_two :
     ⋃ ν : ℤ, Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1)) = Ioi 0 := by
   ext t
   simp only [mem_iUnion, mem_Ioi]
@@ -110,7 +110,7 @@ private theorem iUnion_Ico_zpow_two :
     fun ht => exists_mem_Ico_zpow ht one_lt_two⟩
 
 /-- B–L: `∫₀^∞ = ∑ᵥ ∫_{2^ν}^{2^{ν+1}}` (the dyadic intervals are disjoint). -/
-private theorem lintegral_Ioi_eq_tsum (F : ℝ → ℝ≥0∞) :
+theorem lintegral_Ioi_eq_tsum (F : ℝ → ℝ≥0∞) :
     ∫⁻ t in Ioi (0 : ℝ), F t =
       ∑' ν : ℤ, ∫⁻ t in Ico ((2 : ℝ) ^ ν) (2 ^ (ν + 1)), F t := by
   refine (congrArg (fun s => ∫⁻ t in s, F t) iUnion_Ico_zpow_two).symm.trans

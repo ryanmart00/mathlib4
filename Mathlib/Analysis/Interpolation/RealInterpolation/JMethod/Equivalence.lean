@@ -249,7 +249,7 @@ private theorem tsum_mul_rpow_le {ι : Type*} (φ W : ι → ℝ≥0∞) {p : �
 /-- Young's inequality `ℓ¹ * ℓ^p ⊂ ℓ^p` on `ℤ` for `ℝ≥0∞`-valued sequences (`p ≥ 1`):
 `∑_μ (∑_k φ_k W_{μ-k})^p ≤ (∑ φ)^p ∑ W^p`. This is the "Minkowski's inequality" step of B–L's
 proof of Theorem 3.11.3. -/
-private theorem tsum_conv_rpow_le (φ W : ℤ → ℝ≥0∞) {p : ℝ} (hp : 1 ≤ p) :
+theorem tsum_conv_rpow_le (φ W : ℤ → ℝ≥0∞) {p : ℝ} (hp : 1 ≤ p) :
     ∑' μ, (∑' k, φ k * W (μ - k)) ^ p ≤ (∑' k, φ k) ^ p * ∑' μ, W μ ^ p := by
   -- `∑_μ ∑_k φ_k V_{μ-k} = (∑ φ)(∑ V)`, by Fubini and translation invariance
   have hswap (V : ℤ → ℝ≥0∞) : ∑' μ, ∑' k, φ k * V (μ - k) = (∑' k, φ k) * ∑' μ, V μ := by
@@ -273,7 +273,7 @@ private theorem tsum_conv_rpow_le (φ W : ℤ → ℝ≥0∞) {p : ℝ} (hp : 1 
 `K(t, a) ≤ C_k 4^{1/ρ} (∑ᵥ K(t, uᵥ)^ρ)^{1/ρ}`, where `C_k = max C₀ C₁` and `ρ` is the
 Aoki–Rolewicz exponent of any constant `C' ≥ C_k` (`K(t, ·)` is a `C_k`-quasi-norm, B–L
 Lemma 3.11.1, so B–L Lemma 3.10.2 applies to it). -/
-private theorem ofReal_kFunctional_le_tsum_rpow {C' : ℝ}
+theorem ofReal_kFunctional_le_tsum_rpow {C' : ℝ}
     (hC' : max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
       (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁)) ≤ C') {t : ℝ} (ht : 0 < t)
     {a : sum ι₀ ι₁} {u : ℤ → meet ι₀ ι₁} (hu : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) a) :

@@ -50,6 +50,37 @@ namespace AokiRolewicz
 noncomputable def exponent (C : ℝ) : ℝ :=
   (1 + Real.logb 2 C)⁻¹
 
+theorem exponent_pos {C : ℝ} (hC : 1 ≤ C) : 0 < exponent C :=
+  inv_pos.mpr (by linarith [Real.logb_nonneg one_lt_two hC])
+
+/-- `2 C = 2^{1/ρ}` for `ρ = exponent C` (Bergh–Löfström's `(2c)^ρ = 2`). -/
+theorem two_mul_eq_two_rpow_inv_exponent {C : ℝ} (hC : 1 ≤ C) :
+    2 * C = (2 : ℝ) ^ (exponent C)⁻¹ := by
+  rw [exponent, inv_inv, Real.rpow_add two_pos, Real.rpow_one,
+    Real.rpow_logb two_pos (by norm_num) (by linarith)]
+
+/-- Dyadic weights `2^{-kᵢ}` with all `kᵢ ≤ n` that sum to at most `1 - 2^{-(n+1)}` in fact sum
+to at most `1 - 2^{-n}`, since their sum is a multiple of `2^{-n}`. -/
+private theorem sum_inv_two_pow_add_inv_le {ι : Type*} (t : Finset ι) (k : ι → ℕ) (n : ℕ)
+    (hk : ∀ i ∈ t, k i ≤ n)
+    (h : ∑ i ∈ t, ((2 : ℝ) ^ k i)⁻¹ + ((2 : ℝ) ^ (n + 1))⁻¹ ≤ 1) :
+    ∑ i ∈ t, ((2 : ℝ) ^ k i)⁻¹ + ((2 : ℝ) ^ n)⁻¹ ≤ 1 := by
+  set N : ℕ := ∑ i ∈ t, 2 ^ (n - k i)
+  have h2 : (0 : ℝ) < 2 ^ n := by positivity
+  have hN : ∑ i ∈ t, ((2 : ℝ) ^ k i)⁻¹ = N / 2 ^ n := by
+    rw [Nat.cast_sum, Finset.sum_div]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Nat.cast_pow, Nat.cast_ofNat, pow_sub₀ _ two_ne_zero (hk i hi)]
+    field_simp
+  rw [hN] at h ⊢
+  have hlt : (N : ℝ) < 2 ^ n := by
+    rw [pow_succ] at h
+    field_simp at h
+    linarith
+  have : N + 1 ≤ 2 ^ n := by exact_mod_cast hlt
+  rw [show (N : ℝ) / 2 ^ n + (2 ^ n)⁻¹ = (N + 1) / 2 ^ n by ring, div_le_one h2]
+  exact_mod_cast this
+
 variable {E : Type*} [AddCommMonoid E] (N : E → ℝ) {C : ℝ}
 
 /-- A dyadic form of the quasi-triangle inequality `N(x + y) ≤ C (N x + N y)`: if
@@ -59,8 +90,110 @@ theorem apply_sum_le_of_sum_inv_two_pow_le (hC : 1 ≤ C) (hN0 : ∀ x, 0 ≤ N 
     (hNz : ∀ x, N x = 0 ↔ x = 0) (hN : ∀ x y, N (x + y) ≤ C * (N x + N y)) {ι : Type*}
     (s : Finset ι) (x : ι → E) (k : ι → ℕ) {M : ℝ} (hM : 0 ≤ M)
     (hk : ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ ≤ 1) (hx : ∀ i ∈ s, (2 * C) ^ k i * N (x i) ≤ M) :
-    N (∑ i ∈ s, x i) ≤ M :=
-  sorry
+    N (∑ i ∈ s, x i) ≤ M := by
+  -- B–L, proof of Lemma 3.10.1, formula (5) (by induction; we merge two top-level terms or
+  -- lower a level, rather than splitting into two halves)
+  classical
+  have hK1 : 1 ≤ 2 * C := by linarith
+  have hC0 : 0 < C := by linarith
+  induction h : s.card + ∑ i ∈ s, k i using Nat.strong_induction_on generalizing s x k with
+  | _ n ih => ?_
+  rcases Nat.lt_or_ge s.card 2 with hs | hs
+  · obtain h0 | h1 : s.card = 0 ∨ s.card = 1 := by omega
+    · simpa [Finset.card_eq_zero.mp h0, (hNz 0).mpr rfl] using hM
+    · obtain ⟨a, rfl⟩ := Finset.card_eq_one.mp h1
+      rw [Finset.sum_singleton]
+      calc N (x a) = 1 * N (x a) := (one_mul _).symm
+        _ ≤ (2 * C) ^ k a * N (x a) :=
+          mul_le_mul_of_nonneg_right (one_le_pow₀ hK1) (hN0 _)
+        _ ≤ M := hx a (Finset.mem_singleton_self a)
+  obtain ⟨i₀, hi₀, hmax⟩ := s.exists_max_image k (Finset.card_pos.mp (by omega))
+  obtain ⟨m, hm⟩ : ∃ m, k i₀ = m + 1 := by
+    refine Nat.exists_eq_add_one.mpr (Nat.pos_of_ne_zero fun hm0 => ?_)
+    have h0 : ∀ i ∈ s, k i = 0 := fun i hi => by have := hmax i hi; omega
+    have hsum : ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ = s.card := by
+      rw [Finset.sum_congr rfl fun i hi => by rw [h0 i hi]]; simp
+    have : (2 : ℝ) ≤ s.card := by exact_mod_cast hs
+    linarith
+  obtain ⟨k', hk'd⟩ : ∃ k', k' = Function.update k i₀ m := ⟨_, rfl⟩
+  by_cases hA : ∃ j ∈ s, j ≠ i₀ ∧ k j = m + 1
+  · -- merge `x i₀` and `x j` into a single term at level `m`
+    obtain ⟨j, hj, hji, hkj⟩ := hA
+    have hi₀' : i₀ ∈ s.erase j := Finset.mem_erase.mpr ⟨hji.symm, hi₀⟩
+    set x' := Function.update x i₀ (x i₀ + x j)
+    have hrest {f g : ι → ℝ} (hfg : ∀ i ∈ (s.erase j).erase i₀, f i = g i) :
+        ∑ i ∈ (s.erase j).erase i₀, f i = ∑ i ∈ (s.erase j).erase i₀, g i :=
+      Finset.sum_congr rfl hfg
+    have hne {i} (hi : i ∈ (s.erase j).erase i₀) : i ≠ i₀ := Finset.ne_of_mem_erase hi
+    have hx' : ∑ i ∈ s.erase j, x' i = ∑ i ∈ s, x i := by
+      rw [← Finset.add_sum_erase _ _ hi₀', ← Finset.add_sum_erase _ _ hj,
+        ← Finset.add_sum_erase _ _ hi₀',
+        Finset.sum_congr rfl fun i hi => Function.update_of_ne (hne hi) _ x]
+      simp only [x', Function.update_self]
+      abel
+    have hk' : ∑ i ∈ s.erase j, ((2 : ℝ) ^ k' i)⁻¹ = ∑ i ∈ s, ((2 : ℝ) ^ k i)⁻¹ := by
+      rw [← Finset.add_sum_erase _ _ hi₀', ← Finset.add_sum_erase _ _ hj,
+        ← Finset.add_sum_erase _ _ hi₀',
+        hrest fun i hi => by rw [hk'd, Function.update_of_ne (hne hi)]]
+      simp only [hk'd, Function.update_self, hkj, hm, pow_succ]
+      ring
+    have hcard : (s.erase j).card + ∑ i ∈ s.erase j, k' i < n := by
+      rw [← h, Finset.card_erase_of_mem hj, ← Finset.add_sum_erase _ _ hi₀',
+        ← Finset.add_sum_erase _ _ hj, ← Finset.add_sum_erase _ _ hi₀',
+        hk'd, Finset.sum_congr rfl fun i hi => Function.update_of_ne (hne hi) _ k]
+      simp only [Function.update_self, hkj, hm]
+      generalize ((s.erase j).erase i₀).sum k = R at *
+      omega
+    rw [← hx']
+    refine ih _ hcard (s.erase j) x' k' (hk'.le.trans hk) (fun i hi => ?_) rfl
+    by_cases hii : i = i₀
+    · subst hii
+      simp only [hk'd, x', Function.update_self]
+      have h₀ := hx i hi₀
+      have h₁ := hx j hj
+      rw [hm] at h₀
+      rw [hkj] at h₁
+      rw [pow_succ] at h₀ h₁
+      calc (2 * C) ^ m * N (x i + x j)
+          ≤ (2 * C) ^ m * (C * (N (x i) + N (x j))) := by
+            gcongr; exact hN _ _
+        _ ≤ M := by
+            have hp : 0 ≤ (2 * C) ^ m := by positivity
+            rcases le_total (N (x i)) (N (x j)) with hle | hle
+            · nlinarith [hN0 (x i), mul_le_mul_of_nonneg_left hle (mul_nonneg hp hC0.le)]
+            · nlinarith [hN0 (x j), mul_le_mul_of_nonneg_left hle (mul_nonneg hp hC0.le)]
+    · simp only [hk'd, x', Function.update_of_ne hii]
+      exact hx i (Finset.mem_of_mem_erase hi)
+  · -- lower `k i₀` by one; the dyadic weights still sum to at most `1`
+    push Not at hA
+    have hk' : ∑ i ∈ s, ((2 : ℝ) ^ k' i)⁻¹ ≤ 1 := by
+      subst hk'd
+      rw [← Finset.add_sum_erase _ _ hi₀, Function.update_self,
+        Finset.sum_congr rfl fun i hi => by
+          rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]]
+      rw [← Finset.add_sum_erase _ _ hi₀, hm] at hk
+      rw [add_comm] at hk ⊢
+      refine sum_inv_two_pow_add_inv_le _ _ _ (fun i hi => ?_) hk
+      have h1 := hmax i (Finset.mem_of_mem_erase hi)
+      have h2 := hA i (Finset.mem_of_mem_erase hi) (Finset.ne_of_mem_erase hi)
+      omega
+    have hcard : s.card + ∑ i ∈ s, k' i < n := by
+      rw [← h, ← Finset.add_sum_erase _ _ hi₀, ← Finset.add_sum_erase s k hi₀, hk'd,
+        Finset.sum_congr rfl fun i hi =>
+          Function.update_of_ne (Finset.ne_of_mem_erase hi) _ k]
+      simp only [Function.update_self, hm]
+      generalize (s.erase i₀).sum k = R at *
+      omega
+    refine ih _ hcard s x k' hk' (fun i hi => ?_) rfl
+    by_cases hii : i = i₀
+    · subst hii
+      simp only [hk'd, Function.update_self]
+      have h₀ := hx i hi
+      rw [hm, pow_succ] at h₀
+      have hp : 0 ≤ (2 * C) ^ m := by positivity
+      nlinarith [hN0 (x i), mul_le_mul_of_nonneg_left hK1 (mul_nonneg hp (hN0 (x i)))]
+    · simp only [hk'd, Function.update_of_ne hii]
+      exact hx i hi
 
 /-- **Aoki–Rolewicz** for a quasi-norm function (Bergh–Löfström Lemma 3.10.2): if `N` is a
 `C`-quasi-norm (`N ≥ 0`, `N x = 0 ↔ x = 0`, `N(x + y) ≤ C (N x + N y)` with `C ≥ 1`), then with

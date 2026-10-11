@@ -224,6 +224,58 @@ theorem lintegral_Ioi_comp_rpow_mul_inv {a : ℝ} (ha : 0 < a) (H : ℝ → ℝ�
   rw [hkey, ← mul_assoc, ← ENNReal.ofReal_mul (inv_nonneg.mpr ha.le), inv_mul_cancel₀ ha.ne',
     ENNReal.ofReal_one, one_mul]
 
+/-- Power substitution for the Haar measure `dt/t` with a negative exponent:
+`∫₀^∞ H(tᵃ) dt/t = (-a)⁻¹ ∫₀^∞ H(T) dT/T` for `a < 0`. -/
+theorem lintegral_Ioi_comp_rpow_mul_inv_of_neg {a : ℝ} (ha : a < 0) (H : ℝ → ℝ≥0∞) :
+    ∫⁻ t in Ioi (0 : ℝ), H (t ^ a) * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal (-a)⁻¹ * ∫⁻ t in Ioi (0 : ℝ), H t * ENNReal.ofReal t⁻¹ := by
+  have hf' : ∀ x ∈ Ioi (0 : ℝ), HasDerivWithinAt (fun x : ℝ => x ^ a) (a * x ^ (a - 1))
+      (Ioi (0 : ℝ)) x := fun x hx => (Real.hasDerivAt_rpow_const (Or.inl hx.ne')).hasDerivWithinAt
+  have hanti : AntitoneOn (fun x : ℝ => x ^ a) (Ioi (0 : ℝ)) :=
+    fun x hx y _ hxy => Real.rpow_le_rpow_of_nonpos hx hxy ha.le
+  have himg : (fun x : ℝ => x ^ a) '' Ioi (0 : ℝ) = Ioi 0 := by
+    ext y
+    constructor
+    · rintro ⟨x, hx, rfl⟩
+      exact Real.rpow_pos_of_pos hx a
+    · intro hy
+      exact ⟨y ^ a⁻¹, Real.rpow_pos_of_pos hy _, Real.rpow_inv_rpow hy.le ha.ne⟩
+  have key := lintegral_image_eq_lintegral_deriv_mul_of_antitoneOn measurableSet_Ioi hf' hanti
+    (fun x => H x * ENNReal.ofReal x⁻¹)
+  rw [himg] at key
+  have hkey : ∫⁻ t in Ioi (0 : ℝ), H t * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal (-a) * ∫⁻ t in Ioi (0 : ℝ), H (t ^ a) * ENNReal.ofReal t⁻¹ := by
+    rw [key, ← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+    refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
+    have ht' : 0 < t := ht
+    have e : ENNReal.ofReal (-(a * t ^ (a - 1))) * ENNReal.ofReal (t ^ a)⁻¹ =
+        ENNReal.ofReal (-a) * ENNReal.ofReal t⁻¹ := by
+      have h1 : 0 ≤ -(a * t ^ (a - 1)) := by
+        have := Real.rpow_pos_of_pos ht' (a - 1)
+        nlinarith
+      rw [← ENNReal.ofReal_mul h1, ← ENNReal.ofReal_mul (by linarith)]
+      congr 1
+      rw [Real.rpow_sub ht', Real.rpow_one]
+      have := (Real.rpow_pos_of_pos ht' a).ne'
+      field_simp
+    calc ENNReal.ofReal (-(a * t ^ (a - 1))) * (H (t ^ a) * ENNReal.ofReal (t ^ a)⁻¹)
+        = (ENNReal.ofReal (-(a * t ^ (a - 1))) * ENNReal.ofReal (t ^ a)⁻¹) * H (t ^ a) := by
+          ring
+      _ = _ := by rw [e]; ring
+  rw [hkey, ← mul_assoc, ← ENNReal.ofReal_mul (inv_nonneg.mpr (by linarith)),
+    inv_mul_cancel₀ (by linarith : -a ≠ 0), ENNReal.ofReal_one, one_mul]
+
+/-- Power substitution for the Haar measure `dt/t`: `∫₀^∞ H(tᵃ) dt/t = |a|⁻¹ ∫₀^∞ H(T) dT/T` for
+`a ≠ 0`. -/
+theorem lintegral_Ioi_comp_rpow_mul_inv_of_ne_zero {a : ℝ} (ha : a ≠ 0) (H : ℝ → ℝ≥0∞) :
+    ∫⁻ t in Ioi (0 : ℝ), H (t ^ a) * ENNReal.ofReal t⁻¹ =
+      ENNReal.ofReal |a|⁻¹ * ∫⁻ t in Ioi (0 : ℝ), H t * ENNReal.ofReal t⁻¹ := by
+  rcases ha.lt_or_gt with ha | ha
+  · rw [abs_of_neg ha]
+    exact lintegral_Ioi_comp_rpow_mul_inv_of_neg ha H
+  · rw [abs_of_pos ha]
+    exact lintegral_Ioi_comp_rpow_mul_inv ha H
+
 /-- Pointwise domination `F ≤ c G` on `(0, ∞)` passes to `∫₀^∞ F^s dt/t ≤ c^s ∫₀^∞ G^s dt/t`. -/
 theorem lintegral_rpow_mul_inv_le_of_le {F G : ℝ → ℝ≥0∞} {c : ℝ≥0∞} (hc : c ≠ ⊤) {s : ℝ}
     (hs : 0 ≤ s) (h : ∀ t ∈ Ioi (0 : ℝ), F t ≤ c * G t) :

@@ -302,8 +302,8 @@ theorem nonempty_iso_realInterpolation_lorentz_top_top {p₀ p₁ : ℝ≥0∞} 
     ∃ e : (realInterpolationFunctor 𝕜 θ p).obj (lorentz 𝕜 μ E p₀ ⊤ p₁ ⊤) ≅
         QuasiBanachCat.of 𝕜 (LorentzSpace E p p μ),
       ∀ x, lorentzSumToL0 𝕜 μ E p₀ ⊤ p₁ ⊤ ((realInterpolationFunctor 𝕜 θ p).toSum _ x) =
-        LorentzSpace.toL0 μ E 𝕜 p p (e.hom.hom x) := by
-  sorry
+        LorentzSpace.toL0 μ E 𝕜 p p (e.hom.hom x) :=
+  nonempty_iso_realInterpolation_lorentz 𝕜 μ E hp₀ hp₁ hp₀₁ (fun _ => rfl) (fun _ => rfl) θ p p hp
 
 end InterpolationCat
 

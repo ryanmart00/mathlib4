@@ -598,8 +598,10 @@ omit [T2Space 𝒜] in
 theorem exists_realInterpolationENorm_le_of_le {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1)
     {q r : ℝ≥0∞} (hq : 0 < q) (hqr : q ≤ r) :
     ∃ C : ℝ≥0∞, C ≠ ⊤ ∧ ∀ a : sum ι₀ ι₁,
-      realInterpolationENorm ι₀ ι₁ θ r a ≤ C * realInterpolationENorm ι₀ ι₁ θ q a :=
-  sorry
+      realInterpolationENorm ι₀ ι₁ θ r a ≤ C * realInterpolationENorm ι₀ ι₁ θ q a := by
+  refine ⟨_, ?_, realInterpolationENorm_le_of_le ι₀ ι₁ hθ0 hθ1 hq hqr⟩
+  simp [ENNReal.rpow_eq_top_iff, (realInterpolationConst_pos θ q).ne',
+    (realInterpolationConst_lt_top hθ0 hθ1 q).ne]
 
 /-! ### The space -/
 

@@ -271,6 +271,25 @@ theorem InterpolationCouple.kFunctional_meetToSum_le (t : ℝ) (ht : 0 ≤ t)
         · rw [min_eq_right h]
           exact (min_le_right _ _).trans (mul_le_mul_of_nonneg_left (le_max_right _ _) ht)
 
+omit [ContinuousSMul 𝕜 𝒜] [T2Space 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- Bergh–Löfström Lemma 3.1.1, formula (1): `min(1, t/s) K(s,a) ≤ K(t,a)` for `s > 0`, `t ≥ 0`.
+For `t ≥ s` this is monotonicity; for `t < s` each decomposition has
+`(t/s)(‖a₀‖ + s‖a₁‖) ≤ ‖a₀‖ + t‖a₁‖`. -/
+theorem InterpolationCouple.min_one_div_mul_kFunctional_le {s t : ℝ} (hs : 0 < s) (ht : 0 ≤ t)
+    (a : InterpolationCouple.sum ι₀ ι₁) :
+    min 1 (t / s) * InterpolationCouple.KFunctional ι₀ ι₁ s a ≤
+      InterpolationCouple.KFunctional ι₀ ι₁ t a := by
+  apply le_csInf (InterpolationCouple.kFunctional_set_nonempty ι₀ ι₁ t a)
+  rintro r ⟨a₀, a₁, ha, rfl⟩
+  have hK : InterpolationCouple.KFunctional ι₀ ι₁ s a ≤ ‖a₀‖ + s * ‖a₁‖ :=
+    csInf_le (InterpolationCouple.kFunctional_set_boundedBelow ι₀ ι₁ s hs.le a) ⟨a₀, a₁, ha, rfl⟩
+  have hm0 : 0 ≤ min 1 (t / s) := le_min zero_le_one (div_nonneg ht hs.le)
+  have hm1 : min 1 (t / s) ≤ 1 := min_le_left _ _
+  have hms : min 1 (t / s) * s ≤ t := by
+    rw [← le_div_iff₀ hs]
+    exact min_le_right _ _
+  nlinarith [QuasinormedAddCommGroup.norm_nonneg a₀, QuasinormedAddCommGroup.norm_nonneg a₁]
+
 /-- Triebel's Lemma (§1.3.1): `K(t,a)` is continuous in `t` (for `t ≥ 0`). STATEMENT ONLY —
 proof deferred. -/
 theorem InterpolationCouple.kFunctional_continuousOn (a : InterpolationCouple.sum ι₀ ι₁) :

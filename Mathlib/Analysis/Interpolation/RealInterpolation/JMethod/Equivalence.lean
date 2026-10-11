@@ -193,7 +193,9 @@ theorem exists_jInterpolationENorm_le_mul_realInterpolationENorm [CompleteSpace 
     [CompleteSpace A₁] {θ : ℝ} (hθ0 : 0 < θ) (hθ1 : θ < 1) {q : ℝ≥0∞} (hq : 0 < q) :
     ∃ C : ℝ≥0∞, C ≠ ⊤ ∧ ∀ a : sum ι₀ ι₁,
       jInterpolationENorm ι₀ ι₁ θ q a ≤ C * realInterpolationENorm ι₀ ι₁ θ q a :=
-  sorry
+  ⟨_, ENNReal.mul_ne_top ENNReal.ofReal_ne_top (ENNReal.inv_ne_top.mpr (ENNReal.rpow_pos
+      (ENNReal.ofReal_pos.mpr (Real.log_pos one_lt_two)) ENNReal.ofReal_ne_top).ne'),
+    jInterpolationENorm_le_mul_realInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq⟩
 
 /-- `J ⊂ K` (B–L Theorem 3.11.3, first half): `‖a‖_{θ,q;K} ≤ C ‖a‖_{θ,q;J}`. -/
 theorem exists_realInterpolationENorm_le_mul_jInterpolationENorm {θ : ℝ} (hθ0 : 0 < θ)

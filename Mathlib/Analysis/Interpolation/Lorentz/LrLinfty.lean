@@ -12,7 +12,7 @@ import Mathlib.MeasureTheory.Integral.Hardy
 # Real interpolation of the couple `(Lʳ, L^∞)`
 
 Triebel §1.18.6, Theorem 1, in the quasi-Banach form (Krée; Bergh–Löfström §5.3): for
-`0 < r < ∞`, the couple `(Lʳ, L^∞)`, realized as `InterpolationCat.lorentz 𝕜 μ E r r ⊤ ⊤`
+`0 < r < ∞`, the couple `(Lʳ, L^∞)`, realized as `InterpolationCat.lorentzCouple 𝕜 μ E r r ⊤ ⊤`
 (`L_{r,r} = Lʳ` and `L_{∞,∞} = L^∞` by `LorentzSpace.eq_Lp`), has
 
 * K-functional `K(t, f; Lʳ, L^∞) ≈ (∫₀^{tʳ} f*(s)ʳ ds)^{1/r}` (for `r = 1`: `∫₀ᵗ f*`), with
@@ -255,8 +255,8 @@ namespace InterpolationCat
 /-- Upper bound for the K-functional of `(Lʳ, L^∞)`:
 `K(t, f) ≤ c (∫₀^{tʳ} f*(s)ʳ ds)^{1/r}`, uniformly in `t > 0` and `f ∈ Lʳ + L^∞`. -/
 theorem lorentz_kFunctional_le (hr : r ≠ ⊤) :
-    ∃ c : ℝ≥0, ∀ t : ℝ, 0 < t → ∀ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,
+    ∃ c : ℝ≥0, ∀ t : ℝ, 0 < t → ∀ a : InterpolationCouple.sum (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁,
       ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a) ≤
         c * (∫⁻ s in Ioc 0 (t ^ r.toReal), decreasingRearrangement μ
           (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a) (ENNReal.ofReal s) ^ r.toReal) ^ r.toReal⁻¹ := by
@@ -279,7 +279,7 @@ theorem lorentz_kFunctional_le (hr : r ≠ ⊤) :
       Real.rpow_rpow_inv ht.le hr0.ne']
   rw [hofT] at h₁
   have ha : (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
-      (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a := by
+      (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁) = a := by
     apply InterpolationCouple.sumToAmbient_injective
     change lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ (Submodule.Quotient.mk (a₀, a₁)) = F
     rw [lorentzSumToL0_mk]
@@ -299,8 +299,8 @@ theorem lorentz_kFunctional_le (hr : r ≠ ⊤) :
 /-- Lower bound for the K-functional of `(Lʳ, L^∞)`:
 `(∫₀^{tʳ} f*(s)ʳ ds)^{1/r} ≤ c K(t, f)`, uniformly in `t > 0` and `f ∈ Lʳ + L^∞`. -/
 theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
-    ∃ c : ℝ≥0, ∀ t : ℝ, 0 < t → ∀ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,
+    ∃ c : ℝ≥0, ∀ t : ℝ, 0 < t → ∀ a : InterpolationCouple.sum (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁,
       (∫⁻ s in Ioc 0 (t ^ r.toReal), decreasingRearrangement μ
           (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a) (ENNReal.ofReal s) ^ r.toReal) ^ r.toReal⁻¹ ≤
         c * ENNReal.ofReal (InterpolationCouple.KFunctional _ _ t a) := by
@@ -324,7 +324,7 @@ theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
   -- the bound for a single decomposition `f = a₀ + a₁`
   have hbound : ∀ a₀ : LorentzSpace E r r μ, ∀ a₁ : LorentzSpace E ⊤ ⊤ μ,
       (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a →
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁) = a →
       I ≤ C * (lorentzNorm μ r r a₀ + ENNReal.ofReal t * lorentzNorm μ ⊤ ⊤ a₁) := by
     intro a₀ a₁ ha
     set A := lorentzNorm μ r r a₀ with hAdef
@@ -380,7 +380,8 @@ theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
   -- pass to the infimum over decompositions
   have hS : ∀ x ∈ {x : ℝ | ∃ a₀ : LorentzSpace E r r μ, ∃ a₁ : LorentzSpace E ⊤ ⊤ μ,
       (Submodule.Quotient.mk (a₀, a₁) : InterpolationCouple.sum
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁) = a ∧ ‖a₀‖ + t * ‖a₁‖ = x},
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁) = a ∧
+        ‖a₀‖ + t * ‖a₁‖ = x},
       0 ≤ x ∧ I ≤ C * ENNReal.ofReal x := by
     rintro x ⟨a₀, a₁, ha, rfl⟩
     refine ⟨add_nonneg ENNReal.toReal_nonneg (mul_nonneg ht.le ENNReal.toReal_nonneg),
@@ -414,8 +415,8 @@ theorem le_lorentz_kFunctional (hr : r ≠ ⊤) :
 theorem lorentzNorm_le_realInterpolationENorm (hr : r ≠ ⊤) (θ : ℝ) (q : ℝ≥0∞)
     [Fact (θ < 1)] [Fact (0 < q)] (p : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * r⁻¹) :
-    ∃ A : ℝ≥0, ∀ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,
+    ∃ A : ℝ≥0, ∀ a : InterpolationCouple.sum (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁,
       lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a) ≤
         A * InterpolationCouple.realInterpolationENorm _ _ θ q a := by
   have hrpos : 0 < r := Fact.out
@@ -502,8 +503,8 @@ theorem lorentzNorm_le_realInterpolationENorm (hr : r ≠ ⊤) (θ : ℝ) (q : �
 theorem realInterpolationENorm_le_lorentzNorm (hr : r ≠ ⊤) (θ : ℝ) (q : ℝ≥0∞)
     [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (hrq : r ≤ q) (p : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * r⁻¹) :
-    ∃ B : ℝ≥0, ∀ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀
-        (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,
+    ∃ B : ℝ≥0, ∀ a : InterpolationCouple.sum (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁,
       InterpolationCouple.realInterpolationENorm _ _ θ q a ≤
         B * lorentzNorm μ p q (lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a) := by
   have hrpos : 0 < r := Fact.out
@@ -580,7 +581,7 @@ split `LorentzSpace.exists_Lr_add_Linfty` then decomposes `g`. -/
 theorem exists_lorentzSumToL0_eq (hr : r ≠ ⊤) (θ : ℝ) (q : ℝ≥0∞)
     [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (hrq : r ≤ q) (p : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * r⁻¹) (g : LorentzSpace E p q μ) :
-    ∃ a : InterpolationCouple.sum (lorentz 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentz 𝕜 μ E r r ⊤ ⊤).ι₁,
+    ∃ a : InterpolationCouple.sum (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₀ (lorentzCouple 𝕜 μ E r r ⊤ ⊤).ι₁,
       lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ a = LorentzSpace.toL0 μ E 𝕜 p q g := by
   have hrpos : 0 < r := Fact.out
   have hθ0 : 0 < θ := Fact.out
@@ -636,13 +637,13 @@ inclusions of both sides into `L⁰(μ)`. -/
 theorem nonempty_iso_realInterpolation_lorentz_top (hr : r ≠ ⊤) (θ : ℝ) (q : ℝ≥0∞)
     [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (hrq : r ≤ q) (p : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * r⁻¹) :
-    ∃ e : (realInterpolationFunctor 𝕜 θ q).obj (lorentz 𝕜 μ E r r ⊤ ⊤) ≅
+    ∃ e : (realInterpolationFunctor 𝕜 θ q).obj (lorentzCouple 𝕜 μ E r r ⊤ ⊤) ≅
         QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ),
       ∀ x, lorentzSumToL0 𝕜 μ E r r ⊤ ⊤ ((realInterpolationFunctor 𝕜 θ q).toSum _ x) =
         LorentzSpace.toL0 μ E 𝕜 p q (e.hom.hom x) := by
   obtain ⟨A, hA⟩ := lorentzNorm_le_realInterpolationENorm 𝕜 μ E r hr θ q p hp
   obtain ⟨B, hB⟩ := realInterpolationENorm_le_lorentzNorm 𝕜 μ E r hr θ q hrq p hp
-  set C := lorentz 𝕜 μ E r r ⊤ ⊤ with hCdef
+  set C := lorentzCouple 𝕜 μ E r r ⊤ ⊤ with hCdef
   -- both sides sit in `L⁰(μ)`: the K-space via `lorentzSumToL0`, `L_{p,q}` via `toL0`
   obtain ⟨e, he⟩ := QuasiBanachCat.exists_iso_of_bounded_correspondence
     (X := (kInterpolationFunctor 𝕜 θ q).obj C) (Y := QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ))

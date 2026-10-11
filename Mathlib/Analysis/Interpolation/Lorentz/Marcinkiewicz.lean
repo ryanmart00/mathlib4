@@ -118,8 +118,8 @@ theorem LorentzSpace.exists_lorentzNorm_le_of_le {p : ℝ≥0∞} (hp0 : 0 < p) 
   obtain ⟨B, hB⟩ := InterpolationCat.realInterpolationENorm_le_lorentzNorm ℝ μ ℝ s hst θ q hsq p hpθ
   -- B–L Theorem 3.4.1 (b): `(Lˢ, L^∞)_{θ,q} ⊆ (Lˢ, L^∞)_{θ,r}`
   obtain ⟨c, hc, hmono⟩ := InterpolationCouple.exists_realInterpolationENorm_le_of_le
-    (InterpolationCat.lorentz ℝ μ ℝ s s ⊤ ⊤).ι₀ (InterpolationCat.lorentz ℝ μ ℝ s s ⊤ ⊤).ι₁
-    hθ0 hθ1 hq hqr
+    (InterpolationCat.lorentzCouple ℝ μ ℝ s s ⊤ ⊤).ι₀
+    (InterpolationCat.lorentzCouple ℝ μ ℝ s s ⊤ ⊤).ι₁ hθ0 hθ1 hq hqr
   refine ⟨max 1 (A * c.toNNReal * B), fun f hf => ?_⟩
   -- reduce to `‖f‖ : α → ℝ`, as an element `F` of `L⁰`
   have hnorm (p q : ℝ≥0∞) : lorentzNorm μ p q (fun x => ‖f x‖) = lorentzNorm μ p q f := by
@@ -161,10 +161,12 @@ this is the base case `nonempty_iso_realInterpolation_lorentz_top` (B–L Theore
 class of `Ā_{θ,q}`; for `p = ∞` (so `q = ∞`), `θ = 1` and `L_{∞,∞} = L^∞` is the second leg. -/
 private theorem isOfClassK_and_isOfClassJ_toL0 {s : ℝ≥0∞} [Fact (0 < s)] (hst : s ≠ ⊤)
     {p q : ℝ≥0∞} [Fact (0 < q)] (hsp : s < p) (hsq : s ≤ q) (hq : p = ⊤ → q = ⊤) :
-    InterpolationCouple.IsOfClassK (lorentz 𝕜 μ E s s ⊤ ⊤).ι₀ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₁
-        (1 - s.toReal / p.toReal) (LorentzSpace.toL0 μ E 𝕜 p q) ∧
-      InterpolationCouple.IsOfClassJ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₀ (lorentz 𝕜 μ E s s ⊤ ⊤).ι₁
-        (1 - s.toReal / p.toReal) (LorentzSpace.toL0 μ E 𝕜 p q) := by
+    InterpolationCouple.IsOfClassK (lorentzCouple 𝕜 μ E s s ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E s s ⊤ ⊤).ι₁ (1 - s.toReal / p.toReal)
+        (LorentzSpace.toL0 μ E 𝕜 p q) ∧
+      InterpolationCouple.IsOfClassJ (lorentzCouple 𝕜 μ E s s ⊤ ⊤).ι₀
+        (lorentzCouple 𝕜 μ E s s ⊤ ⊤).ι₁ (1 - s.toReal / p.toReal)
+        (LorentzSpace.toL0 μ E 𝕜 p q) := by
   rcases eq_or_ne p ⊤ with rfl | hp
   · obtain rfl := hq rfl
     simp only [ENNReal.toReal_top, div_zero, sub_zero]
@@ -207,7 +209,7 @@ theorem nonempty_iso_realInterpolation_lorentz {p₀ q₀ p₁ q₁ : ℝ≥0∞
     [Fact (0 < q₁)] (hp₀ : 0 < p₀) (hp₁ : 0 < p₁) (hp₀₁ : p₀ ≠ p₁) (hq₀ : p₀ = ⊤ → q₀ = ⊤)
     (hq₁ : p₁ = ⊤ → q₁ = ⊤) (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
     (p : ℝ≥0∞) (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹) :
-    ∃ e : (realInterpolationFunctor 𝕜 θ q).obj (lorentz 𝕜 μ E p₀ q₀ p₁ q₁) ≅
+    ∃ e : (realInterpolationFunctor 𝕜 θ q).obj (lorentzCouple 𝕜 μ E p₀ q₀ p₁ q₁) ≅
         QuasiBanachCat.of 𝕜 (LorentzSpace E p q μ),
       ∀ x, lorentzSumToL0 𝕜 μ E p₀ q₀ p₁ q₁ ((realInterpolationFunctor 𝕜 θ q).toSum _ x) =
         LorentzSpace.toL0 μ E 𝕜 p q (e.hom.hom x) := by
@@ -282,8 +284,8 @@ theorem nonempty_iso_realInterpolation_lorentz {p₀ q₀ p₁ q₁ : ℝ≥0∞
   obtain ⟨hK₀, hJ₀⟩ := isOfClassK_and_isOfClassJ_toL0 𝕜 μ E hst hsp₀ hsq₀ hq₀
   obtain ⟨hK₁, hJ₁⟩ := isOfClassK_and_isOfClassJ_toL0 𝕜 μ E hst hsp₁ hsq₁ hq₁
   -- B–L Theorem 3.5.3 (reiteration): `(L_{p₀,q₀}, L_{p₁,q₁})_{θ,q} ≅ Ā_{θ',q}`
-  obtain ⟨e₁, he₁⟩ := nonempty_iso_realInterpolationFunctor_reiteration (lorentz 𝕜 μ E s s ⊤ ⊤)
-    (LorentzSpace.toL0 μ E 𝕜 p₀ q₀) (LorentzSpace.toL0 μ E 𝕜 p₁ q₁)
+  obtain ⟨e₁, he₁⟩ := nonempty_iso_realInterpolationFunctor_reiteration
+    (lorentzCouple 𝕜 μ E s s ⊤ ⊤) (LorentzSpace.toL0 μ E 𝕜 p₀ q₀) (LorentzSpace.toL0 μ E 𝕜 p₁ q₁)
     (LorentzSpace.toL0ₗ_injective μ p₀ q₀) (LorentzSpace.toL0ₗ_injective μ p₁ q₁)
     (hθi p₀ hsp₀).1 (hθi p₁ hsp₁).1 hne ⟨hK₀, hJ₀⟩ ⟨hK₁, hJ₁⟩ θ θ' hθ' q
   -- B–L Theorem 5.2.1 once more: `Ā_{θ',q} ≅ L_{p,q}`
@@ -297,7 +299,7 @@ as `L_{p,p}` because `Lp` is a `QuasiBanachCat` object only for `1 ≤ p`. A spe
 theorem nonempty_iso_realInterpolation_lorentz_top_top {p₀ p₁ : ℝ≥0∞} (hp₀ : 0 < p₀)
     (hp₁ : 0 < p₁) (hp₀₁ : p₀ ≠ p₁) (θ : ℝ) [Fact (0 < θ)] [Fact (θ < 1)] (p : ℝ≥0∞)
     [Fact (0 < p)] (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹) :
-    ∃ e : (realInterpolationFunctor 𝕜 θ p).obj (lorentz 𝕜 μ E p₀ ⊤ p₁ ⊤) ≅
+    ∃ e : (realInterpolationFunctor 𝕜 θ p).obj (lorentzCouple 𝕜 μ E p₀ ⊤ p₁ ⊤) ≅
         QuasiBanachCat.of 𝕜 (LorentzSpace E p p μ),
       ∀ x, lorentzSumToL0 𝕜 μ E p₀ ⊤ p₁ ⊤ ((realInterpolationFunctor 𝕜 θ p).toSum _ x) =
         LorentzSpace.toL0 μ E 𝕜 p p (e.hom.hom x) :=
@@ -340,7 +342,7 @@ theorem exists_lorentz_interpolation {p₀ r₀ p₁ r₁ q₀ s₀ q₁ s₁ : 
     [Fact (0 < θ)] [Fact (θ < 1)] (r : ℝ≥0∞) [Fact (0 < r)] (p q : ℝ≥0∞)
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹)
     (hq : q⁻¹ = ENNReal.ofReal (1 - θ) * q₀⁻¹ + ENNReal.ofReal θ * q₁⁻¹) :
-    ∃ C : ℝ, ∀ (T : lorentz 𝕜 μ E p₀ r₀ p₁ r₁ ⟶ lorentz 𝕜 ν F q₀ s₀ q₁ s₁) {M₀ M₁ : ℝ},
+    ∃ C : ℝ, ∀ (T : lorentzCouple 𝕜 μ E p₀ r₀ p₁ r₁ ⟶ lorentzCouple 𝕜 ν F q₀ s₀ q₁ s₁) {M₀ M₁ : ℝ},
       0 < M₀ → 0 < M₁ → QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀ →
       QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁ →
       ∃ S : LorentzSpace E p r μ →L[𝕜] LorentzSpace F q r ν,
@@ -362,7 +364,7 @@ theorem exists_lorentz_interpolation {p₀ r₀ p₁ r₁ q₀ s₀ q₁ s₁ : 
     have hinv : eX.hom.hom (eX.inv.hom f) = f := ConcreteCategory.congr_hom eX.inv_hom_id f
     have hx : (realInterpolationFunctor 𝕜 θ r).toSum _ (eX.inv.hom f) =
         Submodule.Quotient.mk ((f₀, f₁) :
-          (lorentz 𝕜 μ E p₀ r₀ p₁ r₁).A₀ × (lorentz 𝕜 μ E p₀ r₀ p₁ r₁).A₁) :=
+          (lorentzCouple 𝕜 μ E p₀ r₀ p₁ r₁).A₀ × (lorentzCouple 𝕜 μ E p₀ r₀ p₁ r₁).A₁) :=
       InterpolationCouple.sumToAmbient_injective _ _ ((hX _).trans ((congrArg _ hinv).trans hf))
     -- naturality of `toSum`: `Φ(T)` acts on the sum space as `T.sumMap`
     have hT := DFunLike.congr_fun ((realInterpolationFunctor 𝕜 θ r).map_toSum T) (eX.inv.hom f)
@@ -395,7 +397,7 @@ theorem exists_lp_interpolation {p₀ p₁ q₀ q₁ : ℝ≥0∞} [Fact (0 < p�
     [Fact (θ < 1)] (p q : ℝ≥0∞) [Fact (0 < p)] [Fact (0 < q)]
     (hp : p⁻¹ = ENNReal.ofReal (1 - θ) * p₀⁻¹ + ENNReal.ofReal θ * p₁⁻¹)
     (hq : q⁻¹ = ENNReal.ofReal (1 - θ) * q₀⁻¹ + ENNReal.ofReal θ * q₁⁻¹) (hpq : p ≤ q) :
-    ∃ C : ℝ, ∀ (T : lorentz 𝕜 μ E p₀ p₀ p₁ p₁ ⟶ lorentz 𝕜 ν F q₀ ⊤ q₁ ⊤) {M₀ M₁ : ℝ},
+    ∃ C : ℝ, ∀ (T : lorentzCouple 𝕜 μ E p₀ p₀ p₁ p₁ ⟶ lorentzCouple 𝕜 ν F q₀ ⊤ q₁ ⊤) {M₀ M₁ : ℝ},
       0 < M₀ → 0 < M₁ → QuasinormedAddCommGroup.opQuasiNorm T.f₀ ≤ M₀ →
       QuasinormedAddCommGroup.opQuasiNorm T.f₁ ≤ M₁ →
       ∃ S : LorentzSpace E p p μ →L[𝕜] LorentzSpace F q q ν,

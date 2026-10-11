@@ -89,6 +89,47 @@ theorem isOfClassJ_one_ι₁ : IsOfClassJ ι₀ ι₁ 1 ι₁ := by
   · rw [Real.rpow_neg_one, one_mul, ← div_eq_inv_mul, le_div_iff₀ ht, mul_comm]
     exact le_max_right _ _
 
+section Transport
+
+variable {Y : Type*} [QuasinormedAddCommGroup Y] [QuasiNormedSpace 𝕜 Y]
+
+/-- Class `𝒦(θ)` passes to a space `Y` mapped into `X` compatibly with the embeddings: if
+`κ ∘ S = κ'` for a bounded `S : Y → X`, then `X ∈ 𝒦(θ; Ā)` implies `Y ∈ 𝒦(θ; Ā)`. -/
+theorem IsOfClassK.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassK ι₀ ι₁ θ κ)
+    {κ' : Y →L[𝕜] 𝒜} (S : Y →L[𝕜] X) (hS : κ.comp S = κ') : IsOfClassK ι₀ ι₁ θ κ' := by
+  obtain ⟨C, hC⟩ := h
+  refine ⟨max C 0 * QuasinormedAddCommGroup.opQuasiNorm S, fun y => ?_⟩
+  obtain ⟨b, hb, hK⟩ := hC (S y)
+  refine ⟨b, by rw [hb, ← hS, ContinuousLinearMap.comp_apply], fun t ht => ?_⟩
+  have hp : 0 ≤ max C 0 * t ^ θ := mul_nonneg (le_max_right _ _) (Real.rpow_nonneg ht.le _)
+  calc KFunctional ι₀ ι₁ t b ≤ C * t ^ θ * ‖S y‖ := hK t ht
+    _ ≤ max C 0 * t ^ θ * ‖S y‖ := by
+        gcongr
+        · exact QuasinormedAddCommGroup.norm_nonneg _
+        · exact le_max_left _ _
+    _ ≤ max C 0 * t ^ θ * (QuasinormedAddCommGroup.opQuasiNorm S * ‖y‖) :=
+        mul_le_mul_of_nonneg_left (QuasinormedAddCommGroup.le_opQuasiNorm S y) hp
+    _ = _ := by ring
+
+/-- Class `𝒥(θ)` passes to a space `Y` into which `X` maps compatibly with the embeddings: if
+`κ' ∘ T = κ` for a bounded `T : X → Y`, then `X ∈ 𝒥(θ; Ā)` implies `Y ∈ 𝒥(θ; Ā)`. -/
+theorem IsOfClassJ.of_comp {θ : ℝ} {κ : X →L[𝕜] 𝒜} (h : IsOfClassJ ι₀ ι₁ θ κ)
+    {κ' : Y →L[𝕜] 𝒜} (T : X →L[𝕜] Y) (hT : κ'.comp T = κ) : IsOfClassJ ι₀ ι₁ θ κ' := by
+  obtain ⟨C, hC⟩ := h
+  set M := QuasinormedAddCommGroup.opQuasiNorm T
+  refine ⟨M * max C 0, fun b => ?_⟩
+  obtain ⟨x, hx, hJ⟩ := hC b
+  refine ⟨T x, by rw [← hx, ← hT, ContinuousLinearMap.comp_apply], fun t ht => ?_⟩
+  calc ‖T x‖ ≤ M * ‖x‖ := QuasinormedAddCommGroup.le_opQuasiNorm T x
+    _ ≤ M * (max C 0 * t ^ (-θ) * JFunctional ι₀ ι₁ t b) := by
+        refine mul_le_mul_of_nonneg_left ((hJ t ht).trans ?_)
+          (QuasinormedAddCommGroup.opQuasiNorm_nonneg T)
+        exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right (le_max_left C 0)
+          (Real.rpow_nonneg ht.le _)) (jFunctional_nonneg ι₀ ι₁ t b)
+    _ = _ := by ring
+
+end Transport
+
 /-- B–L Theorem 3.2.2, formula (6), for the discrete J-method: the one-term representation
 `b = u_ν` gives `‖b‖_{θ,q;J} ≤ 2^{-νθ} J(2^ν, b)`. -/
 theorem jInterpolationENorm_meetToSum_le_zpow (θ : ℝ) (q : ℝ≥0∞) (b : meet ι₀ ι₁) (ν : ℤ) :

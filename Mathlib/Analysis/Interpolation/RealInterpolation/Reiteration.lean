@@ -815,7 +815,7 @@ theorem nonempty_iso_realInterpolationFunctor_reiteration (A : InterpolationCat.
 
 /-- The canonical real interpolation space `Ā_{θ,q}` is of class `𝒦(θ; Ā)` (transported from
 `RealInterpolationSpace.isOfClassK` along `realInterpolationFunctorEquivK`). -/
-private theorem isOfClassK_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (θ : ℝ)
+theorem isOfClassK_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (θ : ℝ)
     (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     InterpolationCouple.IsOfClassK A.ι₀ A.ι₁ θ
       ((InterpolationCouple.sumToAmbient A.ι₀ A.ι₁).comp
@@ -845,7 +845,7 @@ private theorem isOfClassK_realInterpolationFunctor (A : InterpolationCat.{v, u}
 
 /-- The canonical real interpolation space `Ā_{θ,q}` is of class `𝒥(θ; Ā)` (transported from
 `RealInterpolationSpace.isOfClassJ` along `realInterpolationFunctorEquivK`). -/
-private theorem isOfClassJ_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (θ : ℝ)
+theorem isOfClassJ_realInterpolationFunctor (A : InterpolationCat.{v, u} 𝕜) (θ : ℝ)
     (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     InterpolationCouple.IsOfClassJ A.ι₀ A.ι₁ θ
       ((InterpolationCouple.sumToAmbient A.ι₀ A.ι₁).comp

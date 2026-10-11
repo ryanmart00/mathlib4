@@ -43,11 +43,36 @@ variable {A₀ A₁ : Type*}
 variable (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜)
 variable (θ : ℝ) (q : ℝ≥0∞) [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
 
+/-- `x ≤ C y` in `ℝ≥0∞`, with `C ≠ ⊤` and `y ≠ ⊤`, transfers to `toReal`. -/
+private theorem toReal_le_toReal_mul {x y C : ℝ≥0∞} (hC : C ≠ ⊤) (hy : y ≠ ⊤) (h : x ≤ C * y) :
+    x.toReal ≤ C.toReal * y.toReal := by
+  rw [← ENNReal.toReal_mul]
+  exact ENNReal.toReal_mono (ENNReal.mul_ne_top hC hy) h
+
 /-- The J- and K-spaces are isomorphic quasi-normed spaces via the identity of `A₀ + A₁`
 (`jInterpolationSubmodule_eq_realInterpolationSubmodule` plus the two quasinorm comparisons). -/
 noncomputable def equivRealInterpolationSpace :
     JInterpolationSpace ι₀ ι₁ θ q ≃L[𝕜] RealInterpolationSpace ι₀ ι₁ θ q :=
-  sorry
+  have hθ0 : 0 < θ := Fact.out
+  have hθ1 : θ < 1 := Fact.out
+  have hq : 0 < q := Fact.out
+  let e : JInterpolationSpace ι₀ ι₁ θ q ≃ₗ[𝕜] RealInterpolationSpace ι₀ ι₁ θ q :=
+    LinearEquiv.ofEq _ _ (jInterpolationSubmodule_eq_realInterpolationSubmodule ι₀ ι₁ hθ0 hθ1 hq)
+  { e with
+    continuous_toFun := by
+      obtain ⟨C, hC, h⟩ :=
+        exists_realInterpolationENorm_le_mul_jInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq
+      refine QuasinormedAddCommGroup.continuous_of_bound e.toLinearMap.toAddMonoidHom C.toReal
+        fun x => ?_
+      rw [norm_def, RealInterpolationSpace.norm_def]
+      exact toReal_le_toReal_mul hC x.2.ne (h _)
+    continuous_invFun := by
+      obtain ⟨C, hC, h⟩ :=
+        exists_jInterpolationENorm_le_mul_realInterpolationENorm ι₀ ι₁ hθ0 hθ1 hq
+      refine QuasinormedAddCommGroup.continuous_of_bound e.symm.toLinearMap.toAddMonoidHom
+        C.toReal fun x => ?_
+      rw [norm_def, RealInterpolationSpace.norm_def]
+      exact toReal_le_toReal_mul hC x.2.ne (h _) }
 
 /-- `equivRealInterpolationSpace` is the identity on the underlying elements of `A₀ + A₁`. -/
 theorem toSum_comp_equivRealInterpolationSpace :

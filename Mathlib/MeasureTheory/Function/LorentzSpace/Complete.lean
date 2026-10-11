@@ -472,7 +472,7 @@ theorem distributionFunction_le_of_lorentzNorm_finite_lt_real (p q : ℝ≥0∞)
 /-- The geometric rate a controlled sequence's consecutive `lorentzNorm` differences need to decay
 at, for `ae_summable_norm_of_distributionFunction_le` to apply at the concrete threshold/measure
 scales `σ k = t k := (1/2)^(k+1)` used by `distributionFunction_le_of_lorentzBC` below. Chosen so
-that (mirroring `Basic.lean`'s `quasiTriangleConst`) the same rate works uniformly whether `q = ⊤`
+that (mirroring `Basic.lean`'s `quasiTriangleBound`) the same rate works uniformly whether `q = ⊤`
 or `0 < q < ⊤`, since — as `distributionFunction_le_of_lorentzBC`'s proof shows — the two
 Chebyshev bounds' required rates coincide exactly (only the required *constant* prefactor differs,
 absorbed into `lorentzBCConst`). -/
@@ -775,8 +775,8 @@ theorem LorentzSpace.exists_tendsto_of_cauchy [Fact (0 < q)]
   rw [QuasinormedAddCommGroup.tendsto_iff_norm_sub_tendsto_zero, Metric.tendsto_atTop]
     at h_g_tendsto ⊢
   intro ε hε
-  set C := LorentzSpace.quasiTriangleConst (p := p) (q := q) with hCdef
-  have hCpos : (0 : ℝ) < C := lt_of_lt_of_le zero_lt_one LorentzSpace.one_le_quasiTriangleConst
+  set C := LorentzSpace.quasiTriangleBound (p := p) (q := q) with hCdef
+  have hCpos : (0 : ℝ) < C := lt_of_lt_of_le zero_lt_one LorentzSpace.one_le_quasiTriangleBound
   have hεC : (0 : ℝ) < ε / (2 * C) := by positivity
   obtain ⟨K, hK0⟩ := h_g_tendsto (ε / (2 * C)) hεC
   have hK : ∀ n ≥ K, ‖g n - glimBundled‖ < ε / (2 * C) := by

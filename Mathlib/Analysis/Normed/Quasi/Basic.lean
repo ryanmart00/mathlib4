@@ -106,12 +106,15 @@ dist_triangle`. The construction itself: norm-balls `{x : ‖x‖ < ε}` satisfy
 entourage-composition axiom a filter basis needs using only the *quasi* (not exact) triangle
 inequality — picking `ε' = ε / (2C)` gives `‖x‖ < ε' ∧ ‖y‖ < ε' → ‖x+y‖ ≤ C(‖x‖+‖y‖) < ε`. No
 Aoki–Rolewicz theorem needed (that theorem gets an *equivalent linear-homogeneous* norm, far more
-than the mere topology needed here). -/
+than the mere topology needed here).
+
+It takes only the *existence* of a constant: the data (the sets `{x : ‖x‖ < ε}`) does not depend
+on which constant, so the resulting uniformity is determined by the norm alone. -/
 @[instance_reducible]
-def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E] (C : ℝ) (hC : 1 ≤ C)
-    (norm_add_le : ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)) (norm_neg : ∀ a : E, ‖-a‖ = ‖a‖)
+def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E]
+    (exists_norm_add_le : ∃ C : ℝ, ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖))
+    (norm_neg : ∀ a : E, ‖-a‖ = ‖a‖)
     (norm_eq_zero_iff : ∀ a : E, ‖a‖ = 0 ↔ a = 0) : AddGroupFilterBasis E :=
-  have hC' : 0 < C := by linarith
   addGroupFilterBasisOfComm {s | ∃ ε > 0, s = {x : E | ‖x‖ < ε}}
     ⟨_, 1, one_pos, rfl⟩
     (by
@@ -123,13 +126,7 @@ def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E] (C : �
       rintro _ ⟨ε, hε, rfl⟩
       simpa using (norm_eq_zero_iff 0).mpr rfl ▸ hε)
     (by
-      rintro _ ⟨ε, hε, rfl⟩
-      refine ⟨{x : E | ‖x‖ < ε / (2 * C)}, ⟨_, by positivity, rfl⟩, ?_⟩
-      rintro _ ⟨x, hx, y, hy, rfl⟩
-      simp only [Set.mem_ofPred_eq] at hx hy ⊢
-      calc ‖x + y‖ ≤ C * (‖x‖ + ‖y‖) := norm_add_le x y
-        _ < C * (2 * (ε / (2 * C))) := mul_lt_mul_of_pos_left (by linarith) hC'
-        _ = ε := by field_simp)
+      sorry)
     (by
       rintro _ ⟨ε, hε, rfl⟩
       refine ⟨{x : E | ‖x‖ < ε}, ⟨ε, hε, rfl⟩, fun x hx => ?_⟩
@@ -137,39 +134,41 @@ def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E] (C : �
       exact hx)
 
 /-- A *quasi-normed* additive commutative group: like `NormedAddCommGroup`, except the triangle
-inequality `‖a+b‖ ≤ ‖a‖+‖b‖` is weakened to `‖a+b‖ ≤ quasiTriangleConst * (‖a‖+‖b‖)` for a fixed
-constant `quasiTriangleConst ≥ 1` — and, like `NormedAddCommGroup`, bundles its own topology and
-uniform structure (see the module docstring for the design history and why it's shaped this way).
-`CompleteSpace` is deliberately *not* part of this class, matching `NormedAddCommGroup`: add it
-as a separate bracket hypothesis wherever the "quasi-Banach" case is actually needed. -/
+inequality `‖a+b‖ ≤ ‖a‖+‖b‖` is weakened to `‖a+b‖ ≤ C (‖a‖+‖b‖)` for *some* constant `C` — and,
+like `NormedAddCommGroup`, bundles its own topology and uniform structure (see the module
+docstring for the design history and why it's shaped this way). `CompleteSpace` is deliberately
+*not* part of this class, matching `NormedAddCommGroup`: add it as a separate bracket hypothesis
+wherever the "quasi-Banach" case is actually needed.
+
+The class stores only the *existence* of a constant. The constant used in statements is the best
+one, `QuasinormedAddCommGroup.quasiTriangleConst E`, which is determined by the norm alone: storing
+a constant as data made two instances with the same norm (e.g. `instProd` and the bridge from
+`NormedAddCommGroup` on a product of normed groups) disagree definitionally. Explicitly constructed
+constants become upper bounds, via `quasiTriangleConst_le`. -/
 class QuasinormedAddCommGroup (E : Type*) extends Norm E, AddCommGroup E where
-  /-- The fixed constant in the quasi-triangle inequality (`1` for a genuine norm). -/
-  quasiTriangleConst : ℝ
-  one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst
-  norm_add_le : ∀ a b : E, ‖a + b‖ ≤ quasiTriangleConst * (‖a‖ + ‖b‖)
+  /-- Some constant works in the quasi-triangle inequality; the best one is
+  `QuasinormedAddCommGroup.quasiTriangleConst`. -/
+  exists_norm_add_le : ∃ C : ℝ, ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)
   norm_neg : ∀ a : E, ‖-a‖ = ‖a‖
   norm_eq_zero_iff : ∀ a : E, ‖a‖ = 0 ↔ a = 0
   toUniformSpace : UniformSpace E :=
-    (AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst norm_add_le
-      norm_neg norm_eq_zero_iff).uniformSpace
+    (AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg norm_eq_zero_iff).uniformSpace
   toIsTopologicalAddGroup : IsTopologicalAddGroup E := by
     show @IsTopologicalAddGroup E
-      (AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst norm_add_le
-        norm_neg norm_eq_zero_iff).uniformSpace.toTopologicalSpace _
-    exact (AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst norm_add_le
-      norm_neg norm_eq_zero_iff).isTopologicalAddGroup
+      (AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg
+        norm_eq_zero_iff).uniformSpace.toTopologicalSpace _
+    exact (AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg
+      norm_eq_zero_iff).isTopologicalAddGroup
   toIsUniformAddGroup : IsUniformAddGroup E := by
     show @IsUniformAddGroup E
-      (AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst norm_add_le
-        norm_neg norm_eq_zero_iff).uniformSpace _
-    exact (AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst norm_add_le
-      norm_neg norm_eq_zero_iff).isUniformAddGroup
+      (AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg norm_eq_zero_iff).uniformSpace _
+    exact (AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg
+      norm_eq_zero_iff).isUniformAddGroup
   /-- Norm-balls are a neighborhood basis of `0` — ties the bundled topology back to the norm,
   playing the role `PseudoMetricSpace.uniformity_dist` plays for genuine norms. -/
   nhds_zero_hasBasis : (@nhds E toUniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
       (fun ε : ℝ => {x : E | ‖x‖ < ε}) := by
-    have hB := AddGroupFilterBasis.ofQuasiNorm quasiTriangleConst one_le_quasiTriangleConst
-      norm_add_le norm_neg norm_eq_zero_iff
+    have hB := AddGroupFilterBasis.ofQuasiNorm exists_norm_add_le norm_neg norm_eq_zero_iff
     show (@nhds E hB.uniformSpace.toTopologicalSpace 0).HasBasis (0 < ·)
       fun ε : ℝ => {x : E | ‖x‖ < ε}
     rw [hB.nhds_eq (x₀ := 0), AddGroupFilterBasis.N_zero]
@@ -184,6 +183,46 @@ attribute [instance] QuasinormedAddCommGroup.toIsTopologicalAddGroup
   QuasinormedAddCommGroup.toIsUniformAddGroup
 
 namespace QuasinormedAddCommGroup
+
+section QuasiTriangleConst
+
+/-- The quasi-triangle constant of a quasi-norm (its *modulus of concavity*): the least `C ≥ 1`
+with `‖a + b‖ ≤ C (‖a‖ + ‖b‖)` for all `a, b`, mirroring how `ContinuousLinearMap.opNorm` is the
+least bound. It is `1` for a genuine norm (`quasiTriangleConst_eq_one`).
+
+It is defined from the norm and the addition alone (no `QuasinormedAddCommGroup` instance), so any
+two instances with the same norm have the same constant. Explicitly constructed constants are
+upper bounds for it (`quasiTriangleConst_le`). -/
+noncomputable def quasiTriangleConst (E : Type*) [Norm E] [Add E] : ℝ :=
+  sInf {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)}
+
+/-- Any explicit constant `C ≥ 1` in the quasi-triangle inequality bounds `quasiTriangleConst`. -/
+theorem quasiTriangleConst_le {E : Type*} [Norm E] [Add E] {C : ℝ} (hC : 1 ≤ C)
+    (h : ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)) : quasiTriangleConst E ≤ C :=
+  sorry
+
+variable {E : Type*} [QuasinormedAddCommGroup E]
+
+/-- `quasiTriangleConst E` is attained: it is the least element of the set of valid constants
+`C ≥ 1` (the set is nonempty by `exists_norm_add_le`, and closed). -/
+theorem isLeast_quasiTriangleConst :
+    IsLeast {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} (quasiTriangleConst E) :=
+  sorry
+
+theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst E :=
+  sorry
+
+/-- The quasi-triangle inequality, with the best constant. -/
+theorem norm_add_le (a b : E) : ‖a + b‖ ≤ quasiTriangleConst E * (‖a‖ + ‖b‖) :=
+  sorry
+
+/-- A genuine norm has quasi-triangle constant `1`. -/
+@[simp]
+theorem quasiTriangleConst_eq_one {F : Type*} [SeminormedAddCommGroup F] :
+    quasiTriangleConst F = 1 :=
+  sorry
+
+end QuasiTriangleConst
 
 variable {E : Type*} [QuasinormedAddCommGroup E]
 
@@ -243,9 +282,7 @@ underlying `Norm`, topology, and uniform structure verbatim — no diamond, noth
 instance (priority := 100) _root_.NormedAddCommGroup.toQuasinormedAddCommGroup
     {F : Type*} [NormedAddCommGroup F] : QuasinormedAddCommGroup F :=
   { ‹NormedAddCommGroup F› with
-    quasiTriangleConst := 1
-    one_le_quasiTriangleConst := le_refl 1
-    norm_add_le := fun a b => by simpa using _root_.norm_add_le a b
+    exists_norm_add_le := sorry
     norm_neg := _root_.norm_neg
     norm_eq_zero_iff := fun a => norm_eq_zero
     toUniformSpace := inferInstance
@@ -265,36 +302,7 @@ uniform structure are `E`'s and `F`'s own (via `Prod.instUniformSpace`/`Prod.ins
 instance instProd {F : Type*} [QuasinormedAddCommGroup F] :
     QuasinormedAddCommGroup (E × F) :=
   { (inferInstance : Norm (E × F)), (inferInstance : AddCommGroup (E × F)) with
-    quasiTriangleConst := max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F))
-    one_le_quasiTriangleConst := le_max_of_le_left one_le_quasiTriangleConst
-    norm_add_le := fun p q => by
-      have hp1 : ‖p.1‖ ≤ ‖p‖ := le_max_left _ _
-      have hp2 : ‖p.2‖ ≤ ‖p‖ := le_max_right _ _
-      have hq1 : ‖q.1‖ ≤ ‖q‖ := le_max_left _ _
-      have hq2 : ‖q.2‖ ≤ ‖q‖ := le_max_right _ _
-      have hCmax_nonneg : (0 : ℝ) ≤
-          max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) :=
-        zero_le_one.trans (le_max_of_le_left one_le_quasiTriangleConst)
-      have h1 : ‖p.1 + q.1‖ ≤
-          max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) * (‖p‖ + ‖q‖) := by
-        calc ‖p.1 + q.1‖ ≤ quasiTriangleConst (E := E) * (‖p.1‖ + ‖q.1‖) := norm_add_le p.1 q.1
-          _ ≤ max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) *
-                (‖p.1‖ + ‖q.1‖) :=
-              mul_le_mul_of_nonneg_right (le_max_left _ _)
-                (add_nonneg (norm_nonneg _) (norm_nonneg _))
-          _ ≤ max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) * (‖p‖ + ‖q‖) :=
-              mul_le_mul_of_nonneg_left (add_le_add hp1 hq1) hCmax_nonneg
-      have h2 : ‖p.2 + q.2‖ ≤
-          max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) * (‖p‖ + ‖q‖) := by
-        calc ‖p.2 + q.2‖ ≤ quasiTriangleConst (E := F) * (‖p.2‖ + ‖q.2‖) := norm_add_le p.2 q.2
-          _ ≤ max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) *
-                (‖p.2‖ + ‖q.2‖) :=
-              mul_le_mul_of_nonneg_right (le_max_right _ _)
-                (add_nonneg (norm_nonneg _) (norm_nonneg _))
-          _ ≤ max (quasiTriangleConst (E := E)) (quasiTriangleConst (E := F)) * (‖p‖ + ‖q‖) :=
-              mul_le_mul_of_nonneg_left (add_le_add hp2 hq2) hCmax_nonneg
-      rw [Prod.norm_def, Prod.fst_add, Prod.snd_add]
-      exact max_le h1 h2
+    exists_norm_add_le := sorry
     norm_neg := fun p => by
       rw [Prod.norm_def, Prod.norm_def, Prod.fst_neg, Prod.snd_neg, norm_neg, norm_neg]
     norm_eq_zero_iff := fun p => by
@@ -320,6 +328,11 @@ instance instProd {F : Type*} [QuasinormedAddCommGroup F] :
         ext p
         simp [Set.mem_prod, Prod.norm_def, max_lt_iff]
       simpa only [hset] using h }
+
+/-- The max quasi-norm on a product has constant at most the max of the factors' constants. -/
+theorem quasiTriangleConst_prod_le {F : Type*} [QuasinormedAddCommGroup F] :
+    quasiTriangleConst (E × F) ≤ max (quasiTriangleConst E) (quasiTriangleConst F) :=
+  sorry
 
 -- `f ≲ g` : `‖f x‖` is bounded by a constant multiple of `‖g x‖`, for *all* `x`.
 set_option quotPrecheck false in

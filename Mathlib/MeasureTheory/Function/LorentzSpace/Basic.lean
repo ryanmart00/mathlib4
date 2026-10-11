@@ -153,21 +153,22 @@ theorem ext {f g : LorentzSpace E p q μ} (h : (f : α → E) =ᵐ[μ] (g : α �
 
 variable {p q}
 
-/-- The quasi-triangle constant, as a plain top-level definition (not just an instance field) so
-the four bundled topology fields of `instQuasinormedAddCommGroup` below can refer to it by name —
-see that instance's docstring for why they need to. -/
-noncomputable def quasiTriangleConst : ℝ := (2 : ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal)
+/-- An explicit constant in the quasi-triangle inequality of `L_{p,q}`, `2^{1 + 1/p + 1/q}`
+(`norm_add_le`). It is an upper bound for the best constant
+`QuasinormedAddCommGroup.quasiTriangleConst (LorentzSpace E p q μ)`, via
+`QuasinormedAddCommGroup.quasiTriangleConst_le`. -/
+noncomputable def quasiTriangleBound : ℝ := (2 : ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal)
 
-theorem one_le_quasiTriangleConst : (1 : ℝ) ≤ quasiTriangleConst (p := p) (q := q) := by
-  unfold quasiTriangleConst
+theorem one_le_quasiTriangleBound : (1 : ℝ) ≤ quasiTriangleBound (p := p) (q := q) := by
+  unfold quasiTriangleBound
   calc (1:ℝ) = (2:ℝ) ^ (0:ℝ) := (Real.rpow_zero 2).symm
     _ ≤ (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) := by
         apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
         positivity
 
 theorem norm_add_le (f g : LorentzSpace E p q μ) :
-    ‖f + g‖ ≤ quasiTriangleConst (p := p) (q := q) * (‖f‖ + ‖g‖) := by
-  unfold quasiTriangleConst
+    ‖f + g‖ ≤ quasiTriangleBound (p := p) (q := q) * (‖f‖ + ‖g‖) := by
+  unfold quasiTriangleBound
   change (lorentzNorm μ p q (⇑(f + g))).toReal ≤
     (2:ℝ) ^ (1 + p⁻¹.toReal + q⁻¹.toReal) * ((lorentzNorm μ p q f).toReal +
       (lorentzNorm μ p q g).toReal)
@@ -235,12 +236,9 @@ than `have`. -/
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     QuasinormedAddCommGroup (LorentzSpace E p q μ) := by
   let hB : AddGroupFilterBasis (LorentzSpace E p q μ) :=
-    AddGroupFilterBasis.ofQuasiNorm (quasiTriangleConst (p := p) (q := q))
-      one_le_quasiTriangleConst (norm_add_le μ) (norm_neg μ) (norm_eq_zero_iff μ)
+    AddGroupFilterBasis.ofQuasiNorm ⟨_, norm_add_le μ⟩ (norm_neg μ) (norm_eq_zero_iff μ)
   refine
-    { quasiTriangleConst := quasiTriangleConst (p := p) (q := q)
-      one_le_quasiTriangleConst := one_le_quasiTriangleConst
-      norm_add_le := norm_add_le μ
+    { exists_norm_add_le := ⟨_, norm_add_le μ⟩
       norm_neg := norm_neg μ
       norm_eq_zero_iff := norm_eq_zero_iff μ
       toUniformSpace := hB.uniformSpace

@@ -194,9 +194,7 @@ declaration, not inside a separately-defined instance sitting in the class's nam
 noncomputable def quotientQuasinormedAddCommGroup (hN : N.IsNormClosed) :
     QuasinormedAddCommGroup (E ⧸ N) where
   norm := quotientNorm N
-  quasiTriangleConst := quasiTriangleConst (E := E)
-  one_le_quasiTriangleConst := one_le_quasiTriangleConst (E := E)
-  norm_add_le := quotientNorm_add_le N
+  exists_norm_add_le := ⟨_, quotientNorm_add_le N⟩
   norm_neg := quotientNorm_neg N
   norm_eq_zero_iff := quotientNorm_eq_zero_iff N hN
   toUniformSpace := IsTopologicalAddGroup.rightUniformSpace (E ⧸ N)

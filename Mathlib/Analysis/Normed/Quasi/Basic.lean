@@ -215,8 +215,14 @@ variable {E : Type*} [QuasinormedAddCommGroup E]
 /-- `quasiTriangleConst E` is attained: it is the least element of the set of valid constants
 `C ≥ 1` (the set is nonempty by `exists_norm_add_le`, and closed). -/
 theorem isLeast_quasiTriangleConst :
-    IsLeast {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} (quasiTriangleConst E) :=
-  sorry
+    IsLeast {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} (quasiTriangleConst E) := by
+  have hbdd : BddBelow {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} :=
+    ⟨1, fun _ hx => hx.1⟩
+  have hclosed : IsClosed {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} := by
+    simp only [Set.setOf_and, Set.setOf_forall]
+    exact isClosed_Ici.inter (isClosed_iInter fun a => isClosed_iInter fun b =>
+      isClosed_le continuous_const (continuous_id.mul continuous_const))
+  exact ⟨hclosed.csInf_mem (exists_norm_add_le (E := E)) hbdd, fun _ hC => csInf_le hbdd hC⟩
 
 theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst E :=
   sorry

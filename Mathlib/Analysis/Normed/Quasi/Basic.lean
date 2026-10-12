@@ -312,6 +312,21 @@ instance (priority := 100) _root_.NormedAddCommGroup.toQuasinormedAddCommGroup
       ext x
       simp [Metric.mem_ball, dist_zero_right] }
 
+/-- The quasi-triangle inequality for the max norm on `E × F`, with the max of the factors'
+constants. -/
+private theorem prod_norm_add_le {F : Type*} [QuasinormedAddCommGroup F] (p q : E × F) :
+    ‖p + q‖ ≤ max (quasiTriangleConst E) (quasiTriangleConst F) * (‖p‖ + ‖q‖) := by
+  have hC : 0 ≤ max (quasiTriangleConst E) (quasiTriangleConst F) :=
+    zero_le_one.trans (le_max_of_le_left one_le_quasiTriangleConst)
+  show max ‖p.1 + q.1‖ ‖p.2 + q.2‖ ≤ _
+  refine max_le ?_ ?_
+  · exact (norm_add_le p.1 q.1).trans (mul_le_mul (le_max_left _ _)
+      (add_le_add (le_max_left _ _) (le_max_left _ _))
+      (add_nonneg (norm_nonneg _) (norm_nonneg _)) hC)
+  · exact (norm_add_le p.2 q.2).trans (mul_le_mul (le_max_right _ _)
+      (add_le_add (le_max_right _ _) (le_max_right _ _))
+      (add_nonneg (norm_nonneg _) (norm_nonneg _)) hC)
+
 /-- The product of two quasi-normed groups, via the (already-existing, from `Norm`-alone)
 `Prod` max norm; the triangle constant is the max of the two factors' constants. The topology and
 uniform structure are `E`'s and `F`'s own (via `Prod.instUniformSpace`/`Prod.instIsUniformGroup`),
@@ -319,7 +334,8 @@ uniform structure are `E`'s and `F`'s own (via `Prod.instUniformSpace`/`Prod.ins
 instance instProd {F : Type*} [QuasinormedAddCommGroup F] :
     QuasinormedAddCommGroup (E × F) :=
   { (inferInstance : Norm (E × F)), (inferInstance : AddCommGroup (E × F)) with
-    exists_norm_add_le := sorry
+    exists_norm_add_le :=
+      ⟨_, le_max_of_le_left one_le_quasiTriangleConst, prod_norm_add_le⟩
     norm_neg := fun p => by
       rw [Prod.norm_def, Prod.norm_def, Prod.fst_neg, Prod.snd_neg, norm_neg, norm_neg]
     norm_eq_zero_iff := fun p => by

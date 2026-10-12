@@ -236,9 +236,10 @@ than `have`. -/
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     QuasinormedAddCommGroup (LorentzSpace E p q μ) := by
   let hB : AddGroupFilterBasis (LorentzSpace E p q μ) :=
-    AddGroupFilterBasis.ofQuasiNorm ⟨_, norm_add_le μ⟩ (norm_neg μ) (norm_eq_zero_iff μ)
+    AddGroupFilterBasis.ofQuasiNorm ⟨_, one_le_quasiTriangleBound, norm_add_le μ⟩ (norm_neg μ)
+      (norm_eq_zero_iff μ)
   refine
-    { exists_norm_add_le := ⟨_, norm_add_le μ⟩
+    { exists_norm_add_le := ⟨_, one_le_quasiTriangleBound, norm_add_le μ⟩
       norm_neg := norm_neg μ
       norm_eq_zero_iff := norm_eq_zero_iff μ
       toUniformSpace := hB.uniformSpace

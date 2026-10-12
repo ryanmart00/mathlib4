@@ -712,10 +712,11 @@ theorem norm_eq_zero_iff [Fact (0 < q)] (a : RealInterpolationSpace ι₀ ι₁ 
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     QuasinormedAddCommGroup (RealInterpolationSpace ι₀ ι₁ θ q) := by
   let hB : AddGroupFilterBasis (RealInterpolationSpace ι₀ ι₁ θ q) :=
-    AddGroupFilterBasis.ofQuasiNorm ⟨_, norm_add_le ι₀ ι₁⟩ (norm_neg ι₀ ι₁)
+    AddGroupFilterBasis.ofQuasiNorm ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
+      (norm_neg ι₀ ι₁)
       (norm_eq_zero_iff ι₀ ι₁)
   exact
-    { exists_norm_add_le := ⟨_, norm_add_le ι₀ ι₁⟩
+    { exists_norm_add_le := ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
       norm_neg := norm_neg ι₀ ι₁
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace

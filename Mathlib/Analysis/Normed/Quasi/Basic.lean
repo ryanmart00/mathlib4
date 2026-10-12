@@ -112,7 +112,7 @@ It takes only the *existence* of a constant: the data (the sets `{x : ‖x‖ < 
 on which constant, so the resulting uniformity is determined by the norm alone. -/
 @[instance_reducible]
 def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E]
-    (exists_norm_add_le : ∃ C : ℝ, ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖))
+    (exists_norm_add_le : ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖))
     (norm_neg : ∀ a : E, ‖-a‖ = ‖a‖)
     (norm_eq_zero_iff : ∀ a : E, ‖a‖ = 0 ↔ a = 0) : AddGroupFilterBasis E :=
   addGroupFilterBasisOfComm {s | ∃ ε > 0, s = {x : E | ‖x‖ < ε}}
@@ -147,8 +147,9 @@ a constant as data made two instances with the same norm (e.g. `instProd` and th
 constants become upper bounds, via `quasiTriangleConst_le`. -/
 class QuasinormedAddCommGroup (E : Type*) extends Norm E, AddCommGroup E where
   /-- Some constant works in the quasi-triangle inequality; the best one is
-  `QuasinormedAddCommGroup.quasiTriangleConst`. -/
-  exists_norm_add_le : ∃ C : ℝ, ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)
+  `QuasinormedAddCommGroup.quasiTriangleConst`. Requiring `1 ≤ C` rules out negative "norms"
+  (e.g. `‖x‖ = -1` for `x ≠ 0` with `C = 0`), so that `norm_nonneg` holds. -/
+  exists_norm_add_le : ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)
   norm_neg : ∀ a : E, ‖-a‖ = ‖a‖
   norm_eq_zero_iff : ∀ a : E, ‖a‖ = 0 ↔ a = 0
   toUniformSpace : UniformSpace E :=

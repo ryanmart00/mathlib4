@@ -125,7 +125,8 @@ noncomputable instance InterpolationCouple.meet.quasinormedAddCommGroup
   fast_instance% show QuasinormedAddCommGroup (InterpolationCouple.diff ι₀ ι₁).ker from
   { norm := fun x => ‖(x : A₀ × A₁)‖
     exists_norm_add_le :=
-      ⟨_, fun x y => QuasinormedAddCommGroup.norm_add_le (x : A₀ × A₁) (y : A₀ × A₁)⟩
+      ⟨_, QuasinormedAddCommGroup.one_le_quasiTriangleConst,
+        fun x y => QuasinormedAddCommGroup.norm_add_le (x : A₀ × A₁) (y : A₀ × A₁)⟩
     norm_neg := fun x => by simp [QuasinormedAddCommGroup.norm_neg]
     norm_eq_zero_iff := fun x => by simp [QuasinormedAddCommGroup.norm_eq_zero_iff]
     toUniformSpace := inferInstance

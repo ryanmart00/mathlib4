@@ -323,6 +323,20 @@ theorem InterpolationCouple.realInterpolationENorm_meetToSum_lt_top
   · exact InterpolationCouple.meetToSum_lt_top_of_ne_top ι₀ ι₁ θ hθ0 hθ1 q hq hqtop a₀ a₁ ha
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The quasi-triangle inequality for `realInterpolationENorm`, with an explicit constant: the
+larger of the legs' constants (from `kFunctional_add_le`) times the `Lᵠ` constant
+`ENNReal.LpAddConst q` (Minkowski's inequality in `Lᵠ(dt/t)`; it is `1` for `q ≥ 1`). In
+particular the constant is `1` for normed legs and `q ≥ 1`. -/
+theorem InterpolationCouple.realInterpolationENorm_add_le (θ : ℝ) {q : ℝ≥0∞} (hq : 0 < q)
+    (a b : InterpolationCouple.sum ι₀ ι₁) :
+    InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+      ENNReal.ofReal (max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+          (QuasinormedAddCommGroup.quasiTriangleConst A₁)) * ENNReal.LpAddConst q *
+        (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
+          InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) :=
+  sorry
+
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The quasi-triangle inequality for `realInterpolationENorm`: a Minkowski-type inequality for
 the `(θ,q)`-quasinorm, with some constant `C` depending on `q` and the legs' own
 `quasiTriangleConst`s (in fact, not on `θ` at all — the pointwise `K`-subadditivity step is
@@ -533,18 +547,6 @@ theorem InterpolationCouple.exists_realInterpolationENorm_add_le (θ : ℝ) {q :
           exact ENNReal.rpow_add_le_mul_rpow_add_rpow' _ _ hqinv'.le
       _ = C * (Ia ^ q⁻¹.toReal + Ib ^ q⁻¹.toReal) := by
           rw [hCdef]; ring
-
-omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
-/-- The quasi-triangle inequality for `realInterpolationENorm`, with a positive `ℝ≥0∞` constant;
-see `exists_realInterpolationENorm_add_le` for the (stronger) real-constant form. -/
-theorem InterpolationCouple.realInterpolationENorm_add_le
-    (θ : ℝ) (_hθ0 : 0 < θ) (_hθ1 : θ < 1) (q : ℝ≥0∞) (hq : 0 < q) :
-    ∃ C : ℝ≥0∞, 0 < C ∧ ∀ a b : InterpolationCouple.sum ι₀ ι₁,
-      InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
-        C * (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
-          InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) := by
-  obtain ⟨C, hC, h⟩ := InterpolationCouple.exists_realInterpolationENorm_add_le ι₀ ι₁ θ hq
-  exact ⟨ENNReal.ofReal C, ENNReal.ofReal_pos.mpr (by linarith), h⟩
 
 /-- Rescale `x` by a power of `c` (any element of norm `> 1`) to land in the "shell"
 `[ε/‖c‖, ε)`. Pure real-number `rpow` algebra: the identity that lets `kFunctional_sumMap_le`'s

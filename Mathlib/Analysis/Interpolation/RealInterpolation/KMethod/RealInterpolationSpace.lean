@@ -663,33 +663,20 @@ theorem norm_def (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖a‖ = (realInterpolationENorm ι₀ ι₁ θ q a).toReal :=
   rfl
 
-variable (θ q) in
-/-- A constant in the quasi-triangle inequality of `(A₀, A₁)_{θ,q}`, extracted from
-`exists_realInterpolationENorm_add_le`. It is an upper bound for the best constant
-`QuasinormedAddCommGroup.quasiTriangleConst (RealInterpolationSpace ι₀ ι₁ θ q)`. -/
-noncomputable def quasiTriangleBound [Fact (0 < q)] : ℝ :=
-  Classical.choose (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))
+/-- Transfer a quasi-triangle inequality for `realInterpolationENorm` on `A₀ + A₁`, with a real
+constant `C ≥ 0`, to the norm of `(A₀, A₁)_{θ,q}`. -/
+theorem norm_add_le_of_enorm_add_le {C : ℝ} (hC : 0 ≤ C)
+    (h : ∀ a b : sum ι₀ ι₁, realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+      ENNReal.ofReal C * (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b))
+    (a b : RealInterpolationSpace ι₀ ι₁ θ q) : ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
+  sorry
 
-theorem one_le_quasiTriangleBound [Fact (0 < q)] : 1 ≤ quasiTriangleBound ι₀ ι₁ θ q :=
-  (Classical.choose_spec (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))).1
-
-theorem norm_add_le [Fact (0 < q)] (a b : RealInterpolationSpace ι₀ ι₁ θ q) :
-    ‖a + b‖ ≤ quasiTriangleBound ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by
-  have hC := (Classical.choose_spec
-    (exists_realInterpolationENorm_add_le ι₀ ι₁ θ (Fact.out : 0 < q))).2 a b
-  have ha : realInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
-  have hb : realInterpolationENorm ι₀ ι₁ θ q (b : sum ι₀ ι₁) < ⊤ := b.2
-  have h1 : 0 ≤ quasiTriangleBound ι₀ ι₁ θ q := zero_le_one.trans (one_le_quasiTriangleBound ι₀ ι₁)
-  rw [norm_def, norm_def, norm_def]
-  calc (realInterpolationENorm ι₀ ι₁ θ q ((a + b : RealInterpolationSpace ι₀ ι₁ θ q) :
-          sum ι₀ ι₁)).toReal
-      ≤ (ENNReal.ofReal (quasiTriangleBound ι₀ ι₁ θ q) *
-          (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b)).toReal :=
-        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
-          (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) hC
-    _ = quasiTriangleBound ι₀ ι₁ θ q * ((realInterpolationENorm ι₀ ι₁ θ q a).toReal +
-          (realInterpolationENorm ι₀ ι₁ θ q b).toReal) := by
-        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
+/-- Some constant `C ≥ 1` works in the quasi-triangle inequality of `(A₀, A₁)_{θ,q}`; this is all
+the `QuasinormedAddCommGroup` instance needs. For an explicit constant see
+`quasiTriangleConst_le`. -/
+theorem exists_norm_add_le [Fact (0 < q)] :
+    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : RealInterpolationSpace ι₀ ι₁ θ q, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
+  sorry
 
 theorem norm_neg (a : RealInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
   rw [norm_def, norm_def]
@@ -712,11 +699,10 @@ theorem norm_eq_zero_iff [Fact (0 < q)] (a : RealInterpolationSpace ι₀ ι₁ 
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
     QuasinormedAddCommGroup (RealInterpolationSpace ι₀ ι₁ θ q) := by
   let hB : AddGroupFilterBasis (RealInterpolationSpace ι₀ ι₁ θ q) :=
-    AddGroupFilterBasis.ofQuasiNorm ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
-      (norm_neg ι₀ ι₁)
+    AddGroupFilterBasis.ofQuasiNorm (exists_norm_add_le ι₀ ι₁) (norm_neg ι₀ ι₁)
       (norm_eq_zero_iff ι₀ ι₁)
   exact
-    { exists_norm_add_le := ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
+    { exists_norm_add_le := exists_norm_add_le ι₀ ι₁
       norm_neg := norm_neg ι₀ ι₁
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace
@@ -731,6 +717,23 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < q)] :
           exact ⟨ε, hε, subset_rfl⟩
         · rintro ε hε
           exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩ }
+
+/-- Explicit bound on the best quasi-triangle constant of `(A₀, A₁)_{θ,q}`: at most the larger of
+the legs' constants times the `Lᵠ` constant `ENNReal.LpAddConst q` (which is `1` for `q ≥ 1`),
+from `realInterpolationENorm_add_le`. -/
+theorem quasiTriangleConst_le [Fact (0 < q)] :
+    QuasinormedAddCommGroup.quasiTriangleConst (RealInterpolationSpace ι₀ ι₁ θ q) ≤
+      max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+        (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal :=
+  sorry
+
+/-- The real interpolation space of two spaces with quasi-triangle constant `1` (e.g. Banach
+spaces), for `q ≥ 1`, again has quasi-triangle constant `1`: its quasi-norm is a norm. -/
+theorem quasiTriangleConst_eq_one [Fact (0 < q)] (hq : 1 ≤ q)
+    (h₀ : QuasinormedAddCommGroup.quasiTriangleConst A₀ = 1)
+    (h₁ : QuasinormedAddCommGroup.quasiTriangleConst A₁ = 1) :
+    QuasinormedAddCommGroup.quasiTriangleConst (RealInterpolationSpace ι₀ ι₁ θ q) = 1 :=
+  sorry
 
 theorem norm_smul [Fact (0 < q)] (c : 𝕜) (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖c • a‖ = ‖c‖ * ‖a‖ := by

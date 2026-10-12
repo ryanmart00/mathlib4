@@ -87,32 +87,20 @@ theorem norm_def (a : JInterpolationSpace ι₀ ι₁ θ q) :
     ‖a‖ = (jInterpolationENorm ι₀ ι₁ θ q a).toReal :=
   rfl
 
-variable (θ q) in
-/-- A constant in the quasi-triangle inequality of `(A₀, A₁)_{θ,q;J}`, extracted from
-`exists_jInterpolationENorm_add_le`. It is an upper bound for the best constant
-`QuasinormedAddCommGroup.quasiTriangleConst (JInterpolationSpace ι₀ ι₁ θ q)`. -/
-noncomputable def quasiTriangleBound : ℝ :=
-  Classical.choose (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)
+/-- Transfer a quasi-triangle inequality for `jInterpolationENorm` on `A₀ + A₁`, with a real
+constant `C ≥ 0`, to the norm of `(A₀, A₁)_{θ,q;J}`. -/
+theorem norm_add_le_of_enorm_add_le {C : ℝ} (hC : 0 ≤ C)
+    (h : ∀ a b : sum ι₀ ι₁, jInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+      ENNReal.ofReal C * (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b))
+    (a b : JInterpolationSpace ι₀ ι₁ θ q) : ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
+  sorry
 
-theorem one_le_quasiTriangleBound : 1 ≤ quasiTriangleBound ι₀ ι₁ θ q :=
-  (Classical.choose_spec (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)).1
-
-theorem norm_add_le (a b : JInterpolationSpace ι₀ ι₁ θ q) :
-    ‖a + b‖ ≤ quasiTriangleBound ι₀ ι₁ θ q * (‖a‖ + ‖b‖) := by
-  have hC := (Classical.choose_spec (exists_jInterpolationENorm_add_le ι₀ ι₁ θ q)).2 a b
-  have ha : jInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
-  have hb : jInterpolationENorm ι₀ ι₁ θ q (b : sum ι₀ ι₁) < ⊤ := b.2
-  have h1 : 0 ≤ quasiTriangleBound ι₀ ι₁ θ q := zero_le_one.trans (one_le_quasiTriangleBound ι₀ ι₁)
-  rw [norm_def, norm_def, norm_def]
-  calc (jInterpolationENorm ι₀ ι₁ θ q ((a + b : JInterpolationSpace ι₀ ι₁ θ q) :
-          sum ι₀ ι₁)).toReal
-      ≤ (ENNReal.ofReal (quasiTriangleBound ι₀ ι₁ θ q) *
-          (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b)).toReal :=
-        ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
-          (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) hC
-    _ = quasiTriangleBound ι₀ ι₁ θ q * ((jInterpolationENorm ι₀ ι₁ θ q a).toReal +
-          (jInterpolationENorm ι₀ ι₁ θ q b).toReal) := by
-        rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal h1, ENNReal.toReal_add ha.ne hb.ne]
+/-- Some constant `C ≥ 1` works in the quasi-triangle inequality of `(A₀, A₁)_{θ,q;J}`; this is
+all the `QuasinormedAddCommGroup` instance needs. For an explicit constant see
+`quasiTriangleConst_le`. -/
+theorem exists_norm_add_le :
+    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : JInterpolationSpace ι₀ ι₁ θ q, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
+  sorry
 
 theorem norm_neg (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
   rw [norm_def, norm_def]
@@ -132,11 +120,10 @@ K-method, definiteness of the J-quasinorm uses the sandwich bound, hence the con
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     QuasinormedAddCommGroup (JInterpolationSpace ι₀ ι₁ θ q) := by
   let hB : AddGroupFilterBasis (JInterpolationSpace ι₀ ι₁ θ q) :=
-    AddGroupFilterBasis.ofQuasiNorm ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
-      (norm_neg ι₀ ι₁)
+    AddGroupFilterBasis.ofQuasiNorm (exists_norm_add_le ι₀ ι₁) (norm_neg ι₀ ι₁)
       (norm_eq_zero_iff ι₀ ι₁)
   exact
-    { exists_norm_add_le := ⟨_, one_le_quasiTriangleBound ι₀ ι₁, norm_add_le ι₀ ι₁⟩
+    { exists_norm_add_le := exists_norm_add_le ι₀ ι₁
       norm_neg := norm_neg ι₀ ι₁
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace
@@ -151,6 +138,15 @@ noncomputable instance instQuasinormedAddCommGroup [Fact (0 < θ)] [Fact (θ < 1
           exact ⟨ε, hε, subset_rfl⟩
         · rintro ε hε
           exact FilterBasis.mem_filter_of_mem _ ⟨ε, hε, rfl⟩ }
+
+/-- Explicit bound on the best quasi-triangle constant of `(A₀, A₁)_{θ,q;J}`: at most the larger
+of the legs' constants times the `ℓ^q` constant `ENNReal.LpAddConst q` (which is `1` for `q ≥ 1`),
+from `jInterpolationENorm_add_le`. -/
+theorem quasiTriangleConst_le [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
+    QuasinormedAddCommGroup.quasiTriangleConst (JInterpolationSpace ι₀ ι₁ θ q) ≤
+      max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+        (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal :=
+  sorry
 
 theorem norm_smul (c : 𝕜)
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖c • a‖ = ‖c‖ * ‖a‖ := by

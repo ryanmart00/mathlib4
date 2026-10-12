@@ -117,6 +117,16 @@ theorem jInterpolationENorm_smul (θ : ℝ) (q : ℝ≥0∞) (c : 𝕜) (a : sum
   refine le_antisymm (key c a) (ENNReal.mul_le_of_le_div' ?_)
   simpa [enorm_inv, hc, ENNReal.div_eq_inv_mul] using key c⁻¹ (c • a)
 
+/-- Quasi-triangle inequality for the J-quasinorm, with an explicit constant: the larger of the
+legs' constants (from `jFunctional_add_le`) times the `ℓ^q` constant `ENNReal.LpAddConst q` (it is
+`1` for `q ≥ 1`). Add the two representations termwise. -/
+theorem jInterpolationENorm_add_le (θ : ℝ) (q : ℝ≥0∞) (a b : sum ι₀ ι₁) :
+    jInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+      ENNReal.ofReal (max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+          (QuasinormedAddCommGroup.quasiTriangleConst A₁)) * ENNReal.LpAddConst q *
+        (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b) :=
+  sorry
+
 /-- Quasi-triangle inequality for the J-quasinorm, with a real constant `C ≥ 1` (add the two
 representations termwise; combine `jFunctional_add_le` with the `ℓ^q` quasi-triangle inequality). -/
 theorem exists_jInterpolationENorm_add_le (θ : ℝ) (q : ℝ≥0∞) :

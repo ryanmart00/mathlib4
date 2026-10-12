@@ -225,7 +225,7 @@ theorem isLeast_quasiTriangleConst :
   exact ⟨hclosed.csInf_mem (exists_norm_add_le (E := E)) hbdd, fun _ hC => csInf_le hbdd hC⟩
 
 theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst E :=
-  sorry
+  isLeast_quasiTriangleConst.1.1
 
 /-- The quasi-triangle inequality, with the best constant. -/
 theorem norm_add_le (a b : E) : ‖a + b‖ ≤ quasiTriangleConst E * (‖a‖ + ‖b‖) :=

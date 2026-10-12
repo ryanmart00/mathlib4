@@ -198,6 +198,18 @@ noncomputable instance InterpolationCouple.sum.completeSpace
   QuasinormedAddCommGroup.quotientNorm_completeSpace
     (E := A₀ × A₁) (N := (InterpolationCouple.plus ι₀ ι₁).ker.toAddSubgroup)
 
+omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
+/-- The quasi-triangle constant of `A₀ + A₁` is at most the larger of the legs' constants: the
+sum is a quotient of `A₀ × A₁` (`quasiTriangleConst_quotient_le`), whose max norm has constant at
+most the max (`quasiTriangleConst_prod_le`). -/
+theorem InterpolationCouple.quasiTriangleConst_sum_le (ι₀ : A₀ →L[𝕜] 𝒜) (ι₁ : A₁ →L[𝕜] 𝒜) :
+    QuasinormedAddCommGroup.quasiTriangleConst (InterpolationCouple.sum ι₀ ι₁) ≤
+      max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+        (QuasinormedAddCommGroup.quasiTriangleConst A₁) :=
+  (QuasinormedAddCommGroup.quasiTriangleConst_quotient_le
+    (InterpolationCouple.plus ι₀ ι₁).ker.toAddSubgroup).trans
+    QuasinormedAddCommGroup.quasiTriangleConst_prod_le
+
 /-- `A₀+A₁` is a `QuasiNormedSpace`: the norm-scalar bound for the quotient norm, proved the same
 way `quotientNorm_add_le` proves its own triangle inequality — for any `ε > 0`, pick a
 representative `y` of `a` with `‖y‖` within `ε` of the infimum, then bound

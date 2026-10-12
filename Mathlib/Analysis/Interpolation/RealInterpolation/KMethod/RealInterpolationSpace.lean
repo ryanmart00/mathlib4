@@ -756,7 +756,9 @@ theorem quasiTriangleConst_le [Fact (0 < q)] :
     QuasinormedAddCommGroup.quasiTriangleConst (RealInterpolationSpace ι₀ ι₁ θ q) ≤
       max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
         (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal :=
-  sorry
+  QuasinormedAddCommGroup.quasiTriangleConst_le one_le_max_mul_LpAddConst
+    (norm_add_le_of_enorm_add_le ι₀ ι₁ (zero_le_one.trans one_le_max_mul_LpAddConst)
+      (realInterpolationENorm_add_le_ofReal ι₀ ι₁ Fact.out))
 
 /-- The real interpolation space of two spaces with quasi-triangle constant `1` (e.g. Banach
 spaces), for `q ≥ 1`, again has quasi-triangle constant `1`: its quasi-norm is a norm. -/

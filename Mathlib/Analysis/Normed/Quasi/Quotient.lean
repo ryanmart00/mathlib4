@@ -133,6 +133,15 @@ theorem quotientNorm_add_le (a b : E ⧸ N) :
     _ = quasiTriangleConst (E := E) * (quotientNorm N a + quotientNorm N b) + ε := by
         field_simp
 
+/-- The quotient quasi-norm has quasi-triangle constant at most that of `E`. Stated with only the
+quotient *norm* (all `quasiTriangleConst` depends on), so no closedness of `N` is needed; it
+applies to `quotientQuasinormedAddCommGroup N hN`, whose norm is this one. -/
+theorem quasiTriangleConst_quotient_le :
+    letI : Norm (E ⧸ N) := ⟨quotientNorm N⟩
+    quasiTriangleConst (E ⧸ N) ≤ quasiTriangleConst E :=
+  letI : Norm (E ⧸ N) := ⟨quotientNorm N⟩
+  quasiTriangleConst_le one_le_quasiTriangleConst (quotientNorm_add_le N)
+
 theorem quotientNorm_neg (a : E ⧸ N) : quotientNorm N (-a) = quotientNorm N a := by
   unfold quotientNorm
   congr 1

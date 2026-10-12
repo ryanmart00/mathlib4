@@ -229,7 +229,7 @@ theorem one_le_quasiTriangleConst : 1 ≤ quasiTriangleConst E :=
 
 /-- The quasi-triangle inequality, with the best constant. -/
 theorem norm_add_le (a b : E) : ‖a + b‖ ≤ quasiTriangleConst E * (‖a‖ + ‖b‖) :=
-  sorry
+  isLeast_quasiTriangleConst.1.2 a b
 
 /-- A genuine norm has quasi-triangle constant `1`. -/
 @[simp]

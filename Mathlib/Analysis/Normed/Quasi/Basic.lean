@@ -131,7 +131,7 @@ def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E]
       rintro _ ⟨ε, hε, rfl⟩
       refine ⟨{x : E | ‖x‖ < ε / (2 * C)}, ⟨ε / (2 * C), by positivity, rfl⟩, ?_⟩
       rintro _ ⟨x, hx, y, hy, rfl⟩
-      simp only [Set.mem_setOf_eq] at hx hy ⊢
+      simp only [Set.mem_ofPred_eq] at hx hy ⊢
       calc ‖x + y‖ ≤ C * (‖x‖ + ‖y‖) := h x y
         _ < C * (ε / (2 * C) + ε / (2 * C)) := by gcongr
         _ = ε := by field_simp; ring)
@@ -219,7 +219,7 @@ theorem isLeast_quasiTriangleConst :
   have hbdd : BddBelow {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} :=
     ⟨1, fun _ hx => hx.1⟩
   have hclosed : IsClosed {C : ℝ | 1 ≤ C ∧ ∀ a b : E, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖)} := by
-    simp only [Set.setOf_and, Set.setOf_forall]
+    simp only [Set.ofPred_and, Set.ofPred_forall]
     exact isClosed_Ici.inter (isClosed_iInter fun a => isClosed_iInter fun b =>
       isClosed_le continuous_const (continuous_id.mul continuous_const))
   exact ⟨hclosed.csInf_mem (exists_norm_add_le (E := E)) hbdd, fun _ hC => csInf_le hbdd hC⟩
@@ -318,7 +318,7 @@ private theorem prod_norm_add_le {F : Type*} [QuasinormedAddCommGroup F] (p q : 
     ‖p + q‖ ≤ max (quasiTriangleConst E) (quasiTriangleConst F) * (‖p‖ + ‖q‖) := by
   have hC : 0 ≤ max (quasiTriangleConst E) (quasiTriangleConst F) :=
     zero_le_one.trans (le_max_of_le_left one_le_quasiTriangleConst)
-  show max ‖p.1 + q.1‖ ‖p.2 + q.2‖ ≤ _
+  change max ‖p.1 + q.1‖ ‖p.2 + q.2‖ ≤ _
   refine max_le ?_ ?_
   · exact (norm_add_le p.1 q.1).trans (mul_le_mul (le_max_left _ _)
       (add_le_add (le_max_left _ _) (le_max_left _ _))

@@ -328,7 +328,8 @@ private theorem prod_norm_add_le {F : Type*} [QuasinormedAddCommGroup F] (p q : 
       (add_nonneg (norm_nonneg _) (norm_nonneg _)) hC)
 
 /-- The product of two quasi-normed groups, via the (already-existing, from `Norm`-alone)
-`Prod` max norm; the triangle constant is the max of the two factors' constants. The topology and
+`Prod` max norm; its constant is at most the max of the factors' (`quasiTriangleConst_prod_le`),
+and is exactly `1` for normed factors (`quasiTriangleConst_eq_one`). The topology and
 uniform structure are `E`'s and `F`'s own (via `Prod.instUniformSpace`/`Prod.instIsUniformGroup`),
 *not* a fresh one recomputed from the max-quasi-norm — see the module docstring's diamond note. -/
 instance instProd {F : Type*} [QuasinormedAddCommGroup F] :

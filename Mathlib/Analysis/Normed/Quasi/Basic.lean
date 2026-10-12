@@ -365,7 +365,7 @@ instance instProd {F : Type*} [QuasinormedAddCommGroup F] :
 /-- The max quasi-norm on a product has constant at most the max of the factors' constants. -/
 theorem quasiTriangleConst_prod_le {F : Type*} [QuasinormedAddCommGroup F] :
     quasiTriangleConst (E × F) ≤ max (quasiTriangleConst E) (quasiTriangleConst F) :=
-  sorry
+  quasiTriangleConst_le (le_max_of_le_left one_le_quasiTriangleConst) prod_norm_add_le
 
 -- `f ≲ g` : `‖f x‖` is bounded by a constant multiple of `‖g x‖`, for *all* `x`.
 set_option quotPrecheck false in

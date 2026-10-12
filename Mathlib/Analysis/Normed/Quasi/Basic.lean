@@ -126,7 +126,15 @@ def AddGroupFilterBasis.ofQuasiNorm {E : Type*} [Norm E] [AddCommGroup E]
       rintro _ ⟨ε, hε, rfl⟩
       simpa using (norm_eq_zero_iff 0).mpr rfl ▸ hε)
     (by
-      sorry)
+      obtain ⟨C, hC, h⟩ := exists_norm_add_le
+      have hC0 : 0 < C := by linarith
+      rintro _ ⟨ε, hε, rfl⟩
+      refine ⟨{x : E | ‖x‖ < ε / (2 * C)}, ⟨ε / (2 * C), by positivity, rfl⟩, ?_⟩
+      rintro _ ⟨x, hx, y, hy, rfl⟩
+      simp only [Set.mem_setOf_eq] at hx hy ⊢
+      calc ‖x + y‖ ≤ C * (‖x‖ + ‖y‖) := h x y
+        _ < C * (ε / (2 * C) + ε / (2 * C)) := by gcongr
+        _ = ε := by field_simp; ring)
     (by
       rintro _ ⟨ε, hε, rfl⟩
       refine ⟨{x : E | ‖x‖ < ε}, ⟨ε, hε, rfl⟩, fun x hx => ?_⟩

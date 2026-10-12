@@ -148,6 +148,14 @@ theorem quasiTriangleConst_le [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
         (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal :=
   sorry
 
+/-- The J-interpolation space of two spaces with quasi-triangle constant `1` (e.g. Banach spaces),
+for `q ≥ 1`, again has quasi-triangle constant `1`: its quasi-norm is a norm. -/
+theorem quasiTriangleConst_eq_one [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] (hq : 1 ≤ q)
+    (h₀ : QuasinormedAddCommGroup.quasiTriangleConst A₀ = 1)
+    (h₁ : QuasinormedAddCommGroup.quasiTriangleConst A₁ = 1) :
+    QuasinormedAddCommGroup.quasiTriangleConst (JInterpolationSpace ι₀ ι₁ θ q) = 1 :=
+  sorry
+
 theorem norm_smul (c : 𝕜)
     (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖c • a‖ = ‖c‖ * ‖a‖ := by
   rw [norm_def, norm_def]

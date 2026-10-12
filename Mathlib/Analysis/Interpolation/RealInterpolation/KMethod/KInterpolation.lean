@@ -333,8 +333,88 @@ theorem InterpolationCouple.realInterpolationENorm_add_le (θ : ℝ) {q : ℝ≥
       ENNReal.ofReal (max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
           (QuasinormedAddCommGroup.quasiTriangleConst A₁)) * ENNReal.LpAddConst q *
         (InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q a +
-          InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) :=
-  sorry
+          InterpolationCouple.realInterpolationENorm ι₀ ι₁ θ q b) := by
+  -- B–L, Thm 3.1.2: `K(t, ·)` is a quasi-norm on `A₀ + A₁` (constant `Ck`) and `Φ_{θ,q}` is a
+  -- monotone quasi-norm (constant `LpAddConst q`); compose the two.
+  set Ck := max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+    (QuasinormedAddCommGroup.quasiTriangleConst A₁)
+  have hCk : 0 ≤ Ck :=
+    zero_le_one.trans (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+  -- Step 1: `t^{-θ} K(t, a + b) ≤ Ck (t^{-θ} K(t, a) + t^{-θ} K(t, b))`.
+  have hpt (t : ℝ) (ht : 0 < t) :
+      ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t (a + b)) ≤
+        ENNReal.ofReal Ck *
+          (ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t a) +
+            ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ t b)) := by
+    have hw : 0 ≤ t ^ (-θ) := Real.rpow_nonneg ht.le _
+    rw [← ENNReal.ofReal_add
+      (mul_nonneg hw (InterpolationCouple.kFunctional_nonneg ι₀ ι₁ t ht.le a))
+      (mul_nonneg hw (InterpolationCouple.kFunctional_nonneg ι₀ ι₁ t ht.le b)),
+      ← ENNReal.ofReal_mul hCk]
+    refine ENNReal.ofReal_le_ofReal ?_
+    calc _ ≤ t ^ (-θ) * (Ck * (InterpolationCouple.KFunctional ι₀ ι₁ t a +
+          InterpolationCouple.KFunctional ι₀ ι₁ t b)) :=
+          mul_le_mul_of_nonneg_left (InterpolationCouple.kFunctional_add_le ι₀ ι₁ t ht.le a b) hw
+      _ = _ := by ring
+  unfold InterpolationCouple.realInterpolationENorm
+  split_ifs with hqtop
+  · -- Step 2, `q = ∞`: the supremum of a sum is at most the sum of the suprema.
+    subst hqtop
+    rw [ENNReal.LpAddConst_of_one_le le_top, mul_one]
+    refine iSup_le fun t => (hpt t t.2).trans ?_
+    gcongr
+    · exact le_iSup (fun s : Ioi (0 : ℝ) => ENNReal.ofReal ((s : ℝ) ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ s a)) t
+    · exact le_iSup (fun s : Ioi (0 : ℝ) => ENNReal.ofReal ((s : ℝ) ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ s b)) t
+  -- Step 2, `q < ∞`: Minkowski's inequality in `Lᵠ(μ)`, `μ = dt/t` on `(0, ∞)`, applied to the
+  -- globally measurable stand-ins `F x t = t^{-θ} K(max t 0, x)`.
+  have hp : 0 < q.toReal := ENNReal.toReal_pos hq.ne' hqtop
+  rw [ENNReal.toReal_inv]
+  set p := q.toReal
+  set μ : Measure ℝ := (volume.restrict (Ioi 0)).withDensity fun t => ENNReal.ofReal t⁻¹ with hμ
+  set F : InterpolationCouple.sum ι₀ ι₁ → ℝ → ℝ≥0∞ := fun x t =>
+    ENNReal.ofReal (t ^ (-θ) * InterpolationCouple.KFunctional ι₀ ι₁ (max t 0) x)
+  have hF (x : InterpolationCouple.sum ι₀ ι₁) : Measurable (F x) :=
+    ENNReal.measurable_ofReal.comp
+      ((measurable_id.pow_const _).mul (InterpolationCouple.kFunctional_max_measurable ι₀ ι₁ x))
+  have hI (x : InterpolationCouple.sum ι₀ ι₁) :
+      ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ (-θ) *
+        InterpolationCouple.KFunctional ι₀ ι₁ t x) ^ p * ENNReal.ofReal t⁻¹ =
+        ∫⁻ t, F x t ^ p ∂μ := by
+    rw [hμ, lintegral_withDensity_eq_lintegral_mul _ (f := fun t : ℝ => ENNReal.ofReal t⁻¹)
+      (ENNReal.measurable_ofReal.comp measurable_inv) ((hF x).pow_const p)]
+    refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
+    simp only [F, Pi.mul_apply, InterpolationCouple.kFunctional_max_eq ι₀ ι₁ x ht, mul_comm]
+  rw [hI, hI, hI]
+  have hle : ∫⁻ t, F (a + b) t ^ p ∂μ ≤
+      ENNReal.ofReal Ck ^ p * ∫⁻ t, (F a t + F b t) ^ p ∂μ := by
+    rw [← lintegral_const_mul' _ _ (ENNReal.rpow_ne_top_of_nonneg hp.le ENNReal.ofReal_ne_top)]
+    refine lintegral_mono_ae ?_
+    filter_upwards [(withDensity_absolutelyContinuous _ _).ae_le
+      (ae_restrict_mem measurableSet_Ioi)] with t ht
+    rw [← ENNReal.mul_rpow_of_nonneg _ _ hp.le]
+    refine ENNReal.rpow_le_rpow ?_ hp.le
+    simpa only [F, InterpolationCouple.kFunctional_max_eq ι₀ ι₁ _ ht] using hpt t ht
+  have hmink : (∫⁻ t, (F a t + F b t) ^ p ∂μ) ^ p⁻¹ ≤ ENNReal.LpAddConst q *
+      ((∫⁻ t, F a t ^ p ∂μ) ^ p⁻¹ + (∫⁻ t, F b t ^ p ∂μ) ^ p⁻¹) := by
+    rw [← one_div]
+    rcases le_or_gt 1 p with hp1 | hp1
+    · rw [ENNReal.LpAddConst_of_one_le
+        (by simpa using (ENNReal.ofReal_le_iff_le_toReal hqtop).mpr hp1), one_mul]
+      exact ENNReal.lintegral_Lp_add_le (hF a).aemeasurable (hF b).aemeasurable hp1
+    · have hq1 : q < 1 := (ENNReal.toReal_lt_toReal hqtop ENNReal.one_ne_top).mp
+        (by rwa [ENNReal.toReal_one])
+      rw [ENNReal.LpAddConst, ite_eq_left ⟨hq, hq1⟩]
+      exact ENNReal.lintegral_Lp_add_le_of_le_one (hF a).aemeasurable hp.le hp1.le
+  calc (∫⁻ t, F (a + b) t ^ p ∂μ) ^ p⁻¹
+      ≤ (ENNReal.ofReal Ck ^ p * ∫⁻ t, (F a t + F b t) ^ p ∂μ) ^ p⁻¹ :=
+        ENNReal.rpow_le_rpow hle (inv_nonneg.mpr hp.le)
+    _ = ENNReal.ofReal Ck * (∫⁻ t, (F a t + F b t) ^ p ∂μ) ^ p⁻¹ := by
+        rw [ENNReal.mul_rpow_of_nonneg _ _ (inv_nonneg.mpr hp.le), ENNReal.rpow_rpow_inv hp.ne']
+    _ ≤ _ := by
+        rw [mul_assoc]
+        gcongr
 
 omit [ContinuousSMul 𝕜 𝒜] [CompleteSpace A₀] [CompleteSpace A₁] in
 /-- The quasi-triangle inequality for `realInterpolationENorm`: a Minkowski-type inequality for

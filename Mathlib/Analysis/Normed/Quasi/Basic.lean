@@ -299,7 +299,7 @@ underlying `Norm`, topology, and uniform structure verbatim — no diamond, noth
 instance (priority := 100) _root_.NormedAddCommGroup.toQuasinormedAddCommGroup
     {F : Type*} [NormedAddCommGroup F] : QuasinormedAddCommGroup F :=
   { ‹NormedAddCommGroup F› with
-    exists_norm_add_le := sorry
+    exists_norm_add_le := ⟨1, le_rfl, fun a b => by simpa using _root_.norm_add_le a b⟩
     norm_neg := _root_.norm_neg
     norm_eq_zero_iff := fun a => norm_eq_zero
     toUniformSpace := inferInstance

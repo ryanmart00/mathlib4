@@ -234,8 +234,10 @@ theorem norm_add_le (a b : E) : ‖a + b‖ ≤ quasiTriangleConst E * (‖a‖ 
 /-- A genuine norm has quasi-triangle constant `1`. -/
 @[simp]
 theorem quasiTriangleConst_eq_one {F : Type*} [SeminormedAddCommGroup F] :
-    quasiTriangleConst F = 1 :=
-  sorry
+    quasiTriangleConst F = 1 := by
+  have h : ∀ a b : F, ‖a + b‖ ≤ 1 * (‖a‖ + ‖b‖) := fun a b => by
+    simpa using _root_.norm_add_le a b
+  exact le_antisymm (quasiTriangleConst_le le_rfl h) (le_csInf ⟨1, le_rfl, h⟩ fun _ hC => hC.1)
 
 end QuasiTriangleConst
 

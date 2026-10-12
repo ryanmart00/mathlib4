@@ -766,7 +766,10 @@ theorem quasiTriangleConst_eq_one [Fact (0 < q)] (hq : 1 ≤ q)
     (h₀ : QuasinormedAddCommGroup.quasiTriangleConst A₀ = 1)
     (h₁ : QuasinormedAddCommGroup.quasiTriangleConst A₁ = 1) :
     QuasinormedAddCommGroup.quasiTriangleConst (RealInterpolationSpace ι₀ ι₁ θ q) = 1 :=
-  sorry
+  le_antisymm ((quasiTriangleConst_le ι₀ ι₁).trans_eq (by
+      rw [h₀, h₁, ENNReal.LpAddConst_of_one_le hq]
+      simp))
+    QuasinormedAddCommGroup.one_le_quasiTriangleConst
 
 theorem norm_smul [Fact (0 < q)] (c : 𝕜) (a : RealInterpolationSpace ι₀ ι₁ θ q) :
     ‖c • a‖ = ‖c‖ * ‖a‖ := by

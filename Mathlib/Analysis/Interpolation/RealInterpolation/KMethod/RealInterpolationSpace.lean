@@ -668,8 +668,13 @@ constant `C ≥ 0`, to the norm of `(A₀, A₁)_{θ,q}`. -/
 theorem norm_add_le_of_enorm_add_le {C : ℝ} (hC : 0 ≤ C)
     (h : ∀ a b : sum ι₀ ι₁, realInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
       ENNReal.ofReal C * (realInterpolationENorm ι₀ ι₁ θ q a + realInterpolationENorm ι₀ ι₁ θ q b))
-    (a b : RealInterpolationSpace ι₀ ι₁ θ q) : ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
-  sorry
+    (a b : RealInterpolationSpace ι₀ ι₁ θ q) : ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) := by
+  have ha : realInterpolationENorm ι₀ ι₁ θ q (a : sum ι₀ ι₁) < ⊤ := a.2
+  have hb : realInterpolationENorm ι₀ ι₁ θ q (b : sum ι₀ ι₁) < ⊤ := b.2
+  rw [norm_def, norm_def, norm_def, ← ENNReal.toReal_ofReal hC, ← ENNReal.toReal_add ha.ne hb.ne,
+    ← ENNReal.toReal_mul]
+  exact ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
+    (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) (h a b)
 
 /-- Some constant `C ≥ 1` works in the quasi-triangle inequality of `(A₀, A₁)_{θ,q}`; this is all
 the `QuasinormedAddCommGroup` instance needs. For an explicit constant see

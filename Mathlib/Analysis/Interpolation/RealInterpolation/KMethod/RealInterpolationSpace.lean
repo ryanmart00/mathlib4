@@ -622,9 +622,9 @@ noncomputable def realInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submo
     change realInterpolationENorm ι₀ ι₁ θ q (a + b) < ⊤
     rcases eq_or_ne q 0 with rfl | hq
     · simp [realInterpolationENorm]
-    obtain ⟨C, -, hC⟩ := exists_realInterpolationENorm_add_le ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq)
-    exact (hC a b).trans_lt
-      (ENNReal.mul_lt_top ENNReal.ofReal_lt_top (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
+    exact (realInterpolationENorm_add_le ι₀ ι₁ θ (pos_iff_ne_zero.mpr hq) a b).trans_lt
+      (ENNReal.mul_lt_top (ENNReal.mul_lt_top ENNReal.ofReal_lt_top
+        (ENNReal.LpAddConst_lt_top q)) (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
   smul_mem' := by
     intro c a (ha : realInterpolationENorm ι₀ ι₁ θ q a < ⊤)
     change realInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤

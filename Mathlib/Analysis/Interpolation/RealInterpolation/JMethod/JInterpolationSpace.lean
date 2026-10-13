@@ -100,12 +100,35 @@ theorem norm_add_le_of_enorm_add_le {C : ℝ} (hC : 0 ≤ C)
   exact ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
     (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) (h a b)
 
-/-- Some constant `C ≥ 1` works in the quasi-triangle inequality of `(A₀, A₁)_{θ,q;J}`; this is
-all the `QuasinormedAddCommGroup` instance needs. For an explicit constant see
-`quasiTriangleConst_le`. -/
-theorem exists_norm_add_le :
-    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : JInterpolationSpace ι₀ ι₁ θ q, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
-  sorry
+-- TODO: upstream to `Mathlib/Analysis/MeanInequalitiesPow.lean` as `ENNReal.one_le_LpAddConst`
+-- (duplicated privately in `KMethod/RealInterpolationSpace.lean`).
+private theorem one_le_toReal_LpAddConst (p : ℝ≥0∞) : 1 ≤ (ENNReal.LpAddConst p).toReal := by
+  unfold ENNReal.LpAddConst
+  split_ifs with hp
+  · rw [← ENNReal.toReal_rpow, ENNReal.toReal_ofNat]
+    refine Real.one_le_rpow (by norm_num) ?_
+    rw [sub_nonneg, one_div, one_le_inv₀ (ENNReal.toReal_pos hp.1.ne' (ne_top_of_lt hp.2))]
+    simpa using (ENNReal.toReal_le_toReal (ne_top_of_lt hp.2) ENNReal.one_ne_top).mpr hp.2.le
+  · simp
+
+/-- The explicit quasi-triangle constant of `(A₀, A₁)_{θ,q;J}` is at least `1`. -/
+private theorem one_le_max_mul_LpAddConst :
+    1 ≤ max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+      (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal :=
+  one_le_mul_of_one_le_of_one_le
+    (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
+    (one_le_toReal_LpAddConst q)
+
+/-- `jInterpolationENorm_add_le` with the constant as `ENNReal.ofReal` of a real number. -/
+private theorem jInterpolationENorm_add_le_ofReal (a b : sum ι₀ ι₁) :
+    jInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
+      ENNReal.ofReal (max (QuasinormedAddCommGroup.quasiTriangleConst A₀)
+        (QuasinormedAddCommGroup.quasiTriangleConst A₁) * (ENNReal.LpAddConst q).toReal) *
+        (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b) := by
+  rw [ENNReal.ofReal_mul
+      (zero_le_one.trans (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)),
+    ENNReal.ofReal_toReal (ENNReal.LpAddConst_lt_top q).ne]
+  exact jInterpolationENorm_add_le ι₀ ι₁ θ q a b
 
 theorem norm_neg (a : JInterpolationSpace ι₀ ι₁ θ q) : ‖-a‖ = ‖a‖ := by
   rw [norm_def, norm_def]
@@ -124,11 +147,14 @@ theorem norm_eq_zero_iff [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)]
 K-method, definiteness of the J-quasinorm uses the sandwich bound, hence the conditions on `θ`). -/
 noncomputable instance instQuasinormedAddCommGroup [Fact (0 < θ)] [Fact (θ < 1)] [Fact (0 < q)] :
     QuasinormedAddCommGroup (JInterpolationSpace ι₀ ι₁ θ q) := by
+  have hex : ∃ C : ℝ, 1 ≤ C ∧
+      ∀ a b : JInterpolationSpace ι₀ ι₁ θ q, ‖a + b‖ ≤ C * (‖a‖ + ‖b‖) :=
+    ⟨_, one_le_max_mul_LpAddConst, norm_add_le_of_enorm_add_le ι₀ ι₁
+      (zero_le_one.trans one_le_max_mul_LpAddConst) (jInterpolationENorm_add_le_ofReal ι₀ ι₁)⟩
   let hB : AddGroupFilterBasis (JInterpolationSpace ι₀ ι₁ θ q) :=
-    AddGroupFilterBasis.ofQuasiNorm (exists_norm_add_le ι₀ ι₁) (norm_neg ι₀ ι₁)
-      (norm_eq_zero_iff ι₀ ι₁)
+    AddGroupFilterBasis.ofQuasiNorm hex (norm_neg ι₀ ι₁) (norm_eq_zero_iff ι₀ ι₁)
   exact
-    { exists_norm_add_le := exists_norm_add_le ι₀ ι₁
+    { exists_norm_add_le := hex
       norm_neg := norm_neg ι₀ ι₁
       norm_eq_zero_iff := norm_eq_zero_iff ι₀ ι₁
       toUniformSpace := hB.uniformSpace

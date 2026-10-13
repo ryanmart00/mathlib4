@@ -676,7 +676,8 @@ theorem norm_add_le_of_enorm_add_le {C : ℝ} (hC : 0 ≤ C)
   exact ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top
     (ENNReal.add_lt_top.mpr ⟨ha, hb⟩).ne) (h a b)
 
--- TODO: upstream to `Mathlib/Analysis/MeanInequalitiesPow.lean` as `ENNReal.one_le_LpAddConst`.
+-- TODO: upstream to `Mathlib/Analysis/MeanInequalitiesPow.lean` as `ENNReal.one_le_LpAddConst`
+-- (duplicated privately in `JMethod/JInterpolationSpace.lean`).
 private theorem one_le_toReal_LpAddConst (p : ℝ≥0∞) : 1 ≤ (ENNReal.LpAddConst p).toReal := by
   unfold ENNReal.LpAddConst
   split_ifs with hp

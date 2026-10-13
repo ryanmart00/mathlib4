@@ -51,9 +51,9 @@ noncomputable def jInterpolationSubmodule (θ : ℝ) (q : ℝ≥0∞) : Submodul
   add_mem' := by
     intro a b (ha : jInterpolationENorm ι₀ ι₁ θ q a < ⊤) (hb : jInterpolationENorm ι₀ ι₁ θ q b < ⊤)
     change jInterpolationENorm ι₀ ι₁ θ q (a + b) < ⊤
-    obtain ⟨C, -, hC⟩ := exists_jInterpolationENorm_add_le ι₀ ι₁ θ q
-    exact (hC a b).trans_lt
-      (ENNReal.mul_lt_top ENNReal.ofReal_lt_top (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
+    exact (jInterpolationENorm_add_le ι₀ ι₁ θ q a b).trans_lt
+      (ENNReal.mul_lt_top (ENNReal.mul_lt_top ENNReal.ofReal_lt_top
+        (ENNReal.LpAddConst_lt_top q)) (ENNReal.add_lt_top.mpr ⟨ha, hb⟩))
   smul_mem' := by
     intro c a (ha : jInterpolationENorm ι₀ ι₁ θ q a < ⊤)
     change jInterpolationENorm ι₀ ι₁ θ q (c • a) < ⊤

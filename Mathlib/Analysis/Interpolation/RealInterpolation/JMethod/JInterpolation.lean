@@ -34,7 +34,7 @@ The space itself, as a quasi-normed space with its sandwich and morphism maps, i
 * `InterpolationCouple.jInterpolationENorm θ q a`: its infimum over representations of `a`.
 
 ## Main statements
-* `jInterpolationENorm_zero`, `jInterpolationENorm_smul`, `exists_jInterpolationENorm_add_le`.
+* `jInterpolationENorm_zero`, `jInterpolationENorm_smul`, `jInterpolationENorm_add_le`.
 * `jInterpolationENorm_meetToSum_le`: `‖b‖_J ≤ ‖b‖_{A₀ ∩ A₁}` (one-term representation).
 * `exists_ofReal_mul_norm_le_jInterpolationENorm`: `c ‖a‖_{A₀ + A₁} ≤ ‖a‖_J` for `0 < θ < 1`,
   `0 < q` (via the K–J inequality and Aoki–Rolewicz in `A₀ + A₁`).
@@ -172,63 +172,6 @@ theorem jInterpolationENorm_add_le (θ : ℝ) (q : ℝ≥0∞) (a b : sum ι₀ 
     _ = _ := by
         simp only [jInterpolationENorm, ENNReal.iInf_add, ENNReal.add_iInf,
           ENNReal.mul_iInf_of_ne hC0 hCtop]
-
-/-- Quasi-triangle inequality for the J-quasinorm, with a real constant `C ≥ 1` (add the two
-representations termwise; combine `jFunctional_add_le` with the `ℓ^q` quasi-triangle inequality). -/
-theorem exists_jInterpolationENorm_add_le (θ : ℝ) (q : ℝ≥0∞) :
-    ∃ C : ℝ, 1 ≤ C ∧ ∀ a b : sum ι₀ ι₁,
-      jInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
-        ENNReal.ofReal C * (jInterpolationENorm ι₀ ι₁ θ q a + jInterpolationENorm ι₀ ι₁ θ q b) := by
-  set CJ := max (QuasinormedAddCommGroup.quasiTriangleConst (E := A₀))
-    (QuasinormedAddCommGroup.quasiTriangleConst (E := A₁))
-  have hCJ : 0 ≤ CJ :=
-    zero_le_one.trans (le_max_of_le_left QuasinormedAddCommGroup.one_le_quasiTriangleConst)
-  set L := ENNReal.LpAddConst q
-  set C := max 1 (CJ * L.toReal)
-  have hC0 : ENNReal.ofReal C ≠ 0 := (ENNReal.ofReal_pos.mpr (lt_max_of_lt_left one_pos)).ne'
-  refine ⟨C, le_max_left _ _, fun a b => ?_⟩
-  -- one pair of representations: add them termwise
-  have hpair (u v : ℤ → meet ι₀ ι₁) (hu : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) a)
-      (hv : HasSum (fun ν => meetToSum ι₀ ι₁ (v ν)) b) :
-      jInterpolationENorm ι₀ ι₁ θ q (a + b) ≤
-        ENNReal.ofReal C * (jSequenceENorm ι₀ ι₁ θ q u + jSequenceENorm ι₀ ι₁ θ q v) := by
-    refine (jInterpolationENorm_le ι₀ ι₁ θ q (fun ν => u ν + v ν)
-      (by simpa only [map_add] using hu.add hv)).trans ?_
-    rw [jSequenceENorm_eq, jSequenceENorm_eq, jSequenceENorm_eq]
-    set gu := fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν)
-    set gv := fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (v ν)
-    calc eLpNorm (fun ν : ℤ => ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν + v ν))
-          q Measure.count
-        ≤ eLpNorm (CJ • (gu + gv)) q Measure.count := by
-          refine eLpNorm_mono_real Measurable.of_discrete.aestronglyMeasurable fun ν => ?_
-          have hw : 0 ≤ ((2 : ℝ) ^ ν) ^ (-θ) := Real.rpow_nonneg (zpow_nonneg zero_le_two _) _
-          rw [Real.norm_of_nonneg (mul_nonneg hw (jFunctional_nonneg ι₀ ι₁ _ _))]
-          simp only [Pi.smul_apply, Pi.add_apply, smul_eq_mul, gu, gv]
-          calc ((2 : ℝ) ^ ν) ^ (-θ) * JFunctional ι₀ ι₁ (2 ^ ν) (u ν + v ν)
-              ≤ ((2 : ℝ) ^ ν) ^ (-θ) * (CJ * (JFunctional ι₀ ι₁ (2 ^ ν) (u ν) +
-                  JFunctional ι₀ ι₁ (2 ^ ν) (v ν))) :=
-                mul_le_mul_of_nonneg_left (jFunctional_add_le ι₀ ι₁ _ _ _) hw
-            _ = _ := by ring
-      _ = ‖CJ‖ₑ * eLpNorm (gu + gv) q Measure.count := eLpNorm_const_smul _ _ _ _
-      _ ≤ ‖CJ‖ₑ * (L * (eLpNorm gu q Measure.count + eLpNorm gv q Measure.count)) := by
-          gcongr
-          exact eLpNorm_add_le' q
-      _ = ENNReal.ofReal (CJ * L.toReal) *
-            (eLpNorm gu q Measure.count + eLpNorm gv q Measure.count) := by
-          rw [Real.enorm_of_nonneg hCJ, ENNReal.ofReal_mul hCJ,
-            ENNReal.ofReal_toReal (ENNReal.LpAddConst_lt_top q).ne, mul_assoc]
-      _ ≤ _ := by
-          gcongr
-          exact le_max_right _ _
-  -- take the infimum over both representations
-  calc jInterpolationENorm ι₀ ι₁ θ q (a + b)
-      ≤ ⨅ (v : ℤ → meet ι₀ ι₁) (_ : HasSum (fun ν => meetToSum ι₀ ι₁ (v ν)) b)
-          (u : ℤ → meet ι₀ ι₁) (_ : HasSum (fun ν => meetToSum ι₀ ι₁ (u ν)) a),
-            ENNReal.ofReal C * (jSequenceENorm ι₀ ι₁ θ q u + jSequenceENorm ι₀ ι₁ θ q v) :=
-        le_iInf₂ fun v hv => le_iInf₂ fun u hu => hpair u v hu hv
-    _ = _ := by
-        simp only [jInterpolationENorm, ENNReal.iInf_add, ENNReal.add_iInf,
-          ENNReal.mul_iInf_of_ne hC0 ENNReal.ofReal_ne_top]
 
 /-- The "`A₀ ∩ A₁ ⊂`" half of the sandwich: the one-term representation `u₀ = b` gives
 `‖b‖_J ≤ J(1, b) = ‖b‖`. -/
